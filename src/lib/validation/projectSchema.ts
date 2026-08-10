@@ -1,0 +1,156 @@
+import { z } from "zod";
+
+const dataQualitySchema = z.enum(["known", "estimated", "unknown"]);
+
+const assumptionSchema = z.object({
+  value: z.number().finite("Must be a finite number"),
+  quality: dataQualitySchema,
+});
+
+const optionalAssumptionSchema = assumptionSchema.optional();
+
+const nonNegativeAssumption = assumptionSchema.refine((a) => a.quality === "unknown" || a.value >= 0, {
+  message: "Must be zero or greater",
+});
+
+export const basicInfoSchema = z.object({
+  name: z.string().min(1, "Project name is required"),
+  description: z.string(),
+  businessModel: z.enum(["saas", "subscription", "marketplace", "ecommerce", "one_time", "service", "usage_based", "other"]),
+  currency: z.enum(["OMR", "USD", "SAR", "AED", "EUR", "GBP"]),
+});
+
+export const marketSchema = z.object({
+  totalPotentialCustomers: nonNegativeAssumption,
+  averageAnnualCustomerSpend: nonNegativeAssumption,
+  addressableMarketPct: assumptionSchema,
+  obtainableMarketPct: assumptionSchema,
+  tamOverride: z.number().optional(),
+  samOverride: z.number().optional(),
+  somOverride: z.number().optional(),
+  targetCustomers: nonNegativeAssumption,
+});
+
+export const pricingSchema = z.object({
+  productPrice: nonNegativeAssumption,
+  billingPeriod: z.enum(["monthly", "annual", "one_time", "usage_based"]),
+  currentCustomers: nonNegativeAssumption,
+  expectedCustomers12mo: nonNegativeAssumption,
+  expectedMonthlyCustomerGrowthPct: assumptionSchema,
+  freeToPaidConversionPct: optionalAssumptionSchema,
+});
+
+export const acquisitionSchema = z.object({
+  monthlyMarketingSpend: nonNegativeAssumption,
+  monthlySalesSpend: nonNegativeAssumption,
+  newCustomersAcquiredMonthly: nonNegativeAssumption,
+  monthlyLeads: optionalAssumptionSchema,
+  leadToCustomerConversionPct: optionalAssumptionSchema,
+});
+
+export const retentionSchema = z.object({
+  monthlyChurnPct: assumptionSchema,
+  annualChurnPct: optionalAssumptionSchema,
+  averageCustomerLifetimeMonths: optionalAssumptionSchema,
+});
+
+export const unitEconomicsSchema = z.object({
+  revenuePerCustomer: nonNegativeAssumption,
+  directCostPerCustomer: nonNegativeAssumption,
+  paymentProcessingPct: assumptionSchema,
+  infrastructureCostPerCustomer: nonNegativeAssumption,
+  supportCostPerCustomer: nonNegativeAssumption,
+  otherVariableCostPerCustomer: nonNegativeAssumption,
+});
+
+export const costsSchema = z.object({
+  founderSalaries: nonNegativeAssumption,
+  employeeSalaries: nonNegativeAssumption,
+  contractorExpenses: nonNegativeAssumption,
+  officeExpenses: nonNegativeAssumption,
+  infrastructure: nonNegativeAssumption,
+  softwareSubscriptions: nonNegativeAssumption,
+  marketing: nonNegativeAssumption,
+  sales: nonNegativeAssumption,
+  legalAccounting: nonNegativeAssumption,
+  otherMonthlyExpenses: nonNegativeAssumption,
+});
+
+export const fundingSchema = z.object({
+  availableCash: nonNegativeAssumption,
+  initialInvestment: nonNegativeAssumption,
+  otherMonthlyIncome: nonNegativeAssumption,
+});
+
+const rating = z.number().min(1).max(5);
+
+export const validationAssessmentSchema = z.object({
+  problemPain: rating,
+  problemFrequency: rating,
+  problemAlreadySpendingMoney: rating,
+  customersInterviewed: rating,
+  hasUsers: rating,
+  hasPayingCustomers: rating,
+  hasSignedLois: rating,
+  customersRequestedSolution: rating,
+  technicallyFeasible: rating,
+  mvpDifficulty: rating,
+  productDifferentiation: rating,
+  knowsHowToReachCustomers: rating,
+  hasAudience: rating,
+  hasPartnerships: rating,
+  hasUnfairDistributionAdvantage: rating,
+  competitionIntensity: rating,
+  differentiationStrength: rating,
+  switchingEase: rating,
+});
+
+export const teamAssessmentSchema = z.object({
+  domainExpertise: rating,
+  technicalAbility: rating,
+  salesCapability: rating,
+  marketingCapability: rating,
+  founderCommitment: rating,
+  industryRelationships: rating,
+  accessToCapital: rating,
+});
+
+export const riskAssessmentSchema = z.object({
+  technicalRisk: rating,
+  marketRisk: rating,
+  regulatoryRisk: rating,
+  competitiveRisk: rating,
+  financialRisk: rating,
+  dependencyRisk: rating,
+});
+
+export const projectFormSchema = z.object({
+  basicInfo: basicInfoSchema,
+  market: marketSchema,
+  pricing: pricingSchema,
+  acquisition: acquisitionSchema,
+  retention: retentionSchema,
+  unitEconomics: unitEconomicsSchema,
+  costs: costsSchema,
+  funding: fundingSchema,
+  validation: validationAssessmentSchema,
+  team: teamAssessmentSchema,
+  risk: riskAssessmentSchema,
+});
+
+export type ProjectFormValues = z.infer<typeof projectFormSchema>;
+
+/** Field paths (dot notation) that belong to each wizard step, used for per-step validation via RHF's trigger(). */
+export const STEP_FIELDS: Record<string, string[]> = {
+  basicInfo: ["basicInfo"],
+  market: ["market"],
+  pricing: ["pricing"],
+  acquisition: ["acquisition"],
+  retention: ["retention"],
+  unitEconomics: ["unitEconomics"],
+  costs: ["costs"],
+  funding: ["funding"],
+  validation: ["validation"],
+  team: ["team"],
+  risk: ["risk"],
+};
