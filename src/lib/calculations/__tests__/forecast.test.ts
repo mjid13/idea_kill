@@ -1,0 +1,69 @@
+import { describe, expect, it } from "vitest";
+import { generateForecast, findBreakEvenMonth, type ForecastInputs } from "../forecast";
+
+function baseInputs(overrides: Partial<ForecastInputs> = {}): ForecastInputs {
+  return {
+    startingCustomers: 50,
+    newCustomersPerMonth: 30,
+    monthlyCustomerGrowthPct: 0,
+    monthlyChurnPct: 3,
+    monthlyArpu: 50,
+    grossMarginPct: 80,
+    monthlyOperatingExpenses: 12000,
+    otherMonthlyIncome: 0,
+    startingCashBalance: 100000,
+    isRecurringRevenue: true,
+    months: 12,
+    ...overrides,
+  };
+}
+
+describe("generateForecast", () => {
+  it("produces the requested number of months", () => {
+    const forecast = generateForecast(baseInputs({ months: 24 }));
+    expect(forecast).toHaveLength(24);
+  });
+
+  it("never produces NaN or Infinity values", () => {
+    const forecast = generateForecast(baseInputs({ monthlyChurnPct: 0, newCustomersPerMonth: 0 }));
+    for (const m of forecast) {
+      for (const v of Object.values(m)) {
+        expect(Number.isFinite(v)).toBe(true);
+      }
+    }
+  });
+
+  it("grows customers month over month when new customers exceed churn", () => {
+    const forecast = generateForecast(baseInputs());
+    expect(forecast[1].beginningCustomers).toBe(forecast[0].endingCustomers);
+    expect(forecast[11].endingCustomers).toBeGreaterThan(forecast[0].endingCustomers);
+  });
+
+  it("handles zero customers and zero revenue without crashing", () => {
+    const forecast = generateForecast(
+      baseInputs({ startingCustomers: 0, newCustomersPerMonth: 0, monthlyArpu: 0 })
+    );
+    expect(forecast[0].revenue).toBe(0);
+    expect(forecast[0].endingCustomers).toBe(0);
+  });
+
+  it("compounds new-customer growth using the monthly growth rate", () => {
+    const forecast = generateForecast(baseInputs({ monthlyCustomerGrowthPct: 10, monthlyChurnPct: 0 }));
+    expect(forecast[1].newCustomers).toBeGreaterThan(forecast[0].newCustomers);
+  });
+
+  it("finds the first break-even month where cash flow turns non-negative", () => {
+    const forecast = generateForecast(
+      baseInputs({ startingCustomers: 1000, monthlyOperatingExpenses: 1000 })
+    );
+    const breakEvenMonth = findBreakEvenMonth(forecast);
+    expect(breakEvenMonth).toBe(1);
+  });
+
+  it("returns null break-even month when the business never turns cash-flow positive", () => {
+    const forecast = generateForecast(
+      baseInputs({ startingCustomers: 0, newCustomersPerMonth: 0, monthlyOperatingExpenses: 5000 })
+    );
+    expect(findBreakEvenMonth(forecast)).toBeNull();
+  });
+});
