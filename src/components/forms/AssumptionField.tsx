@@ -20,6 +20,8 @@ interface AssumptionFieldProps {
   step?: number;
   min?: number;
   placeholder?: string;
+  /** Small caption under the input, e.g. to note it was pre-filled from another step. */
+  hint?: string;
 }
 
 /** Numeric assumption input paired with a Known/Estimated/Unknown data-quality toggle. */
@@ -34,6 +36,7 @@ export function AssumptionField({
   step = 1,
   min = 0,
   placeholder,
+  hint,
 }: AssumptionFieldProps) {
   const valueField = useController({ control, name: `${name}.value` as FieldPath<ProjectFormValues> });
   const qualityField = useController({ control, name: `${name}.quality` as FieldPath<ProjectFormValues> });
@@ -66,11 +69,19 @@ export function AssumptionField({
           onChange={(e) => {
             const next = e.target.valueAsNumber;
             valueField.field.onChange(Number.isFinite(next) ? next : 0);
+            // Typing a value implies the user knows it; promote out of the
+            // pristine "Unknown" default so it counts toward confidence and
+            // can flow into linked fields. The user can still downgrade it
+            // to Estimated/Unknown afterward via the toggle.
+            if (qualityField.field.value === "unknown") {
+              qualityField.field.onChange("known");
+            }
           }}
           onBlur={valueField.field.onBlur}
         />
         {suffix && <span className="pointer-events-none absolute right-2.5 text-xs text-muted-foreground">{suffix}</span>}
       </div>
+      {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
     </div>
   );
 }
