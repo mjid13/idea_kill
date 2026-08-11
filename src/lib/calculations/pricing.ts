@@ -8,17 +8,20 @@ import { isRecurring, normalizeToMonthlyArpu, val } from "./helpers";
  * Annual subscriptions are normalized to a monthly ARPU before computing MRR
  * so that mixed billing periods stay comparable. One-time / usage-based
  * products do not have a stable MRR concept; monthlyRevenue instead reflects
- * a period-appropriate estimate using current customer count as a proxy.
+ * a period-appropriate estimate driven by new customers acquired that month
+ * (a flow), not the cumulative customer count (a stock) — matching the
+ * forecast engine's treatment of non-recurring revenue in forecast.ts.
  */
-export function calculateRevenueMetrics(pricing: PricingAssumptions): RevenueMetrics {
+export function calculateRevenueMetrics(pricing: PricingAssumptions, newCustomersPerMonth: number): RevenueMetrics {
   const price = val(pricing.productPrice);
   const currentCustomers = val(pricing.currentCustomers);
 
   const monthlyArpu = normalizeToMonthlyArpu(price, pricing.billingPeriod);
 
   if (!isRecurring(pricing.billingPeriod)) {
-    // One-time purchase: revenue is transactional, not recurring.
-    const monthlyRevenue = price * currentCustomers;
+    // One-time purchase: revenue is transactional, not recurring — every
+    // existing customer doesn't re-purchase every month, only new ones do.
+    const monthlyRevenue = price * newCustomersPerMonth;
     return {
       monthlyArpu: price,
       mrr: 0,

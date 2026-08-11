@@ -16,10 +16,16 @@ export function scoreUnitEconomics(metrics: CalculatedMetrics, businessModel: Bu
   const ltvToCacScore = ltvToCac === null ? 0 : interpolateScore(ltvToCac, benchmarks.ltvToCac);
 
   const cacPayback = metrics.unitEconomics.cacPaybackMonths;
-  const cacPaybackScore = cacPayback === null ? 40 : interpolateScore(cacPayback, benchmarks.cacPaybackMonths);
-  // A null payback (e.g. CAC is 0 because there's no acquisition spend yet) is
-  // treated as neutral rather than penalized to zero — it usually means the
-  // input hasn't been entered rather than that economics are broken.
+  // A null payback usually means CAC/spend hasn't been entered yet, which is
+  // treated as neutral rather than penalized. But it's also null when gross
+  // profit per customer is negative (payback is mathematically impossible) —
+  // that case must be penalized, not treated as "no data".
+  const cacPaybackScore =
+    cacPayback === null
+      ? metrics.unitEconomics.grossProfitPerCustomer < 0
+        ? 0
+        : 40
+      : interpolateScore(cacPayback, benchmarks.cacPaybackMonths);
 
   const score = weightedAverage([
     [grossMarginScore, 0.25],
