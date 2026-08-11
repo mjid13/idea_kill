@@ -1,4 +1,4 @@
-import type { BillingPeriod, BusinessModel, Currency } from "@/types";
+import type { BillingPeriod, BusinessModel, Currency, FundingRoundType } from "@/types";
 
 export const BUSINESS_MODEL_OPTIONS: Array<{ value: BusinessModel; label: string }> = [
   { value: "saas", label: "SaaS" },
@@ -38,3 +38,15 @@ export const CURRENCY_LABELS: Record<Currency, string> = Object.fromEntries(
 export const BILLING_PERIOD_LABELS: Record<BillingPeriod, string> = Object.fromEntries(
   BILLING_PERIOD_OPTIONS.map((o) => [o.value, o.label])
 ) as Record<BillingPeriod, string>;
+
+export const FUNDING_ROUND_OPTIONS: Array<{ value: FundingRoundType; label: string }> = [
+  { value: "pre_seed", label: "Pre-seed" },
+  { value: "seed", label: "Seed" },
+  { value: "series_a", label: "Series A" },
+  { value: "series_b_plus", label: "Series B+" },
+  { value: "bridge", label: "Bridge" },
+];
+
+export const FUNDING_ROUND_LABELS: Record<FundingRoundType, string> = Object.fromEntries(
+  FUNDING_ROUND_OPTIONS.map((o) => [o.value, o.label])
+) as Record<FundingRoundType, string>;
