@@ -3,15 +3,22 @@ import { getBenchmarks } from "@/lib/scoring/benchmarks";
 import { interpolateScore } from "@/lib/scoring/interpolate";
 
 let idCounter = 0;
-function insight(message: string, detail?: string): Insight {
+function insight(
+  message: string,
+  detail?: string,
+  messageParams?: Record<string, string | number>,
+  detailParams?: Record<string, string | number>
+): Insight {
   idCounter += 1;
-  return { id: `insight-${idCounter}`, message, detail };
+  return { id: `insight-${idCounter}`, message, messageParams, detail, detailParams };
 }
 
 /**
  * Deterministic, rule-based insight generation — no AI required (spec
  * section 21). Every rule reads directly from calculated metrics/scores so
- * the reasoning is reproducible and auditable.
+ * the reasoning is reproducible and auditable. Messages/details are
+ * translation keys — any interpolated values travel as params rather than
+ * being baked into the string, so the UI layer can translate them.
  */
 export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakdown, project: Project): InsightReport {
   const strengths: Insight[] = [];
@@ -43,7 +50,9 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
       strengths.push(
         insight(
           "Your customer economics appear healthy based on the current assumptions.",
-          `LTV:CAC is ${unitEconomics.ltvToCacRatio.toFixed(1)}x.`
+          "LTV:CAC is {value}x.",
+          undefined,
+          { value: unitEconomics.ltvToCacRatio.toFixed(1) }
         )
       );
       if (unitEconomics.ltvToCacRatio > 5) {
@@ -65,18 +74,26 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
       criticalRisks.push(
         insight(
           "Cash runway is a major risk.",
-          `At the current burn rate the business has ${funding.runwayMonths.toFixed(1)} months of runway — less than six months.`
+          "At the current burn rate the business has {months} months of runway — less than six months.",
+          undefined,
+          { months: funding.runwayMonths.toFixed(1) }
         )
       );
     } else if (funding.runwayMonths < 12) {
       warnings.push(
         insight(
           "Runway is under a year.",
-          `${funding.runwayMonths.toFixed(1)} months of runway leaves limited room to iterate before raising or reaching break-even.`
+          "{months} months of runway leaves limited room to iterate before raising or reaching break-even.",
+          undefined,
+          { months: funding.runwayMonths.toFixed(1) }
         )
       );
     } else {
-      strengths.push(insight("Runway provides a healthy buffer.", `${funding.runwayMonths.toFixed(1)} months at the current burn rate.`));
+      strengths.push(
+        insight("Runway provides a healthy buffer.", "{months} months at the current burn rate.", undefined, {
+          months: funding.runwayMonths.toFixed(1),
+        })
+      );
     }
   }
 
@@ -86,11 +103,17 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
     warnings.push(
       insight(
         "Gross margin is below the benchmark for this business model.",
-        `Current gross margin is ${unitEconomics.grossMarginPct.toFixed(1)}%. Consider reducing variable costs or increasing price.`
+        "Current gross margin is {pct}%. Consider reducing variable costs or increasing price.",
+        undefined,
+        { pct: unitEconomics.grossMarginPct.toFixed(1) }
       )
     );
   } else if (marginScore >= 85) {
-    strengths.push(insight("Gross margin is strong for this business model.", `${unitEconomics.grossMarginPct.toFixed(1)}% gross margin.`));
+    strengths.push(
+      insight("Gross margin is strong for this business model.", "{pct}% gross margin.", undefined, {
+        pct: unitEconomics.grossMarginPct.toFixed(1),
+      })
+    );
   }
 
   // --- CAC payback -----------------------------------------------------
@@ -99,11 +122,17 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
       warnings.push(
         insight(
           "CAC payback period is long.",
-          `It takes ${unitEconomics.cacPaybackMonths.toFixed(1)} months of gross profit to recover acquisition cost.`
+          "It takes {months} months of gross profit to recover acquisition cost.",
+          undefined,
+          { months: unitEconomics.cacPaybackMonths.toFixed(1) }
         )
       );
     } else if (unitEconomics.cacPaybackMonths <= 6) {
-      strengths.push(insight("CAC payback is fast.", `Acquisition cost is recovered in ${unitEconomics.cacPaybackMonths.toFixed(1)} months.`));
+      strengths.push(
+        insight("CAC payback is fast.", "Acquisition cost is recovered in {months} months.", undefined, {
+          months: unitEconomics.cacPaybackMonths.toFixed(1),
+        })
+      );
     }
   }
 
@@ -112,14 +141,18 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
     warnings.push(
       insight(
         "Required market penetration looks unrealistic.",
-        `Hitting your target requires capturing ${market.requiredMarketPenetrationPct.toFixed(1)}% of the addressable market.`
+        "Hitting your target requires capturing {pct}% of the addressable market.",
+        undefined,
+        { pct: market.requiredMarketPenetrationPct.toFixed(1) }
       )
     );
   } else if (market.requiredMarketPenetrationPct > 0 && market.requiredMarketPenetrationPct < 3) {
     strengths.push(
       insight(
         "Required market penetration is modest.",
-        `Your target only requires ${market.requiredMarketPenetrationPct.toFixed(2)}% of the addressable market.`
+        "Your target only requires {pct}% of the addressable market.",
+        undefined,
+        { pct: market.requiredMarketPenetrationPct.toFixed(2) }
       )
     );
   }
@@ -142,7 +175,9 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
     warnings.push(
       insight(
         "Monthly churn is high relative to the benchmark for this business model.",
-        `${retention.monthlyChurnPct.toFixed(1)}% monthly churn shortens customer lifetime and depresses LTV.`
+        "{pct}% monthly churn shortens customer lifetime and depresses LTV.",
+        undefined,
+        { pct: retention.monthlyChurnPct.toFixed(1) }
       )
     );
   }
@@ -177,7 +212,9 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
     opportunities.push(
       insight(
         "Lead-to-customer conversion is low.",
-        `${acquisition.leadToCustomerConversionPct.toFixed(1)}% of leads convert — improving funnel conversion may be cheaper than acquiring more leads.`
+        "{pct}% of leads convert — improving funnel conversion may be cheaper than acquiring more leads.",
+        undefined,
+        { pct: acquisition.leadToCustomerConversionPct.toFixed(1) }
       )
     );
   }
@@ -201,18 +238,18 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
         break;
       case "unitEconomics":
         recommendedActions.push(
-          insight(
-            metrics.acquisition.cac === null
-              ? "Acquisition spend isn't converting into customers yet — fix the funnel before scaling spend further."
-              : `Reduce CAC below $${Math.max(1, Math.round(metrics.acquisition.cac * 0.7)).toLocaleString()} or improve gross margin to strengthen unit economics.`
-          )
+          metrics.acquisition.cac === null
+            ? insight("Acquisition spend isn't converting into customers yet — fix the funnel before scaling spend further.")
+            : insight("Reduce CAC below ${amount} or improve gross margin to strengthen unit economics.", undefined, {
+                amount: Math.max(1, Math.round(metrics.acquisition.cac * 0.7)).toLocaleString(),
+              })
         );
         break;
       case "financial":
         recommendedActions.push(insight("Reduce fixed costs or extend runway before scaling acquisition spend."));
         break;
       case "market":
-        recommendedActions.push(insight(`Test willingness to pay at your current price point with a small sample of prospects.`));
+        recommendedActions.push(insight("Test willingness to pay at your current price point with a small sample of prospects."));
         break;
       case "execution":
         recommendedActions.push(insight("Identify a distribution channel or partnership before increasing build scope."));
@@ -226,7 +263,11 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
   if (retention.monthlyChurnPct > 0) {
     const targetChurn = Math.max(0.5, retention.monthlyChurnPct * 0.6);
     if (churnScore < 60) {
-      recommendedActions.push(insight(`Validate churn below ${targetChurn.toFixed(1)}% before scaling acquisition spend.`));
+      recommendedActions.push(
+        insight("Validate churn below {target}% before scaling acquisition spend.", undefined, {
+          target: targetChurn.toFixed(1),
+        })
+      );
     }
   }
 

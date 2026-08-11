@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { InfoTooltip } from "@/components/forms/InfoTooltip";
 import { HEALTH_TEXT_COLOR, type HealthStatus } from "@/lib/health";
@@ -13,6 +14,7 @@ interface MetricCardProps {
 }
 
 export function MetricCard({ label, value, description, formula, health, healthLabel }: MetricCardProps) {
+  const t = useTranslations();
   return (
     <Card size="sm">
       <CardContent className="space-y-1">
@@ -22,7 +24,7 @@ export function MetricCard({ label, value, description, formula, health, healthL
         </div>
         <p className="text-xl font-semibold tabular-nums text-foreground">{value}</p>
         {health && (
-          <p className={cn("text-[11px] font-medium", HEALTH_TEXT_COLOR[health])}>{healthLabel ?? health}</p>
+          <p className={cn("text-[11px] font-medium", HEALTH_TEXT_COLOR[health])}>{t(healthLabel ?? health)}</p>
         )}
       </CardContent>
     </Card>

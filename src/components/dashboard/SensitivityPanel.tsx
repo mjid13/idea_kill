@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ const LEVERS: Array<{ key: keyof SensitivityMultipliers; label: string; descript
 ];
 
 export function SensitivityPanel({ project }: { project: Project }) {
+  const t = useTranslations();
   const [multipliers, setMultipliers] = useState<SensitivityMultipliers>(DEFAULT_MULTIPLIERS);
 
   const ranking = useMemo(() => calculateSensitivityRanking(project), [project]);
@@ -31,19 +33,19 @@ export function SensitivityPanel({ project }: { project: Project }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Assumption sensitivity</CardTitle>
-        <CardDescription>Flex the assumptions that move the score the most and see the dashboard recalculate instantly.</CardDescription>
+        <CardTitle>{t("Assumption sensitivity")}</CardTitle>
+        <CardDescription>{t("Flex the assumptions that move the score the most and see the dashboard recalculate instantly.")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
-          <p className="mb-2 text-xs font-semibold text-foreground">Most sensitive assumptions</p>
+          <p className="mb-2 text-xs font-semibold text-foreground">{t("Most sensitive assumptions")}</p>
           <ol className="space-y-1">
             {ranking.map((item, i) => (
               <li key={item.key} className="flex items-center justify-between text-sm">
                 <span className="text-foreground">
-                  {i + 1}. {item.label}
+                  {i + 1}. {t(item.label)}
                 </span>
-                <span className="text-xs text-muted-foreground">±{item.impact.toFixed(1)} score pts across ±50%</span>
+                <span className="text-xs text-muted-foreground">{t("±{points} score pts across ±50%", { points: item.impact.toFixed(1) })}</span>
               </li>
             ))}
           </ol>
@@ -54,8 +56,8 @@ export function SensitivityPanel({ project }: { project: Project }) {
             <div key={lever.key} className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-foreground">{lever.label}</p>
-                  <p className="text-[11px] text-muted-foreground">{lever.description}</p>
+                  <p className="text-xs font-medium text-foreground">{t(lever.label)}</p>
+                  <p className="text-[11px] text-muted-foreground">{t(lever.description)}</p>
                 </div>
                 <span className="text-xs font-medium tabular-nums text-foreground">
                   {multipliers[lever.key] >= 1 ? "+" : ""}
@@ -76,26 +78,26 @@ export function SensitivityPanel({ project }: { project: Project }) {
         <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 p-3">
           <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-4">
             <div>
-              <p className="text-[11px] text-muted-foreground">Score</p>
+              <p className="text-[11px] text-muted-foreground">{t("Score")}</p>
               <p className="text-sm font-semibold tabular-nums text-foreground">{adjustedScore.overall}/100</p>
             </div>
             <div>
-              <p className="text-[11px] text-muted-foreground">MRR</p>
+              <p className="text-[11px] text-muted-foreground">{t("MRR")}</p>
               <p className="text-sm font-semibold tabular-nums text-foreground">{formatCurrency(adjustedMetrics.revenue.mrr, project.basicInfo.currency, { compact: true })}</p>
             </div>
             <div>
-              <p className="text-[11px] text-muted-foreground">LTV:CAC</p>
+              <p className="text-[11px] text-muted-foreground">{t("LTV:CAC")}</p>
               <p className="text-sm font-semibold tabular-nums text-foreground">{formatMultiple(adjustedMetrics.unitEconomics.ltvToCacRatio)}</p>
             </div>
             <div>
-              <p className="text-[11px] text-muted-foreground">Runway</p>
+              <p className="text-[11px] text-muted-foreground">{t("Runway")}</p>
               <p className="text-sm font-semibold tabular-nums text-foreground">
-                {adjustedMetrics.funding.isProfitable ? "Profitable" : formatMonths(adjustedMetrics.funding.runwayMonths)}
+                {adjustedMetrics.funding.isProfitable ? t("Profitable") : formatMonths(adjustedMetrics.funding.runwayMonths)}
               </p>
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={() => setMultipliers(DEFAULT_MULTIPLIERS)} disabled={isDefault}>
-            <RotateCcw /> Reset
+            <RotateCcw /> {t("Reset")}
           </Button>
         </div>
       </CardContent>

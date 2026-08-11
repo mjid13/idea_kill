@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { classifyScore, CLASSIFICATION_DESCRIPTIONS } from "@/lib/scoring";
@@ -12,33 +13,34 @@ const CLASSIFICATION_COLOR: Record<string, string> = {
 };
 
 export function ScoreHero({ scores }: { scores: ScoreBreakdown }) {
+  const t = useTranslations();
   const classification = classifyScore(scores.overall);
 
   return (
     <Card>
       <CardContent className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Product Viability Score</p>
+          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("Product Viability Score")}</p>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-5xl font-semibold tracking-tight text-foreground tabular-nums">{scores.overall}</span>
             <span className="text-lg text-muted-foreground">/ 100</span>
           </div>
           <Badge variant="outline" className={`mt-2 ${CLASSIFICATION_COLOR[classification]}`}>
-            {classification}
+            {t(classification)}
           </Badge>
-          <p className="mt-2 max-w-md text-sm text-muted-foreground">{CLASSIFICATION_DESCRIPTIONS[classification]}</p>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">{t(CLASSIFICATION_DESCRIPTIONS[classification])}</p>
         </div>
 
         <div className="flex gap-6 sm:border-l sm:border-border sm:pl-6">
           <div>
-            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Confidence</p>
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("Confidence")}</p>
             <p className="mt-1 text-3xl font-semibold tabular-nums text-foreground">{scores.confidence}%</p>
-            <p className="mt-1 max-w-40 text-[11px] text-muted-foreground">How much real-world evidence supports these assumptions.</p>
+            <p className="mt-1 max-w-40 text-[11px] text-muted-foreground">{t("How much real-world evidence supports these assumptions.")}</p>
           </div>
           <div>
-            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Maturity</p>
-            <p className="mt-1 text-lg font-semibold text-foreground">Stage {scores.maturityStage.stage}</p>
-            <p className="mt-1 max-w-36 text-[11px] text-muted-foreground">{scores.maturityStage.label}</p>
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("Maturity")}</p>
+            <p className="mt-1 text-lg font-semibold text-foreground">{t("Stage {stage}", { stage: scores.maturityStage.stage })}</p>
+            <p className="mt-1 max-w-36 text-[11px] text-muted-foreground">{t(scores.maturityStage.label)}</p>
           </div>
         </div>
       </CardContent>

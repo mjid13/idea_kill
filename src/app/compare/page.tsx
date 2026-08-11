@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ export default function ComparePage() {
 }
 
 function CompareContent() {
+  const t = useTranslations();
   const searchParams = useSearchParams();
   const ids = useMemo(() => (searchParams.get("ids") ?? "").split(",").filter(Boolean), [searchParams]);
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -64,7 +66,7 @@ function CompareContent() {
     higherIsBetter?: boolean;
   }> = rows
     ? [
-        { label: "Viability score", get: (r) => `${r.scores.overall}/100 (${classifyScore(r.scores.overall)})`, raw: (r) => r.scores.overall },
+        { label: "Viability score", get: (r) => `${r.scores.overall}/100 (${t(classifyScore(r.scores.overall))})`, raw: (r) => r.scores.overall },
         { label: "Confidence", get: (r) => `${r.scores.confidence}%`, raw: (r) => r.scores.confidence },
         { label: "TAM", get: (r) => formatCurrency(r.metrics.market.tam, currency, { compact: true }), raw: (r) => r.metrics.market.tam },
         { label: "SOM", get: (r) => formatCurrency(r.metrics.market.som, currency, { compact: true }), raw: (r) => r.metrics.market.som },
@@ -75,13 +77,13 @@ function CompareContent() {
         { label: "LTV:CAC", get: (r) => formatMultiple(r.metrics.unitEconomics.ltvToCacRatio), raw: (r) => r.metrics.unitEconomics.ltvToCacRatio },
         {
           label: "Break-even customers",
-          get: (r) => (r.metrics.breakEven.breakEvenCustomers === null ? "Unreachable" : r.metrics.breakEven.breakEvenCustomers.toLocaleString()),
+          get: (r) => (r.metrics.breakEven.breakEvenCustomers === null ? t("Unreachable") : r.metrics.breakEven.breakEvenCustomers.toLocaleString()),
           raw: (r) => r.metrics.breakEven.breakEvenCustomers,
           higherIsBetter: false,
         },
         {
           label: "Runway",
-          get: (r) => (r.metrics.funding.isProfitable ? "Profitable" : formatMonths(r.metrics.funding.runwayMonths)),
+          get: (r) => (r.metrics.funding.isProfitable ? t("Profitable") : formatMonths(r.metrics.funding.runwayMonths)),
           raw: (r) => r.metrics.funding.runwayMonths,
         },
         { label: "Validation", get: (r) => `${r.scores.categories.validation.score}/100`, raw: (r) => r.scores.categories.validation.score },
@@ -96,15 +98,15 @@ function CompareContent() {
       <main className="flex-1">
         <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Compare projects</h1>
-            <p className="text-sm text-muted-foreground">Select 2 or more saved projects to compare side by side.</p>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("Compare projects")}</h1>
+            <p className="text-sm text-muted-foreground">{t("Select 2 or more saved projects to compare side by side.")}</p>
           </div>
 
           {rows && rows.length < 2 && (
             <Card>
               <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-                <p className="text-sm text-muted-foreground">Select at least two projects on the Projects page to compare them.</p>
-                <Button render={<Link href="/projects">Go to projects</Link>} />
+                <p className="text-sm text-muted-foreground">{t("Select at least two projects on the Projects page to compare them.")}</p>
+                <Button render={<Link href="/projects">{t("Go to projects")}</Link>} />
               </CardContent>
             </Card>
           )}
@@ -115,13 +117,13 @@ function CompareContent() {
                 <table className="w-full min-w-[600px] text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                      <th className="py-2 pr-4 font-medium">Metric</th>
+                      <th className="py-2 pr-4 font-medium">{t("Metric")}</th>
                       {rows.map((r) => (
                         <th key={r.project.id} className="py-2 pr-4 text-left font-medium">
                           <Link href={`/project/${r.project.id}`} className="text-foreground hover:underline">
-                            {r.project.basicInfo.name || "Untitled"}
+                            {r.project.basicInfo.name || t("Untitled")}
                           </Link>
-                          <div className="text-[10px] font-normal text-muted-foreground">{BUSINESS_MODEL_LABELS[r.project.basicInfo.businessModel]}</div>
+                          <div className="text-[10px] font-normal text-muted-foreground">{t(BUSINESS_MODEL_LABELS[r.project.basicInfo.businessModel])}</div>
                         </th>
                       ))}
                     </tr>
@@ -132,7 +134,7 @@ function CompareContent() {
                       const winner = bestIndex(values, row.higherIsBetter ?? true);
                       return (
                         <tr key={row.label} className="border-b border-border/60 last:border-0">
-                          <td className="py-2 pr-4 text-muted-foreground">{row.label}</td>
+                          <td className="py-2 pr-4 text-muted-foreground">{t(row.label)}</td>
                           {rows.map((r, i) => (
                             <td
                               key={r.project.id}
