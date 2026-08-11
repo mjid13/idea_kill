@@ -11,7 +11,12 @@ export function calculateAcquisitionMetrics(acquisition: AcquisitionAssumptions)
   const sales = val(acquisition.monthlySalesSpend);
   const newCustomers = val(acquisition.newCustomersAcquiredMonthly);
 
-  const cac = safeDiv(marketing + sales, newCustomers) ?? 0;
+  const spend = marketing + sales;
+  // If nothing has been entered yet (no spend, no customers), 0 is the least
+  // misleading default. But if spend was made and zero customers resulted,
+  // CAC is unknown/effectively unbounded — leaving it null (rather than 0)
+  // stops downstream payback/LTV:CAC calculations from reading as "instant".
+  const cac = safeDiv(spend, newCustomers) ?? (spend === 0 ? 0 : null);
 
   let leadToCustomerConversionPct: number | null = null;
   const hasExplicitConversion =

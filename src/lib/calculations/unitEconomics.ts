@@ -11,7 +11,7 @@ import { pct, safeDiv, val } from "./helpers";
 export function calculateUnitEconomicsMetrics(
   unitEconomics: UnitEconomicsAssumptions,
   monthlyArpu: number,
-  cac: number,
+  cac: number | null,
   monthlyChurnPct: number
 ): UnitEconomicsMetrics {
   const revenuePerCustomer = val(unitEconomics.revenuePerCustomer);
@@ -30,10 +30,10 @@ export function calculateUnitEconomicsMetrics(
   // When churn is effectively zero, lifetime is indefinite; cap LTV at a large-but-finite
   // multiple (1000 months ~ 83 years) instead of Infinity so the UI never breaks.
 
-  const ltvToCacRatio = safeDiv(ltv, cac);
+  const ltvToCacRatio = cac === null ? null : safeDiv(ltv, cac);
 
   const monthlyGrossProfitPerCustomer = grossProfitPerCustomer; // per-customer monthly figure
-  const cacPaybackMonths = safeDiv(cac, monthlyGrossProfitPerCustomer);
+  const cacPaybackMonths = cac === null ? null : safeDiv(cac, monthlyGrossProfitPerCustomer);
 
   return {
     variableCostPerCustomer,

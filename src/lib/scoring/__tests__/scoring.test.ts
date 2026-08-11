@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { classifyScore, calculateScoreBreakdown } from "../index";
+import { scoreUnitEconomics } from "../unitEconomics";
 import { calculateMetrics } from "@/lib/calculations/metrics";
 import { exampleProject } from "@/lib/example";
-import { known, type Project } from "@/types";
+import { known, type CalculatedMetrics, type Project } from "@/types";
 
 describe("classifyScore boundaries", () => {
   it("classifies 0-39 as High Risk", () => {
@@ -86,5 +87,27 @@ describe("calculateScoreBreakdown", () => {
     const breakdown = calculateScoreBreakdown(exampleProject, metrics);
     expect(breakdown.maturityStage.stage).toBeGreaterThanOrEqual(0);
     expect(breakdown.maturityStage.stage).toBeLessThanOrEqual(5);
+  });
+});
+
+describe("scoreUnitEconomics — null CAC payback handling", () => {
+  const baseMetrics = calculateMetrics(exampleProject);
+
+  function withUnitEconomics(overrides: Partial<CalculatedMetrics["unitEconomics"]>): CalculatedMetrics {
+    return { ...baseMetrics, unitEconomics: { ...baseMetrics.unitEconomics, ...overrides } };
+  }
+
+  it("treats a null payback with positive gross profit per customer as neutral (no data entered yet)", () => {
+    const metrics = withUnitEconomics({ cacPaybackMonths: null, grossProfitPerCustomer: 20 });
+    const score = scoreUnitEconomics(metrics, exampleProject.basicInfo.businessModel);
+    const factor = score.factors.find((f) => f.label === "CAC payback period")!;
+    expect(factor.score).toBe(40);
+  });
+
+  it("penalizes a null payback when gross profit per customer is negative (economics are broken, not just missing data)", () => {
+    const metrics = withUnitEconomics({ cacPaybackMonths: null, grossProfitPerCustomer: -5 });
+    const score = scoreUnitEconomics(metrics, exampleProject.basicInfo.businessModel);
+    const factor = score.factors.find((f) => f.label === "CAC payback period")!;
+    expect(factor.score).toBe(0);
   });
 });

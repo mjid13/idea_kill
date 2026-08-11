@@ -12,7 +12,7 @@ import { val } from "./helpers";
 /** Computes every derived metric for a project from its raw assumptions. */
 export function calculateMetrics(project: Project): CalculatedMetrics {
   const market = calculateMarketMetrics(project.market);
-  const revenue = calculateRevenueMetrics(project.pricing);
+  const revenue = calculateRevenueMetrics(project.pricing, val(project.acquisition.newCustomersAcquiredMonthly));
   const acquisition = calculateAcquisitionMetrics(project.acquisition);
   const retention = calculateRetentionMetrics(project.retention);
 

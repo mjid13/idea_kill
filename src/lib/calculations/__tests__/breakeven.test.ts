@@ -15,6 +15,15 @@ describe("calculateBreakEvenMetrics", () => {
     expect(m.breakEvenRevenue).toBeNull();
   });
 
+  it("returns null (unreachable) rather than 0 when contribution margin per customer is negative", () => {
+    // Every customer loses money before fixed costs are even considered —
+    // break-even must never read as "0 customers away" for this case.
+    const m = calculateBreakEvenMetrics(12000, -10, 50, 50);
+    expect(m.breakEvenCustomers).toBeNull();
+    expect(m.breakEvenRevenue).toBeNull();
+    expect(m.remainingCustomersToBreakEven).toBeNull();
+  });
+
   it("returns 0 remaining customers when already past break-even", () => {
     const m = calculateBreakEvenMetrics(1000, 40, 50, 100);
     expect(m.remainingCustomersToBreakEven).toBe(0);

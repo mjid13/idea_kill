@@ -237,7 +237,8 @@ export interface RevenueMetrics {
 }
 
 export interface AcquisitionMetrics {
-  cac: number;
+  /** null when spend was entered but zero customers were acquired — CAC is unknown, not $0. */
+  cac: number | null;
   leadToCustomerConversionPct: number | null;
 }
 

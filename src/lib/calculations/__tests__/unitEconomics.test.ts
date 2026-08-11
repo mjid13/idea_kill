@@ -51,6 +51,12 @@ describe("calculateUnitEconomicsMetrics", () => {
     expect(m.ltvToCacRatio).toBeNull();
   });
 
+  it("propagates a null CAC (unknown, e.g. spend with zero acquired customers) to LTV:CAC and payback instead of treating it as instant/free", () => {
+    const m = calculateUnitEconomicsMetrics(baseUnitEconomics(), 50, null, 5);
+    expect(m.ltvToCacRatio).toBeNull();
+    expect(m.cacPaybackMonths).toBeNull();
+  });
+
   it("handles zero revenue per customer without NaN gross margin", () => {
     const m = calculateUnitEconomicsMetrics(
       baseUnitEconomics({ revenuePerCustomer: known(0) }),
