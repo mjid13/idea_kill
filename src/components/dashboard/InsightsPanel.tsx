@@ -1,5 +1,7 @@
+import { useTranslations } from "next-intl";
 import { AlertTriangle, CheckCircle2, Lightbulb, ShieldAlert, ListChecks } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { translateInsightMessage, translateInsightDetail } from "@/components/i18n/translate-insight";
 import type { Insight, InsightReport } from "@/types";
 
 function InsightGroup({
@@ -13,6 +15,7 @@ function InsightGroup({
   items: Insight[];
   tone: "emerald" | "amber" | "red" | "blue";
 }) {
+  const t = useTranslations();
   if (items.length === 0) return null;
   const toneClass = {
     emerald: "text-emerald-600 dark:text-emerald-400",
@@ -25,13 +28,13 @@ function InsightGroup({
     <div>
       <div className={`mb-2 flex items-center gap-1.5 text-sm font-semibold ${toneClass}`}>
         <Icon className="size-4" />
-        {title}
+        {t(title)}
       </div>
       <ul className="space-y-2">
         {items.map((item) => (
           <li key={item.id} className="rounded-lg border border-border bg-background/50 p-2.5">
-            <p className="text-sm text-foreground">{item.message}</p>
-            {item.detail && <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>}
+            <p className="text-sm text-foreground">{translateInsightMessage(t, item)}</p>
+            {item.detail && <p className="mt-0.5 text-xs text-muted-foreground">{translateInsightDetail(t, item)}</p>}
           </li>
         ))}
       </ul>
@@ -40,6 +43,7 @@ function InsightGroup({
 }
 
 export function InsightsPanel({ report }: { report: InsightReport }) {
+  const t = useTranslations();
   const hasAny =
     report.strengths.length + report.warnings.length + report.criticalRisks.length + report.opportunities.length > 0;
 
@@ -48,7 +52,7 @@ export function InsightsPanel({ report }: { report: InsightReport }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Insights</CardTitle>
+        <CardTitle>{t("Insights")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
         <InsightGroup title="Critical risks" icon={ShieldAlert} items={report.criticalRisks} tone="red" />
@@ -61,12 +65,13 @@ export function InsightsPanel({ report }: { report: InsightReport }) {
 }
 
 export function RecommendedActions({ items }: { items: Insight[] }) {
+  const t = useTranslations();
   if (items.length === 0) return null;
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-1.5">
-          <ListChecks className="size-4" /> Recommended next experiments
+          <ListChecks className="size-4" /> {t("Recommended next experiments")}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -76,7 +81,7 @@ export function RecommendedActions({ items }: { items: Insight[] }) {
               <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground">
                 {i + 1}
               </span>
-              {item.message}
+              {translateInsightMessage(t, item)}
             </li>
           ))}
         </ol>

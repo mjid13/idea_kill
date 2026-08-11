@@ -1,36 +1,38 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { Control } from "react-hook-form";
 import { AssumptionField } from "@/components/forms/AssumptionField";
 import type { ProjectFormValues } from "@/lib/validation/projectSchema";
 
 export function OpexStep({ control }: { control: Control<ProjectFormValues> }) {
+  const t = useTranslations();
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <AssumptionField control={control} name="costs.founderSalaries" label="Founder salaries" prefix="$" />
-      <AssumptionField control={control} name="costs.employeeSalaries" label="Employee salaries" prefix="$" />
-      <AssumptionField control={control} name="costs.contractorExpenses" label="Contractor expenses" prefix="$" />
-      <AssumptionField control={control} name="costs.officeExpenses" label="Office expenses" prefix="$" />
-      <AssumptionField control={control} name="costs.infrastructure" label="Infrastructure" prefix="$" />
-      <AssumptionField control={control} name="costs.softwareSubscriptions" label="Software subscriptions" prefix="$" />
+      <AssumptionField control={control} name="costs.founderSalaries" label={t("Founder salaries")} prefix="$" />
+      <AssumptionField control={control} name="costs.employeeSalaries" label={t("Employee salaries")} prefix="$" />
+      <AssumptionField control={control} name="costs.contractorExpenses" label={t("Contractor expenses")} prefix="$" />
+      <AssumptionField control={control} name="costs.officeExpenses" label={t("Office expenses")} prefix="$" />
+      <AssumptionField control={control} name="costs.infrastructure" label={t("Infrastructure")} prefix="$" />
+      <AssumptionField control={control} name="costs.softwareSubscriptions" label={t("Software subscriptions")} prefix="$" />
       <AssumptionField
         control={control}
         name="costs.marketing"
-        label="Marketing"
+        label={t("Marketing")}
         prefix="$"
-        description="Same spend as the marketing budget entered in Customer Acquisition."
-        hint="Synced from Customer Acquisition — edit to use a different number."
+        description={t("Same spend as the marketing budget entered in Customer Acquisition.")}
+        hint={t("Synced from Customer Acquisition — edit to use a different number.")}
       />
       <AssumptionField
         control={control}
         name="costs.sales"
-        label="Sales expenses"
+        label={t("Sales expenses")}
         prefix="$"
-        description="Same spend as the sales budget entered in Customer Acquisition."
-        hint="Synced from Customer Acquisition — edit to use a different number."
+        description={t("Same spend as the sales budget entered in Customer Acquisition.")}
+        hint={t("Synced from Customer Acquisition — edit to use a different number.")}
       />
-      <AssumptionField control={control} name="costs.legalAccounting" label="Legal / accounting" prefix="$" />
-      <AssumptionField control={control} name="costs.otherMonthlyExpenses" label="Other monthly expenses" prefix="$" />
+      <AssumptionField control={control} name="costs.legalAccounting" label={t("Legal / accounting")} prefix="$" />
+      <AssumptionField control={control} name="costs.otherMonthlyExpenses" label={t("Other monthly expenses")} prefix="$" />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import type { CategoryScore, DecisionSummary, DecisionVerdict, ScoreBreakdown } from "@/types";
+import type { CategoryScore, DecisionReason, DecisionSummary, DecisionVerdict, ScoreBreakdown } from "@/types";
 
 const VERDICT_COPY: Record<DecisionVerdict, { title: string; description: string }> = {
   explore_further: {
@@ -53,13 +53,23 @@ export function generateDecisionSummary(scores: ScoreBreakdown): DecisionSummary
   return { verdict, title: copy.title, description: copy.description, reasons };
 }
 
-function buildReasons(verdict: DecisionVerdict, scores: ScoreBreakdown): string[] {
+/** `label` travels as a param holding the category's own translation key — the renderer translates it before interpolating. */
+function describeWeak(c: CategoryScore): DecisionReason {
+  return { template: "{label} scores {score}/100 — the weakest driver of this result.", params: { label: c.label, score: c.score } };
+}
+
+function describeStrong(c: CategoryScore): DecisionReason {
+  return { template: "{label} scores {score}/100, a clear strength.", params: { label: c.label, score: c.score } };
+}
+
+function describeRoomToImprove(c: CategoryScore): DecisionReason {
+  return { template: "{label} scores {score}/100 and has room to improve.", params: { label: c.label, score: c.score } };
+}
+
+function buildReasons(verdict: DecisionVerdict, scores: ScoreBreakdown): DecisionReason[] {
   const categories = Object.values(scores.categories);
   const sortedAscending = categories.slice().sort((a, b) => a.score - b.score);
   const sortedDescending = categories.slice().sort((a, b) => b.score - a.score);
-
-  const describeWeak = (c: CategoryScore) => `${c.label} scores ${c.score}/100 — the weakest driver of this result.`;
-  const describeStrong = (c: CategoryScore) => `${c.label} scores ${c.score}/100, a clear strength.`;
 
   switch (verdict) {
     case "strong_candidate":
@@ -68,20 +78,26 @@ function buildReasons(verdict: DecisionVerdict, scores: ScoreBreakdown): string[
       return sortedAscending.slice(0, 3).map(describeWeak);
     case "improve_economics":
       return [
-        `Unit economics score ${scores.categories.unitEconomics.score}/100.`,
-        `Financial viability scores ${scores.categories.financial.score}/100.`,
+        { template: "Unit economics score {score}/100.", params: { score: scores.categories.unitEconomics.score } },
+        { template: "Financial viability scores {score}/100.", params: { score: scores.categories.financial.score } },
         sortedAscending[0].category === "unitEconomics" || sortedAscending[0].category === "financial"
           ? describeWeak(sortedAscending[1])
           : describeWeak(sortedAscending[0]),
       ];
     case "validate_before_building":
       return [
-        `Validation scores ${scores.categories.validation.score}/100, the weakest category.`,
-        `Unit economics (${scores.categories.unitEconomics.score}/100) and financial viability (${scores.categories.financial.score}/100) look more promising.`,
-        `Confidence is ${scores.confidence}% — more real-world evidence would materially change this result.`,
+        { template: "Validation scores {score}/100, the weakest category.", params: { score: scores.categories.validation.score } },
+        {
+          template: "Unit economics ({ue}/100) and financial viability ({fv}/100) look more promising.",
+          params: { ue: scores.categories.unitEconomics.score, fv: scores.categories.financial.score },
+        },
+        {
+          template: "Confidence is {confidence}% — more real-world evidence would materially change this result.",
+          params: { confidence: scores.confidence },
+        },
       ];
     case "explore_further":
     default:
-      return sortedAscending.slice(0, 3).map((c) => `${c.label} scores ${c.score}/100 and has room to improve.`);
+      return sortedAscending.slice(0, 3).map(describeRoomToImprove);
   }
 }

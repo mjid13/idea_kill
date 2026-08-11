@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Controller, type Control } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -38,56 +39,57 @@ function NarrativeField({ control, name, label, placeholder, description, rows =
  * step blank never affects viability, it only leaves deck sections empty.
  */
 export function PitchStep({ control }: { control: Control<ProjectFormValues> }) {
+  const t = useTranslations();
   return (
     <div className="space-y-5">
       <p className="text-xs text-muted-foreground">
-        Optional — used only to fill in the narrative sections of the investor pitch deck export. None of this affects your viability score.
+        {t("Optional — used only to fill in the narrative sections of the investor pitch deck export. None of this affects your viability score.")}
       </p>
 
       <NarrativeField
         control={control}
         name="pitch.problemStatement"
-        label="Problem"
-        placeholder="What problem are you solving, and for whom? Why does it matter?"
+        label={t("Problem")}
+        placeholder={t("What problem are you solving, and for whom? Why does it matter?")}
       />
 
       <NarrativeField
         control={control}
         name="pitch.competitiveLandscape"
-        label="Competitive landscape"
-        placeholder="Who else solves this today, and how are you meaningfully different?"
+        label={t("Competitive landscape")}
+        placeholder={t("Who else solves this today, and how are you meaningfully different?")}
       />
 
       <NarrativeField
         control={control}
         name="pitch.traction"
-        label="Traction & milestones"
-        placeholder="Key proof points so far: customers, revenue, partnerships, launches, press."
+        label={t("Traction & milestones")}
+        placeholder={t("Key proof points so far: customers, revenue, partnerships, launches, press.")}
       />
 
       <NarrativeField
         control={control}
         name="pitch.teamBios"
-        label="Team"
-        placeholder="Founders and key team members — name, role, and relevant background."
+        label={t("Team")}
+        placeholder={t("Founders and key team members — name, role, and relevant background.")}
       />
 
-      <NarrativeField control={control} name="pitch.vision" label="Vision" placeholder="Where does this go in 3-5 years?" rows={2} />
+      <NarrativeField control={control} name="pitch.vision" label={t("Vision")} placeholder={t("Where does this go in 3-5 years?")} rows={2} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <AssumptionField
           control={control}
           name="pitch.fundingAsk"
-          label="Funding ask"
+          label={t("Funding ask")}
           prefix="$"
-          description="The amount you're raising in this round, if applicable."
+          description={t("The amount you're raising in this round, if applicable.")}
         />
         <div className="sm:col-span-1">
           <NarrativeField
             control={control}
             name="pitch.useOfFunds"
-            label="Use of funds"
-            placeholder="How will this money be spent? e.g. 60% engineering, 25% sales, 15% buffer."
+            label={t("Use of funds")}
+            placeholder={t("How will this money be spent? e.g. 60% engineering, 25% sales, 15% buffer.")}
             rows={2}
           />
         </div>

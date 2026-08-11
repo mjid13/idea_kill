@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,7 @@ import { ExportMenu } from "./ExportMenu";
 import type { Project } from "@/types";
 
 export function ProjectDashboard({ project }: { project: Project }) {
+  const t = useTranslations();
   const metrics = useMemo(() => calculateMetrics(project), [project]);
   const scores = useMemo(() => calculateScoreBreakdown(project, metrics), [project, metrics]);
   const insights = useMemo(() => generateInsights(metrics, scores, project), [metrics, scores, project]);
@@ -32,14 +34,14 @@ export function ProjectDashboard({ project }: { project: Project }) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">{project.basicInfo.name || "Untitled project"}</h1>
-            <Badge variant="secondary">{BUSINESS_MODEL_LABELS[project.basicInfo.businessModel]}</Badge>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">{project.basicInfo.name || t("Untitled project")}</h1>
+            <Badge variant="secondary">{t(BUSINESS_MODEL_LABELS[project.basicInfo.businessModel])}</Badge>
           </div>
           {project.basicInfo.description && <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{project.basicInfo.description}</p>}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" render={<Link href={`/project/${project.id}/edit`} />}>
-            <Pencil /> Edit assumptions
+            <Pencil /> {t("Edit assumptions")}
           </Button>
           <ExportMenu project={project} />
         </div>

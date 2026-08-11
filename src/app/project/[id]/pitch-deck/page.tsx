@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Printer, ArrowLeft, Pencil } from "lucide-react";
 import { Header } from "@/components/layout/header";
@@ -14,11 +15,13 @@ import { generateInsights } from "@/lib/insights";
 import { BUSINESS_MODEL_LABELS, BILLING_PERIOD_LABELS, FUNDING_ROUND_LABELS } from "@/lib/constants";
 import { formatCurrency, formatCompactNumber, formatMonths, formatPercentage } from "@/lib/format";
 import { ExportMenu } from "@/components/dashboard/ExportMenu";
+import { translateInsightMessage } from "@/components/i18n/translate-insight";
 import type { Project } from "@/types";
 
 export default function PitchDeckPage() {
   const params = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null | undefined>(undefined);
+  const t = useTranslations();
 
   useEffect(() => {
     projectRepository.getById(params.id).then(setProject);
@@ -30,8 +33,8 @@ export default function PitchDeckPage() {
         <Header />
       </div>
       <main className="flex-1">
-        {project === undefined && <div className="p-10 text-center text-sm text-muted-foreground">Loading…</div>}
-        {project === null && <div className="p-10 text-center text-sm text-muted-foreground">Project not found.</div>}
+        {project === undefined && <div className="p-10 text-center text-sm text-muted-foreground">{t("Loading…")}</div>}
+        {project === null && <div className="p-10 text-center text-sm text-muted-foreground">{t("Project not found.")}</div>}
         {project && <PitchDeck project={project} />}
       </main>
     </div>
@@ -39,6 +42,7 @@ export default function PitchDeckPage() {
 }
 
 function PitchDeck({ project }: { project: Project }) {
+  const t = useTranslations();
   const currency = project.basicInfo.currency;
   const metrics = useMemo(() => calculateMetrics(project), [project]);
   const scores = useMemo(() => calculateScoreBreakdown(project, metrics), [project, metrics]);
@@ -57,36 +61,36 @@ function PitchDeck({ project }: { project: Project }) {
     <div className="mx-auto max-w-3xl px-6 py-10 print:max-w-none print:px-0">
       <div className="no-print mb-6 flex items-center justify-between">
         <Button variant="outline" size="sm" render={<Link href={`/project/${project.id}`} />}>
-          <ArrowLeft /> Back to dashboard
+          <ArrowLeft /> {t("Back to dashboard")}
         </Button>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" render={<Link href={`/project/${project.id}/pitch-deck/edit`} />}>
-            <Pencil /> Edit deck details
+            <Pencil /> {t("Edit deck details")}
           </Button>
           <ExportMenu project={project} />
           <Button size="sm" onClick={() => window.print()}>
-            <Printer /> Print / Save as PDF
+            <Printer /> {t("Print / Save as PDF")}
           </Button>
         </div>
       </div>
 
       <header className="mb-8 border-b border-border pb-6">
-        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Investor Pitch Deck</p>
-        <h1 className="mt-1 text-3xl font-semibold text-foreground">{project.basicInfo.name || "Untitled project"}</h1>
+        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("Investor Pitch Deck")}</p>
+        <h1 className="mt-1 text-3xl font-semibold text-foreground">{project.basicInfo.name || t("Untitled project")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {BUSINESS_MODEL_LABELS[project.basicInfo.businessModel]} · {currency} · {new Date().toLocaleDateString()}
+          {t(BUSINESS_MODEL_LABELS[project.basicInfo.businessModel])} · {currency} · {new Date().toLocaleDateString()}
         </p>
         {project.basicInfo.description && <p className="mt-3 text-base text-foreground">{project.basicInfo.description}</p>}
       </header>
 
       <Slide title="The problem">
-        <Prose text={pitch?.problemStatement} placeholder="No problem statement entered yet — add one in the Pitch narrative step." />
+        <Prose text={pitch?.problemStatement} placeholder={t("No problem statement entered yet — add one in the Pitch narrative step.")} />
       </Slide>
 
       <Slide title="The solution">
         <Prose
           text={project.basicInfo.description}
-          placeholder="No solution summary entered yet — add a short description in the Basic information step."
+          placeholder={t("No solution summary entered yet — add a short description in the Basic information step.")}
         />
       </Slide>
 
@@ -105,7 +109,7 @@ function PitchDeck({ project }: { project: Project }) {
         <KeyValueGrid
           items={[
             ["Pricing", formatCurrency(val(project.pricing.productPrice), currency)],
-            ["Billing", BILLING_PERIOD_LABELS[project.pricing.billingPeriod]],
+            ["Billing", t(BILLING_PERIOD_LABELS[project.pricing.billingPeriod])],
             ["Current customers", val(project.pricing.currentCustomers).toLocaleString()],
             ["Gross margin", formatPercentage(metrics.unitEconomics.grossMarginPct)],
           ]}
@@ -114,11 +118,11 @@ function PitchDeck({ project }: { project: Project }) {
 
       <Slide title="Traction">
         <TractionChart points={pitch?.tractionHistory ?? []} />
-        <Prose text={pitch?.traction} placeholder="No traction summary entered yet — add one from the deck's Edit deck details page." />
+        <Prose text={pitch?.traction} placeholder={t("No traction summary entered yet — add one from the deck's Edit deck details page.")} />
         {insights.strengths.length > 0 && (
           <ul className="mt-3 list-inside list-disc space-y-1 text-sm text-foreground">
             {insights.strengths.slice(0, 4).map((s) => (
-              <li key={s.id}>{s.message}</li>
+              <li key={s.id}>{translateInsightMessage(t, s)}</li>
             ))}
           </ul>
         )}
@@ -139,15 +143,15 @@ function PitchDeck({ project }: { project: Project }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left text-xs text-muted-foreground">
-              <th className="py-1.5">Metric</th>
-              <th className="py-1.5 text-right">Conservative</th>
-              <th className="py-1.5 text-right">Base</th>
-              <th className="py-1.5 text-right">Optimistic</th>
+              <th className="py-1.5">{t("Metric")}</th>
+              <th className="py-1.5 text-right">{t("Conservative")}</th>
+              <th className="py-1.5 text-right">{t("Base")}</th>
+              <th className="py-1.5 text-right">{t("Optimistic")}</th>
             </tr>
           </thead>
           <tbody>
             <tr className="border-b border-border/60">
-              <td className="py-1.5 text-muted-foreground">Revenue</td>
+              <td className="py-1.5 text-muted-foreground">{t("Revenue")}</td>
               {(["conservative", "base", "optimistic"] as const).map((k) => (
                 <td key={k} className="py-1.5 text-right tabular-nums">
                   {formatCurrency(scenarios.scenarios[k].revenue, currency, { compact: true })}
@@ -155,7 +159,7 @@ function PitchDeck({ project }: { project: Project }) {
               ))}
             </tr>
             <tr>
-              <td className="py-1.5 text-muted-foreground">Customers</td>
+              <td className="py-1.5 text-muted-foreground">{t("Customers")}</td>
               {(["conservative", "base", "optimistic"] as const).map((k) => (
                 <td key={k} className="py-1.5 text-right tabular-nums">
                   {scenarios.scenarios[k].customers.toLocaleString()}
@@ -171,8 +175,8 @@ function PitchDeck({ project }: { project: Project }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                <th className="py-1.5 pr-4">Competitor</th>
-                <th className="py-1.5">Your edge</th>
+                <th className="py-1.5 pr-4">{t("Competitor")}</th>
+                <th className="py-1.5">{t("Your edge")}</th>
               </tr>
             </thead>
             <tbody>
@@ -187,7 +191,7 @@ function PitchDeck({ project }: { project: Project }) {
         ) : (
           <Prose
             text={pitch?.competitiveLandscape}
-            placeholder="No competitive landscape entered yet — add named competitors from the deck's Edit deck details page."
+            placeholder={t("No competitive landscape entered yet — add named competitors from the deck's Edit deck details page.")}
           />
         )}
       </Slide>
@@ -197,19 +201,22 @@ function PitchDeck({ project }: { project: Project }) {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {pitch.teamMembers.map((m) => (
               <div key={m.id} className="rounded-lg border border-border/60 p-3">
-                <p className="text-sm font-medium text-foreground">{m.name || "Unnamed"}</p>
+                <p className="text-sm font-medium text-foreground">{m.name || t("Unnamed")}</p>
                 <p className="text-xs text-muted-foreground">{m.role}</p>
                 {m.bio && <p className="mt-1.5 text-sm text-foreground">{m.bio}</p>}
               </div>
             ))}
           </div>
         ) : (
-          <Prose text={pitch?.teamBios} placeholder="No team bios entered yet — add named team members from the deck's Edit deck details page." />
+          <Prose text={pitch?.teamBios} placeholder={t("No team bios entered yet — add named team members from the deck's Edit deck details page.")} />
         )}
       </Slide>
 
       <Slide title="Risks">
-        <BulletList items={[...insights.criticalRisks, ...insights.warnings].map((i) => i.message)} empty="No significant risks flagged." />
+        <BulletList
+          items={[...insights.criticalRisks, ...insights.warnings].map((i) => translateInsightMessage(t, i))}
+          empty={t("No significant risks flagged.")}
+        />
       </Slide>
 
       <Slide title="The ask">
@@ -218,37 +225,37 @@ function PitchDeck({ project }: { project: Project }) {
             <p className="text-2xl font-semibold tabular-nums text-foreground">{formatCurrency(fundingAsk, currency, { compact: true })}</p>
             {extendedRunwayMonths !== null && (
               <p className="mt-1 text-sm text-muted-foreground">
-                Extends runway to approximately {formatMonths(extendedRunwayMonths)} at the current burn rate.
+                {t("Extends runway to approximately")} {formatMonths(extendedRunwayMonths)} {t("at the current burn rate.")}
               </p>
             )}
             {round && (round.roundType || round.valuation || round.previousInvestors) && (
               <KeyValueGrid
                 items={[
-                  ...(round.roundType ? ([["Round", FUNDING_ROUND_LABELS[round.roundType]]] as Array<[string, string]>) : []),
+                  ...(round.roundType ? ([["Round", t(FUNDING_ROUND_LABELS[round.roundType])]] as Array<[string, string]>) : []),
                   ...(round.valuation ? ([["Valuation", formatCurrency(round.valuation, currency, { compact: true })]] as Array<[string, string]>) : []),
                   ...(round.previousInvestors ? ([["Previous investors", round.previousInvestors]] as Array<[string, string]>) : []),
                 ]}
               />
             )}
-            <Prose text={pitch?.useOfFunds} placeholder="No use-of-funds breakdown entered yet." className="mt-3" />
+            <Prose text={pitch?.useOfFunds} placeholder={t("No use-of-funds breakdown entered yet.")} className="mt-3" />
           </>
         ) : (
-          <p className="text-sm text-muted-foreground">No funding ask entered — add an amount in the Pitch narrative step if you&apos;re raising.</p>
+          <p className="text-sm text-muted-foreground">{t("No funding ask entered — add an amount in the Pitch narrative step if you're raising.")}</p>
         )}
       </Slide>
 
       <Slide title="Vision" last={!pitch?.vision}>
-        <Prose text={pitch?.vision} placeholder="No vision statement entered yet — add one in the Pitch narrative step." />
+        <Prose text={pitch?.vision} placeholder={t("No vision statement entered yet — add one in the Pitch narrative step.")} />
       </Slide>
 
       <Slide title="Independent viability read" last>
         <div className="flex items-baseline gap-6">
           <div>
             <p className="text-3xl font-semibold tabular-nums text-foreground">{scores.overall}/100</p>
-            <p className="text-sm text-muted-foreground">{classification}</p>
+            <p className="text-sm text-muted-foreground">{t(classification)}</p>
           </div>
           <p className="max-w-md text-xs text-muted-foreground">
-            Independently modeled from the assumptions in this deck — not a guarantee of outcome, a check on whether the current numbers add up.
+            {t("Independently modeled from the assumptions in this deck — not a guarantee of outcome, a check on whether the current numbers add up.")}
           </p>
         </div>
       </Slide>
@@ -257,9 +264,10 @@ function PitchDeck({ project }: { project: Project }) {
 }
 
 function Slide({ title, children, last }: { title: string; children: React.ReactNode; last?: boolean }) {
+  const t = useTranslations();
   return (
     <section className={`py-5 print:break-inside-avoid ${last ? "" : "border-b border-border"}`}>
-      <h2 className="mb-3 text-sm font-semibold tracking-wide text-foreground uppercase">{title}</h2>
+      <h2 className="mb-3 text-sm font-semibold tracking-wide text-foreground uppercase">{t(title)}</h2>
       {children}
     </section>
   );
@@ -273,11 +281,12 @@ function Prose({ text, placeholder, className }: { text: string | undefined; pla
 }
 
 function KeyValueGrid({ items }: { items: Array<[string, string]> }) {
+  const t = useTranslations();
   return (
     <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
       {items.map(([label, value]) => (
         <div key={label}>
-          <dt className="text-xs text-muted-foreground">{label}</dt>
+          <dt className="text-xs text-muted-foreground">{t(label)}</dt>
           <dd className="text-sm font-medium tabular-nums text-foreground">{value}</dd>
         </div>
       ))}
@@ -289,6 +298,7 @@ const AXIS_TICK = { fontSize: 11, fill: "var(--color-muted-foreground)" };
 const GRID_STROKE = "var(--color-border)";
 
 function TractionChart({ points }: { points: NonNullable<Project["pitch"]>["tractionHistory"] }) {
+  const t = useTranslations();
   const data = points ?? [];
   if (data.length < 2) return null;
 
@@ -309,28 +319,28 @@ function TractionChart({ points }: { points: NonNullable<Project["pitch"]>["trac
     <div className={`mb-4 grid grid-cols-1 gap-4 ${hasMrr && hasCustomers ? "sm:grid-cols-2" : ""}`}>
       {hasMrr && (
         <div>
-          <p className="mb-1 text-xs font-medium text-muted-foreground">MRR over time</p>
+          <p className="mb-1 text-xs font-medium text-muted-foreground">{t("MRR over time")}</p>
           <ResponsiveContainer width="100%" height={160}>
             <LineChart data={data} margin={{ left: -12, right: 8 }}>
               <CartesianGrid stroke={GRID_STROKE} vertical={false} />
               <XAxis dataKey="label" tickLine={false} axisLine={false} tick={AXIS_TICK} />
               <YAxis tickLine={false} axisLine={false} tick={AXIS_TICK} tickFormatter={formatCompactNumber} width={40} />
               <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => formatCompactNumber(Number(v))} />
-              <Line type="monotone" dataKey="mrr" name="MRR" stroke="var(--color-chart-1)" strokeWidth={2} dot />
+              <Line type="monotone" dataKey="mrr" name={t("MRR")} stroke="var(--color-chart-1)" strokeWidth={2} dot />
             </LineChart>
           </ResponsiveContainer>
         </div>
       )}
       {hasCustomers && (
         <div>
-          <p className="mb-1 text-xs font-medium text-muted-foreground">Customers over time</p>
+          <p className="mb-1 text-xs font-medium text-muted-foreground">{t("Customers over time")}</p>
           <ResponsiveContainer width="100%" height={160}>
             <LineChart data={data} margin={{ left: -12, right: 8 }}>
               <CartesianGrid stroke={GRID_STROKE} vertical={false} />
               <XAxis dataKey="label" tickLine={false} axisLine={false} tick={AXIS_TICK} />
               <YAxis tickLine={false} axisLine={false} tick={AXIS_TICK} tickFormatter={formatCompactNumber} width={40} />
               <Tooltip contentStyle={tooltipStyle} />
-              <Line type="monotone" dataKey="customers" name="Customers" stroke="var(--color-chart-2)" strokeWidth={2} dot />
+              <Line type="monotone" dataKey="customers" name={t("Customers")} stroke="var(--color-chart-2)" strokeWidth={2} dot />
             </LineChart>
           </ResponsiveContainer>
         </div>

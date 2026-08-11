@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { formatCompactNumber, formatCurrency, formatMonths } from "@/lib/format";
 import type { Currency, ScenarioResult } from "@/types";
@@ -10,23 +11,24 @@ const ROWS: Array<{ label: string; key: "revenue" | "mrr" | "customers" | "profi
 ];
 
 export function ScenarioTable({ result, currency }: { result: ScenarioResult; currency: Currency }) {
+  const t = useTranslations();
   const scenarios = [result.scenarios.conservative, result.scenarios.base, result.scenarios.optimistic];
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Scenario analysis</CardTitle>
-        <CardDescription>Conservative applies weaker growth/CAC/churn; optimistic applies stronger. Base uses your entered assumptions.</CardDescription>
+        <CardTitle>{t("Scenario analysis")}</CardTitle>
+        <CardDescription>{t("Conservative applies weaker growth/CAC/churn; optimistic applies stronger. Base uses your entered assumptions.")}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[480px] text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                <th className="py-2 pr-4 font-medium">Metric</th>
+                <th className="py-2 pr-4 font-medium">{t("Metric")}</th>
                 {scenarios.map((s) => (
                   <th key={s.name} className="py-2 pr-4 text-right font-medium">
-                    {s.label}
+                    {t(s.label)}
                   </th>
                 ))}
               </tr>
@@ -34,7 +36,7 @@ export function ScenarioTable({ result, currency }: { result: ScenarioResult; cu
             <tbody>
               {ROWS.map((row) => (
                 <tr key={row.key} className="border-b border-border/60 last:border-0">
-                  <td className="py-2 pr-4 text-muted-foreground">{row.label}</td>
+                  <td className="py-2 pr-4 text-muted-foreground">{t(row.label)}</td>
                   {scenarios.map((s) => (
                     <td key={s.name} className="py-2 pr-4 text-right tabular-nums text-foreground">
                       {row.isCurrency ? formatCurrency(s[row.key], currency, { compact: true }) : formatCompactNumber(s[row.key])}
@@ -43,18 +45,18 @@ export function ScenarioTable({ result, currency }: { result: ScenarioResult; cu
                 </tr>
               ))}
               <tr className="border-b border-border/60">
-                <td className="py-2 pr-4 text-muted-foreground">Runway</td>
+                <td className="py-2 pr-4 text-muted-foreground">{t("Runway")}</td>
                 {scenarios.map((s) => (
                   <td key={s.name} className="py-2 pr-4 text-right tabular-nums text-foreground">
-                    {s.runwayMonths === null ? "Profitable" : formatMonths(s.runwayMonths)}
+                    {s.runwayMonths === null ? t("Profitable") : formatMonths(s.runwayMonths)}
                   </td>
                 ))}
               </tr>
               <tr>
-                <td className="py-2 pr-4 text-muted-foreground">Break-even month</td>
+                <td className="py-2 pr-4 text-muted-foreground">{t("Break-even month")}</td>
                 {scenarios.map((s) => (
                   <td key={s.name} className="py-2 pr-4 text-right tabular-nums text-foreground">
-                    {s.breakEvenMonth === null ? "Not reached" : `Month ${s.breakEvenMonth}`}
+                    {s.breakEvenMonth === null ? t("Not reached") : t("Month {month}", { month: s.breakEvenMonth })}
                   </td>
                 ))}
               </tr>
