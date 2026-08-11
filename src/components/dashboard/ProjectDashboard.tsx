@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Pencil, FileOutput } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { calculateMetrics, generateScenarios } from "@/lib/calculations";
@@ -17,6 +17,7 @@ import { DecisionSummary } from "./DecisionSummary";
 import { SensitivityPanel } from "./SensitivityPanel";
 import { ScenarioTable } from "./ScenarioTable";
 import { ForecastCharts } from "./ForecastCharts";
+import { ExportMenu } from "./ExportMenu";
 import type { Project } from "@/types";
 
 export function ProjectDashboard({ project }: { project: Project }) {
@@ -40,9 +41,7 @@ export function ProjectDashboard({ project }: { project: Project }) {
           <Button variant="outline" size="sm" render={<Link href={`/project/${project.id}/edit`} />}>
             <Pencil /> Edit assumptions
           </Button>
-          <Button variant="outline" size="sm" render={<Link href={`/project/${project.id}/report`} />}>
-            <FileOutput /> Export report
-          </Button>
+          <ExportMenu project={project} />
         </div>
       </div>
 
