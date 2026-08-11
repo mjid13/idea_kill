@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   CartesianGrid,
   Legend,
@@ -35,6 +36,7 @@ function ChartBlock({ title, children }: { title: string; children: React.ReactE
 }
 
 export function ForecastCharts({ project, metrics }: { project: Project; metrics: CalculatedMetrics }) {
+  const t = useTranslations();
   const [months, setMonths] = useState<(typeof HORIZONS)[number]>(24);
   const forecast = useMemo(() => forecastProject(project, metrics, months), [project, metrics, months]);
   const currency = project.basicInfo.currency;
@@ -58,8 +60,8 @@ export function ForecastCharts({ project, metrics }: { project: Project; metrics
     <Card>
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
         <div>
-          <CardTitle>Forecast</CardTitle>
-          <CardDescription>Month-by-month projection built from your current assumptions.</CardDescription>
+          <CardTitle>{t("Forecast")}</CardTitle>
+          <CardDescription>{t("Month-by-month projection built from your current assumptions.")}</CardDescription>
         </div>
         <div className="inline-flex rounded-md border border-border p-0.5 text-xs">
           {HORIZONS.map((h) => (
@@ -72,52 +74,53 @@ export function ForecastCharts({ project, metrics }: { project: Project; metrics
                 months === h ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {h}mo
+              {h}
+              {t("mo")}
             </button>
           ))}
         </div>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <ChartBlock title="Revenue growth">
+        <ChartBlock title={t("Revenue growth")}>
           <LineChart data={data} margin={{ left: -12, right: 8 }}>
             <CartesianGrid stroke={GRID_STROKE} vertical={false} />
             <XAxis dataKey="month" tickLine={false} axisLine={false} tick={AXIS_TICK} />
             <YAxis tickLine={false} axisLine={false} tick={AXIS_TICK} tickFormatter={formatCompactNumber} width={48} />
-            <Tooltip contentStyle={tooltipStyle} formatter={currencyFormatter} labelFormatter={(m) => `Month ${m}`} />
-            <Line type="monotone" dataKey="revenue" name="Revenue" stroke="var(--color-chart-1)" strokeWidth={2} dot={false} />
+            <Tooltip contentStyle={tooltipStyle} formatter={currencyFormatter} labelFormatter={(m) => t("Month {month}", { month: Number(m) })} />
+            <Line type="monotone" dataKey="revenue" name={t("Revenue")} stroke="var(--color-chart-1)" strokeWidth={2} dot={false} />
           </LineChart>
         </ChartBlock>
 
-        <ChartBlock title="Customers">
+        <ChartBlock title={t("Customers")}>
           <LineChart data={data} margin={{ left: -12, right: 8 }}>
             <CartesianGrid stroke={GRID_STROKE} vertical={false} />
             <XAxis dataKey="month" tickLine={false} axisLine={false} tick={AXIS_TICK} />
             <YAxis tickLine={false} axisLine={false} tick={AXIS_TICK} tickFormatter={formatCompactNumber} width={48} />
-            <Tooltip contentStyle={tooltipStyle} labelFormatter={(m) => `Month ${m}`} />
-            <Line type="monotone" dataKey="endingCustomers" name="Customers" stroke="var(--color-chart-2)" strokeWidth={2} dot={false} />
+            <Tooltip contentStyle={tooltipStyle} labelFormatter={(m) => t("Month {month}", { month: Number(m) })} />
+            <Line type="monotone" dataKey="endingCustomers" name={t("Customers")} stroke="var(--color-chart-2)" strokeWidth={2} dot={false} />
           </LineChart>
         </ChartBlock>
 
-        <ChartBlock title="Revenue vs. expenses">
+        <ChartBlock title={t("Revenue vs. expenses")}>
           <LineChart data={data} margin={{ left: -12, right: 8 }}>
             <CartesianGrid stroke={GRID_STROKE} vertical={false} />
             <XAxis dataKey="month" tickLine={false} axisLine={false} tick={AXIS_TICK} />
             <YAxis tickLine={false} axisLine={false} tick={AXIS_TICK} tickFormatter={formatCompactNumber} width={48} />
-            <Tooltip contentStyle={tooltipStyle} formatter={currencyFormatter} labelFormatter={(m) => `Month ${m}`} />
+            <Tooltip contentStyle={tooltipStyle} formatter={currencyFormatter} labelFormatter={(m) => t("Month {month}", { month: Number(m) })} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Line type="monotone" dataKey="revenue" name="Revenue" stroke="var(--color-chart-1)" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="totalExpenses" name="Expenses" stroke="var(--color-chart-3)" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="revenue" name={t("Revenue")} stroke="var(--color-chart-1)" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="totalExpenses" name={t("Expenses")} stroke="var(--color-chart-3)" strokeWidth={2} dot={false} />
           </LineChart>
         </ChartBlock>
 
-        <ChartBlock title="Cash balance">
+        <ChartBlock title={t("Cash balance")}>
           <LineChart data={data} margin={{ left: -12, right: 8 }}>
             <CartesianGrid stroke={GRID_STROKE} vertical={false} />
             <XAxis dataKey="month" tickLine={false} axisLine={false} tick={AXIS_TICK} />
             <YAxis tickLine={false} axisLine={false} tick={AXIS_TICK} tickFormatter={formatCompactNumber} width={48} />
-            <Tooltip contentStyle={tooltipStyle} formatter={currencyFormatter} labelFormatter={(m) => `Month ${m}`} />
+            <Tooltip contentStyle={tooltipStyle} formatter={currencyFormatter} labelFormatter={(m) => t("Month {month}", { month: Number(m) })} />
             <ReferenceLine y={0} stroke="var(--color-destructive)" strokeDasharray="4 4" />
-            <Line type="monotone" dataKey="cashBalance" name="Cash balance" stroke="var(--color-chart-5)" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="cashBalance" name={t("Cash balance")} stroke="var(--color-chart-5)" strokeWidth={2} dot={false} />
           </LineChart>
         </ChartBlock>
       </CardContent>

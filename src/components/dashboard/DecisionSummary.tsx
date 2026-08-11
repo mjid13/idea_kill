@@ -1,4 +1,6 @@
+import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
+import { translateReason } from "@/components/i18n/translate-insight";
 import type { DecisionSummary as DecisionSummaryType } from "@/types";
 
 const VERDICT_COLOR: Record<DecisionSummaryType["verdict"], string> = {
@@ -10,22 +12,23 @@ const VERDICT_COLOR: Record<DecisionSummaryType["verdict"], string> = {
 };
 
 export function DecisionSummary({ summary }: { summary: DecisionSummaryType }) {
+  const t = useTranslations();
   return (
     <Card>
       <CardContent className="space-y-4">
         <div>
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Should you pursue this idea?</p>
+          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("Should you pursue this idea?")}</p>
           <div className={`mt-2 inline-flex rounded-lg border px-3 py-1.5 text-base font-semibold ${VERDICT_COLOR[summary.verdict]}`}>
-            {summary.title}
+            {t(summary.title)}
           </div>
-          <p className="mt-2 text-sm text-muted-foreground">{summary.description}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{t(summary.description)}</p>
         </div>
         <div>
-          <p className="text-xs font-semibold text-foreground">Top reasons</p>
+          <p className="text-xs font-semibold text-foreground">{t("Top reasons")}</p>
           <ul className="mt-1.5 space-y-1.5">
             {summary.reasons.map((reason, i) => (
               <li key={i} className="flex gap-2 text-sm text-muted-foreground">
-                <span className="text-foreground">{i + 1}.</span> {reason}
+                <span className="text-foreground">{i + 1}.</span> {translateReason(t, reason)}
               </li>
             ))}
           </ul>

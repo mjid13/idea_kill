@@ -437,8 +437,12 @@ export type ViabilityClassification =
 
 export interface Insight {
   id: string;
+  /** Translation key (the English source string, used verbatim as an i18n message id). */
   message: string;
+  messageParams?: Record<string, string | number>;
+  /** Translation key for the secondary line, if any. */
   detail?: string;
+  detailParams?: Record<string, string | number>;
 }
 
 export interface InsightReport {
@@ -456,9 +460,15 @@ export type DecisionVerdict =
   | "strong_candidate"
   | "high_risk";
 
+export interface DecisionReason {
+  /** Translation key (the English source string, used verbatim as an i18n message id). */
+  template: string;
+  params?: Record<string, string | number>;
+}
+
 export interface DecisionSummary {
   verdict: DecisionVerdict;
   title: string;
   description: string;
-  reasons: string[];
+  reasons: DecisionReason[];
 }

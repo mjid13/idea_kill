@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   ArrowRight,
   BarChart3,
@@ -32,6 +33,7 @@ const CALCULATES = [
 
 export default function LandingPage() {
   const router = useRouter();
+  const t = useTranslations();
 
   async function viewExample() {
     await projectRepository.save(exampleProject);
@@ -44,34 +46,34 @@ export default function LandingPage() {
       <main className="flex-1">
         <section className="mx-auto max-w-4xl px-4 pt-20 pb-16 text-center">
           <h1 className="text-4xl font-semibold tracking-tight text-balance text-foreground sm:text-5xl">
-            Know if your product economics make sense before you spend months building it.
+            {t("Know if your product economics make sense before you spend months building it.")}
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
-            Enter your assumptions and instantly evaluate market size, unit economics, profitability, runway, and overall product viability.
+            {t("Enter your assumptions and instantly evaluate market size, unit economics, profitability, runway, and overall product viability.")}
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button size="lg" render={<Link href="/new" />}>
-              Evaluate an Idea <ArrowRight />
+              {t("Evaluate an Idea")} <ArrowRight />
             </Button>
             <Button size="lg" variant="outline" onClick={viewExample}>
-              View Example
+              {t("View Example")}
             </Button>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">
-            No account needed. Evaluations are saved privately in your browser.
+            {t("No account needed. Evaluations are saved privately in your browser.")}
           </p>
         </section>
 
         <section className="border-t border-border bg-muted/30 py-16">
           <div className="mx-auto max-w-6xl px-4">
-            <h2 className="text-center text-sm font-semibold tracking-wide text-muted-foreground uppercase">What it calculates</h2>
+            <h2 className="text-center text-sm font-semibold tracking-wide text-muted-foreground uppercase">{t("What it calculates")}</h2>
             <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {CALCULATES.map((item) => (
                 <Card key={item.title} size="sm">
                   <CardContent>
                     <item.icon className="size-5 text-primary" />
-                    <p className="mt-3 text-sm font-semibold text-foreground">{item.title}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
+                    <p className="mt-3 text-sm font-semibold text-foreground">{t(item.title)}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{t(item.description)}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -81,13 +83,12 @@ export default function LandingPage() {
 
         <section className="mx-auto max-w-4xl px-4 py-16 text-center">
           <p className="text-sm text-muted-foreground">
-            This tool does not predict whether your startup will succeed. It evaluates the quality of your current assumptions and
-            economics — so you know what to fix, validate, or build next.
+            {t("This tool does not predict whether your startup will succeed. It evaluates the quality of your current assumptions and economics — so you know what to fix, validate, or build next.")}
           </p>
         </section>
       </main>
       <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
-        Product Viability Calculator — evaluate before you build.
+        {t("Product Viability Calculator — evaluate before you build.")}
       </footer>
     </div>
   );

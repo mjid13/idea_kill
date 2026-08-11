@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
@@ -56,6 +57,7 @@ interface ProjectWizardProps {
 
 export function ProjectWizard({ initialProject }: ProjectWizardProps) {
   const router = useRouter();
+  const t = useTranslations();
   const [stepIndex, setStepIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
@@ -112,7 +114,7 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
       <div className="mb-8 space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-xs font-medium text-muted-foreground">
-            Step {stepIndex + 1} of {STEPS.length}
+            {t("Step {current} of {total}", { current: stepIndex + 1, total: STEPS.length })}
           </p>
           {!initialProject && (
             <button
@@ -120,14 +122,14 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
               onClick={loadExample}
               className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
             >
-              <Sparkles className="size-3" /> Load example
+              <Sparkles className="size-3" /> {t("Load example")}
             </button>
           )}
         </div>
         <Progress value={progressPct} />
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">{step.title}</h1>
-          <p className="text-sm text-muted-foreground">{step.description}</p>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">{t(step.title)}</h1>
+          <p className="text-sm text-muted-foreground">{t(step.description)}</p>
         </div>
       </div>
 
@@ -139,21 +141,21 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
 
         <div className="mt-6 flex items-center justify-between">
           <Button type="button" variant="outline" onClick={goBack} disabled={isFirst}>
-            <ArrowLeft /> Back
+            <ArrowLeft /> {t("Back")}
           </Button>
 
           {isLast ? (
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Saving…" : "Calculate viability"} <Check />
+              {submitting ? t("Saving…") : t("Calculate viability")} <Check />
             </Button>
           ) : (
             <Button type="button" onClick={goNext}>
-              Next <ArrowRight />
+              {t("Next")} <ArrowRight />
             </Button>
           )}
         </div>
         {formState.errors && Object.keys(formState.errors).length > 0 && isLast && (
-          <p className="mt-3 text-xs text-destructive">Some fields need attention before you can finish. Please review earlier steps.</p>
+          <p className="mt-3 text-xs text-destructive">{t("Some fields need attention before you can finish. Please review earlier steps.")}</p>
         )}
       </form>
     </div>
