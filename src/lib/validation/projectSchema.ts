@@ -124,6 +124,16 @@ export const riskAssessmentSchema = z.object({
   dependencyRisk: rating,
 });
 
+export const pitchSchema = z.object({
+  problemStatement: z.string(),
+  competitiveLandscape: z.string(),
+  traction: z.string(),
+  teamBios: z.string(),
+  vision: z.string(),
+  fundingAsk: assumptionSchema,
+  useOfFunds: z.string(),
+});
+
 export const projectFormSchema = z.object({
   basicInfo: basicInfoSchema,
   market: marketSchema,
@@ -136,6 +146,7 @@ export const projectFormSchema = z.object({
   validation: validationAssessmentSchema,
   team: teamAssessmentSchema,
   risk: riskAssessmentSchema,
+  pitch: pitchSchema,
 });
 
 export type ProjectFormValues = z.infer<typeof projectFormSchema>;
@@ -153,4 +164,5 @@ export const STEP_FIELDS: Record<string, string[]> = {
   validation: ["validation"],
   team: ["team"],
   risk: ["risk"],
+  pitch: ["pitch"],
 };

@@ -26,6 +26,7 @@ import { FundingStep } from "./steps/FundingStep";
 import { ValidationStep } from "./steps/ValidationStep";
 import { TeamStep } from "./steps/TeamStep";
 import { RiskStep } from "./steps/RiskStep";
+import { PitchStep } from "./steps/PitchStep";
 
 interface StepDef {
   key: keyof ProjectFormValues;
@@ -46,6 +47,7 @@ const STEPS: StepDef[] = [
   { key: "validation", title: "Validation", description: "Evidence the problem and solution are real.", Component: ValidationStep },
   { key: "team", title: "Team", description: "Rate your team's capability to execute.", Component: TeamStep },
   { key: "risk", title: "Risk", description: "Rate the risks facing this opportunity.", Component: RiskStep },
+  { key: "pitch", title: "Pitch narrative", description: "Optional context used to generate the investor pitch deck.", Component: PitchStep },
 ];
 
 interface ProjectWizardProps {

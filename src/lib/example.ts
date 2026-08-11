@@ -106,4 +106,50 @@ export const exampleProject: Project = {
     financialRisk: 2,
     dependencyRisk: 2,
   },
+  pitch: {
+    problemStatement:
+      "Small accounting firms lose 8-10 hours a week per staff member manually re-keying transactions between client bookkeeping systems and their own practice software. That's billable time lost to copy-paste work, and it doesn't scale as firms take on more clients.",
+    competitiveLandscape:
+      "Generic RPA tools (Zapier, Make) require technical setup firms don't have time for. Practice-management suites (Karbon, Financial Cent) bundle workflow but don't solve cross-system data sync. We're the first tool purpose-built for accounting-specific system pairs, with zero-config templates for the top 12 bookkeeping platforms.",
+    traction:
+      "50 paying firms at $50/mo, 3% monthly churn. 400 inbound leads/month from a content-led funnel, 30 converting to paying customers. Contractor-run support and infra at $2.6K/mo combined — no full-time hires yet.",
+    teamBios:
+      "Founder: 6 years as a senior accountant at a 40-person firm before starting this; built the first version to solve her own team's workflow. Technical co-founder: ex-fintech engineer, shipped two B2B SaaS integrations platforms previously.",
+    vision:
+      "Become the default automation layer between every small accounting firm and the systems their clients already use — expanding from data sync into full workflow automation over the next 3 years.",
+    fundingAsk: known(250000),
+    useOfFunds:
+      "60% engineering (2 hires to build out the integration library), 25% sales & marketing (scale the content funnel that's already converting), 15% runway buffer.",
+    tractionHistory: [
+      { id: "t1", label: "Month 1", customers: 8, mrr: 400 },
+      { id: "t2", label: "Month 2", customers: 15, mrr: 750 },
+      { id: "t3", label: "Month 3", customers: 24, mrr: 1200 },
+      { id: "t4", label: "Month 4", customers: 34, mrr: 1700 },
+      { id: "t5", label: "Month 5", customers: 42, mrr: 2100 },
+      { id: "t6", label: "Month 6", customers: 50, mrr: 2500 },
+    ],
+    teamMembers: [
+      {
+        id: "m1",
+        name: "Amina Al-Rashdi",
+        role: "Founder & CEO",
+        bio: "6 years as a senior accountant at a 40-person firm before starting this; built the first version to solve her own team's workflow.",
+      },
+      {
+        id: "m2",
+        name: "Yusuf Al-Balushi",
+        role: "Co-founder & CTO",
+        bio: "Ex-fintech engineer, shipped two B2B SaaS integration platforms previously.",
+      },
+    ],
+    competitors: [
+      { id: "c1", name: "Zapier / Make", edge: "Zero-config templates for accounting-specific system pairs — no technical setup required." },
+      { id: "c2", name: "Karbon, Financial Cent", edge: "We solve cross-system data sync directly; they bundle general workflow but don't touch this problem." },
+    ],
+    round: {
+      roundType: "seed",
+      valuation: 3000000,
+      previousInvestors: "Pre-seed: $50K from a regional accelerator.",
+    },
+  },
 };
