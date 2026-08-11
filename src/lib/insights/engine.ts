@@ -202,7 +202,9 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
       case "unitEconomics":
         recommendedActions.push(
           insight(
-            `Reduce CAC below $${Math.max(1, Math.round(metrics.acquisition.cac * 0.7)).toLocaleString()} or improve gross margin to strengthen unit economics.`
+            metrics.acquisition.cac === null
+              ? "Acquisition spend isn't converting into customers yet — fix the funnel before scaling spend further."
+              : `Reduce CAC below $${Math.max(1, Math.round(metrics.acquisition.cac * 0.7)).toLocaleString()} or improve gross margin to strengthen unit economics.`
           )
         );
         break;

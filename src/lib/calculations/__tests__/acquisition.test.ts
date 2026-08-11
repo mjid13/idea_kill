@@ -18,8 +18,17 @@ describe("calculateAcquisitionMetrics", () => {
     expect(m.cac).toBeCloseTo(200, 5);
   });
 
-  it("returns 0 CAC (not NaN/Infinity) when no customers were acquired", () => {
+  it("returns null CAC (not 0, not NaN/Infinity) when spend was made but no customers were acquired", () => {
+    // CAC is unknown/effectively unbounded here, not free — a naive fallback
+    // of 0 would make CAC payback read as instant in downstream scoring.
     const m = calculateAcquisitionMetrics(baseAcquisition({ newCustomersAcquiredMonthly: known(0) }));
+    expect(m.cac).toBeNull();
+  });
+
+  it("returns 0 CAC when neither spend nor customers have been entered", () => {
+    const m = calculateAcquisitionMetrics(
+      baseAcquisition({ monthlyMarketingSpend: known(0), monthlySalesSpend: known(0), newCustomersAcquiredMonthly: known(0) })
+    );
     expect(m.cac).toBe(0);
   });
 

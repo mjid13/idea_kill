@@ -12,7 +12,13 @@ export function calculateBreakEvenMetrics(
   monthlyArpu: number,
   currentCustomers: number
 ): BreakEvenMetrics {
-  const breakEvenCustomersRaw = safeDiv(fixedMonthlyCosts, contributionMarginPerCustomer);
+  // A zero or negative contribution margin means break-even is mathematically
+  // unreachable (each customer adds no profit, or actively loses money) —
+  // treat both the same as the divide-by-zero case rather than only >=0
+  // negatives falling through safeDiv, which would otherwise clamp to 0 via
+  // Math.max below and read as "already broke even".
+  const breakEvenCustomersRaw =
+    contributionMarginPerCustomer <= 0 ? null : safeDiv(fixedMonthlyCosts, contributionMarginPerCustomer);
   const breakEvenCustomers =
     breakEvenCustomersRaw === null ? null : Math.max(0, Math.ceil(breakEvenCustomersRaw));
 

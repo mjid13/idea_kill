@@ -197,6 +197,61 @@ export interface RiskAssessment {
 }
 
 // ---------------------------------------------------------------------------
+// Step 11 - Pitch narrative (optional, investor-deck content only — not
+// used by any calculation or score, so absence never affects viability).
+// ---------------------------------------------------------------------------
+
+export interface TractionDataPoint {
+  id: string;
+  /** e.g. "Jan 2026" or "Month 3" — free-form, whatever the user tracks by. */
+  label: string;
+  customers?: number;
+  mrr?: number;
+}
+
+export interface PitchTeamMember {
+  id: string;
+  name: string;
+  role: string;
+  bio?: string;
+}
+
+export interface PitchCompetitor {
+  id: string;
+  name: string;
+  /** Your differentiation against this specific competitor. */
+  edge: string;
+}
+
+export type FundingRoundType = "pre_seed" | "seed" | "series_a" | "series_b_plus" | "bridge";
+
+export interface PitchRoundDetails {
+  roundType?: FundingRoundType;
+  valuation?: number;
+  previousInvestors?: string;
+}
+
+export interface PitchAssumptions {
+  problemStatement?: string;
+  competitiveLandscape?: string;
+  traction?: string;
+  teamBios?: string;
+  vision?: string;
+  fundingAsk?: Assumption<number>;
+  useOfFunds?: string;
+  /**
+   * Deck-only structured extras. These are never part of the main wizard —
+   * they're entered from within the Pitch Deck view itself (see
+   * /project/[id]/pitch-deck/edit), since they only matter to someone who
+   * actually wants to generate a deck.
+   */
+  tractionHistory?: TractionDataPoint[];
+  teamMembers?: PitchTeamMember[];
+  competitors?: PitchCompetitor[];
+  round?: PitchRoundDetails;
+}
+
+// ---------------------------------------------------------------------------
 // Aggregate project record
 // ---------------------------------------------------------------------------
 
@@ -215,6 +270,8 @@ export interface Project {
   validation: ValidationAssessment;
   team: TeamAssessment;
   risk: RiskAssessment;
+  /** Optional — absent on projects created before this step existed. */
+  pitch?: PitchAssumptions;
 }
 
 // ---------------------------------------------------------------------------
@@ -237,7 +294,8 @@ export interface RevenueMetrics {
 }
 
 export interface AcquisitionMetrics {
-  cac: number;
+  /** null when spend was entered but zero customers were acquired — CAC is unknown, not $0. */
+  cac: number | null;
   leadToCustomerConversionPct: number | null;
 }
 

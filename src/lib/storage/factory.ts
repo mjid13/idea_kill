@@ -106,6 +106,20 @@ export function createEmptyProject(businessModel: BusinessModel = "saas", curren
       financialRisk: 3,
       dependencyRisk: 2,
     },
+    pitch: emptyPitch(),
+  };
+}
+
+/** Default empty pitch-narrative content, also used to backfill projects saved before this step existed. */
+export function emptyPitch() {
+  return {
+    problemStatement: "",
+    competitiveLandscape: "",
+    traction: "",
+    teamBios: "",
+    vision: "",
+    fundingAsk: u0(),
+    useOfFunds: "",
   };
 }
 

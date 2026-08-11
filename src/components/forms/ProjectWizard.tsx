@@ -12,6 +12,7 @@ import { projectRepository } from "@/lib/storage/localStorageRepository";
 import { createEmptyProject } from "@/lib/storage/factory";
 import { exampleProject } from "@/lib/example";
 import { projectToFormValues, formValuesToProject } from "./formMapping";
+import { FieldLinker } from "./FieldLinker";
 import type { Project } from "@/types";
 
 import { BasicInfoStep } from "./steps/BasicInfoStep";
@@ -25,6 +26,7 @@ import { FundingStep } from "./steps/FundingStep";
 import { ValidationStep } from "./steps/ValidationStep";
 import { TeamStep } from "./steps/TeamStep";
 import { RiskStep } from "./steps/RiskStep";
+import { PitchStep } from "./steps/PitchStep";
 
 interface StepDef {
   key: keyof ProjectFormValues;
@@ -45,6 +47,7 @@ const STEPS: StepDef[] = [
   { key: "validation", title: "Validation", description: "Evidence the problem and solution are real.", Component: ValidationStep },
   { key: "team", title: "Team", description: "Rate your team's capability to execute.", Component: TeamStep },
   { key: "risk", title: "Risk", description: "Rate the risks facing this opportunity.", Component: RiskStep },
+  { key: "pitch", title: "Pitch narrative", description: "Optional context used to generate the investor pitch deck.", Component: PitchStep },
 ];
 
 interface ProjectWizardProps {
@@ -61,11 +64,12 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
     [initialProject]
   );
 
-  const { control, handleSubmit, trigger, reset, formState } = useForm<ProjectFormValues>({
+  const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectFormSchema),
     defaultValues,
     mode: "onBlur",
   });
+  const { control, handleSubmit, trigger, reset, formState } = form;
 
   const step = STEPS[stepIndex];
   const isFirst = stepIndex === 0;
@@ -128,6 +132,7 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
+        <FieldLinker form={form} />
         <div className="rounded-xl border border-border bg-card p-5 ring-1 ring-foreground/5">
           <StepComponent control={control} />
         </div>

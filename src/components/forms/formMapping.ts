@@ -1,4 +1,4 @@
-import { createProjectId } from "@/lib/storage/factory";
+import { createProjectId, emptyPitch } from "@/lib/storage/factory";
 import type { Project } from "@/types";
 import type { ProjectFormValues } from "@/lib/validation/projectSchema";
 
@@ -8,7 +8,9 @@ export function projectToFormValues(project: Project): ProjectFormValues {
   void _id;
   void _createdAt;
   void _updatedAt;
-  return rest as ProjectFormValues;
+  // Projects saved before the pitch-narrative step existed don't have this
+  // key at all — backfill it so the form always has a controlled value.
+  return { ...rest, pitch: project.pitch ?? emptyPitch() } as ProjectFormValues;
 }
 
 export function formValuesToProject(

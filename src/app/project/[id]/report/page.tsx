@@ -12,6 +12,7 @@ import { calculateScoreBreakdown, classifyScore, CLASSIFICATION_DESCRIPTIONS } f
 import { generateInsights, generateDecisionSummary } from "@/lib/insights";
 import { BUSINESS_MODEL_LABELS } from "@/lib/constants";
 import { formatCurrency, formatMonths, formatMultiple, formatPercentage } from "@/lib/format";
+import { ExportMenu } from "@/components/dashboard/ExportMenu";
 import type { Project } from "@/types";
 
 export default function ReportPage() {
@@ -51,9 +52,12 @@ function Report({ project }: { project: Project }) {
         <Button variant="outline" size="sm" render={<Link href={`/project/${project.id}`} />}>
           <ArrowLeft /> Back to dashboard
         </Button>
-        <Button size="sm" onClick={() => window.print()}>
-          <Printer /> Print / Save as PDF
-        </Button>
+        <div className="flex gap-2">
+          <ExportMenu project={project} />
+          <Button size="sm" onClick={() => window.print()}>
+            <Printer /> Print / Save as PDF
+          </Button>
+        </div>
       </div>
 
       <header className="mb-8 border-b border-border pb-6">
@@ -174,6 +178,10 @@ function Report({ project }: { project: Project }) {
 
       <Section title="Risks">
         <BulletList items={[...insights.criticalRisks, ...insights.warnings].map((i) => i.message)} empty="None identified." />
+      </Section>
+
+      <Section title="Opportunities">
+        <BulletList items={insights.opportunities.map((i) => i.message)} empty="None identified." />
       </Section>
 
       <Section title="Recommended next experiments">
