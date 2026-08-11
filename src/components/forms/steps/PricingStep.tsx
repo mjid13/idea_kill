@@ -38,7 +38,13 @@ export function PricingStep({ control }: { control: Control<ProjectFormValues> }
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <AssumptionField control={control} name="pricing.currentCustomers" label="Current customers" description="Paying customers you have today." />
-        <AssumptionField control={control} name="pricing.expectedCustomers12mo" label="Expected customers after 12 months" />
+        <AssumptionField
+          control={control}
+          name="pricing.expectedCustomers12mo"
+          label="Expected customers after 12 months"
+          description="Defaults to the target customers you set on the Market step."
+          hint="Pre-filled from Market → Target customers — edit to override."
+        />
         <AssumptionField
           control={control}
           name="pricing.expectedMonthlyCustomerGrowthPct"

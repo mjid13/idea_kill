@@ -12,6 +12,7 @@ import { projectRepository } from "@/lib/storage/localStorageRepository";
 import { createEmptyProject } from "@/lib/storage/factory";
 import { exampleProject } from "@/lib/example";
 import { projectToFormValues, formValuesToProject } from "./formMapping";
+import { FieldLinker } from "./FieldLinker";
 import type { Project } from "@/types";
 
 import { BasicInfoStep } from "./steps/BasicInfoStep";
@@ -61,11 +62,12 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
     [initialProject]
   );
 
-  const { control, handleSubmit, trigger, reset, formState } = useForm<ProjectFormValues>({
+  const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectFormSchema),
     defaultValues,
     mode: "onBlur",
   });
+  const { control, handleSubmit, trigger, reset, formState } = form;
 
   const step = STEPS[stepIndex];
   const isFirst = stepIndex === 0;
@@ -128,6 +130,7 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
+        <FieldLinker form={form} />
         <div className="rounded-xl border border-border bg-card p-5 ring-1 ring-foreground/5">
           <StepComponent control={control} />
         </div>

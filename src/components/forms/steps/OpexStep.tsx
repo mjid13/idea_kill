@@ -13,8 +13,22 @@ export function OpexStep({ control }: { control: Control<ProjectFormValues> }) {
       <AssumptionField control={control} name="costs.officeExpenses" label="Office expenses" prefix="$" />
       <AssumptionField control={control} name="costs.infrastructure" label="Infrastructure" prefix="$" />
       <AssumptionField control={control} name="costs.softwareSubscriptions" label="Software subscriptions" prefix="$" />
-      <AssumptionField control={control} name="costs.marketing" label="Marketing" prefix="$" />
-      <AssumptionField control={control} name="costs.sales" label="Sales expenses" prefix="$" />
+      <AssumptionField
+        control={control}
+        name="costs.marketing"
+        label="Marketing"
+        prefix="$"
+        description="Same spend as the marketing budget entered in Customer Acquisition."
+        hint="Synced from Customer Acquisition — edit to use a different number."
+      />
+      <AssumptionField
+        control={control}
+        name="costs.sales"
+        label="Sales expenses"
+        prefix="$"
+        description="Same spend as the sales budget entered in Customer Acquisition."
+        hint="Synced from Customer Acquisition — edit to use a different number."
+      />
       <AssumptionField control={control} name="costs.legalAccounting" label="Legal / accounting" prefix="$" />
       <AssumptionField control={control} name="costs.otherMonthlyExpenses" label="Other monthly expenses" prefix="$" />
     </div>
