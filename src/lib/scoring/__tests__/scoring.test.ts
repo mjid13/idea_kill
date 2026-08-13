@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { classifyScore, calculateScoreBreakdown } from "../index";
 import { scoreUnitEconomics } from "../unitEconomics";
+import { scoreMarketOpportunity } from "../market";
+import { scoreRisk } from "../risk";
 import { calculateMetrics } from "@/lib/calculations/metrics";
 import { exampleProject } from "@/lib/example";
 import { known, type CalculatedMetrics, type Project } from "@/types";
@@ -90,6 +92,22 @@ describe("calculateScoreBreakdown", () => {
   });
 });
 
+describe("scoreMarketOpportunity — currency normalization", () => {
+  it("scores identical SAM/SOM higher in a stronger currency (OMR) than in USD", () => {
+    const metrics = calculateMetrics(exampleProject);
+    const usdScore = scoreMarketOpportunity(metrics, exampleProject.validation, "USD");
+    const omrScore = scoreMarketOpportunity(metrics, exampleProject.validation, "OMR");
+    expect(omrScore.score).toBeGreaterThan(usdScore.score);
+  });
+
+  it("scores identical SAM/SOM lower in a weaker currency (AED) than in USD", () => {
+    const metrics = calculateMetrics(exampleProject);
+    const usdScore = scoreMarketOpportunity(metrics, exampleProject.validation, "USD");
+    const aedScore = scoreMarketOpportunity(metrics, exampleProject.validation, "AED");
+    expect(aedScore.score).toBeLessThanOrEqual(usdScore.score);
+  });
+});
+
 describe("scoreUnitEconomics — null CAC payback handling", () => {
   const baseMetrics = calculateMetrics(exampleProject);
 
@@ -99,15 +117,64 @@ describe("scoreUnitEconomics — null CAC payback handling", () => {
 
   it("treats a null payback with positive gross profit per customer as neutral (no data entered yet)", () => {
     const metrics = withUnitEconomics({ cacPaybackMonths: null, grossProfitPerCustomer: 20 });
-    const score = scoreUnitEconomics(metrics, exampleProject.basicInfo.businessModel);
+    const score = scoreUnitEconomics(metrics, exampleProject.basicInfo.businessModel, exampleProject.retention);
     const factor = score.factors.find((f) => f.label === "CAC payback period")!;
     expect(factor.score).toBe(40);
   });
 
   it("penalizes a null payback when gross profit per customer is negative (economics are broken, not just missing data)", () => {
     const metrics = withUnitEconomics({ cacPaybackMonths: null, grossProfitPerCustomer: -5 });
-    const score = scoreUnitEconomics(metrics, exampleProject.basicInfo.businessModel);
+    const score = scoreUnitEconomics(metrics, exampleProject.basicInfo.businessModel, exampleProject.retention);
     const factor = score.factors.find((f) => f.label === "CAC payback period")!;
     expect(factor.score).toBe(0);
+  });
+});
+
+describe("scoreUnitEconomics — gated NRR factor", () => {
+  it("does not add an NRR factor when expansion/contraction were never entered (zero regression for existing projects)", () => {
+    const metrics = calculateMetrics(exampleProject);
+    const score = scoreUnitEconomics(metrics, exampleProject.basicInfo.businessModel, exampleProject.retention);
+    expect(score.factors.some((f) => f.label === "Net revenue retention")).toBe(false);
+  });
+
+  it("adds a gated NRR factor once expansion or contraction data is entered", () => {
+    const retention = { ...exampleProject.retention, monthlyExpansionRevenuePct: known(5) };
+    const project: Project = { ...exampleProject, retention };
+    const metrics = calculateMetrics(project);
+    const score = scoreUnitEconomics(metrics, project.basicInfo.businessModel, retention);
+    expect(score.factors.some((f) => f.label === "Net revenue retention")).toBe(true);
+  });
+
+  it("feeds marketplace take rate into the gross margin factor instead of the generic gross margin", () => {
+    const project: Project = {
+      ...exampleProject,
+      basicInfo: { ...exampleProject.basicInfo, businessModel: "marketplace" },
+      marketplace: {
+        averageOrderValue: known(40),
+        takeRatePct: known(20),
+        transactionsPerCustomerPerMonth: known(2),
+      },
+    };
+    const metrics = calculateMetrics(project);
+    const marketplaceScore = scoreUnitEconomics(metrics, "marketplace", project.retention);
+    const saasScore = scoreUnitEconomics({ ...metrics, marketplace: null }, "marketplace", project.retention);
+    const marketplaceFactor = marketplaceScore.factors.find((f) => f.label === "Gross margin")!;
+    const saasFactor = saasScore.factors.find((f) => f.label === "Gross margin")!;
+    expect(marketplaceFactor.score).not.toBe(saasFactor.score);
+  });
+});
+
+describe("scoreRisk — gated concentration factor", () => {
+  it("does not add a concentration factor when it was never entered (zero regression for existing projects)", () => {
+    const score = scoreRisk(exampleProject.risk, exampleProject.pricing);
+    expect(score.factors.some((f) => f.label === "Customer concentration")).toBe(false);
+  });
+
+  it("adds a gated concentration factor once entered, and penalizes severe concentration", () => {
+    const pricing = { ...exampleProject.pricing, topCustomersRevenueSharePct: known(75) };
+    const score = scoreRisk(exampleProject.risk, pricing);
+    const factor = score.factors.find((f) => f.label === "Customer concentration");
+    expect(factor).toBeDefined();
+    expect(factor!.score).toBe(0);
   });
 });

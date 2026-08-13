@@ -17,12 +17,12 @@ export { scoreMarketOpportunity, scoreUnitEconomics, scoreFinancialViability, sc
  * Validation x 0.15 + Execution x 0.15 + Risk x 0.10 (spec section 16).
  */
 export function calculateScoreBreakdown(project: Project, metrics: CalculatedMetrics): ScoreBreakdown {
-  const market = scoreMarketOpportunity(metrics, project.validation);
-  const unitEconomics = scoreUnitEconomics(metrics, project.basicInfo.businessModel);
+  const market = scoreMarketOpportunity(metrics, project.validation, project.basicInfo.currency);
+  const unitEconomics = scoreUnitEconomics(metrics, project.basicInfo.businessModel, project.retention);
   const financial = scoreFinancialViability(metrics);
   const validation = scoreValidation(project.validation);
   const execution = scoreExecution(project.team, project.validation);
-  const risk = scoreRisk(project.risk);
+  const risk = scoreRisk(project.risk, project.pricing);
 
   const categories: Record<ScoreCategory, ReturnType<typeof scoreMarketOpportunity>> = {
     market,

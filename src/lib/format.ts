@@ -75,10 +75,19 @@ export function formatMultiple(value: number | null | undefined, decimals = 1): 
   return `${value.toFixed(decimals)}x`;
 }
 
-export function formatMonths(value: number | null | undefined, decimals = 1): string {
+export function formatMonths(value: number | null | undefined, decimals = 1, locale = "en-US"): string {
   if (value === null || value === undefined || isBadNumber(value)) return PLACEHOLDER;
   const rounded = Number(value.toFixed(decimals));
-  const label = trimTrailingZero(rounded.toFixed(decimals));
+  const numberLocale = locale.startsWith("ar") ? "ar-u-nu-arab" : locale;
+  const label = new Intl.NumberFormat(numberLocale, { maximumFractionDigits: decimals }).format(rounded);
+
+  if (locale.startsWith("ar")) {
+    const unit = { zero: "شهر", one: "شهر", two: "شهران", few: "أشهر", many: "شهرًا", other: "شهر" }[
+      new Intl.PluralRules(locale).select(rounded)
+    ];
+    return `${label} ${unit}`;
+  }
+
   return `${label} ${rounded === 1 ? "month" : "months"}`;
 }
 

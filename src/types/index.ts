@@ -80,6 +80,18 @@ export interface PricingAssumptions {
   expectedCustomers12mo: Assumption<number>;
   expectedMonthlyCustomerGrowthPct: Assumption<number>;
   freeToPaidConversionPct?: Assumption<number>;
+  /** Estimated % of monthly revenue coming from your largest few customers. */
+  topCustomersRevenueSharePct?: Assumption<number>;
+}
+
+// ---------------------------------------------------------------------------
+// Step 2b - Marketplace GMV & take rate (only applicable to businessModel "marketplace")
+// ---------------------------------------------------------------------------
+
+export interface MarketplaceAssumptions {
+  averageOrderValue: Assumption<number>;
+  takeRatePct: Assumption<number>;
+  transactionsPerCustomerPerMonth: Assumption<number>;
 }
 
 // ---------------------------------------------------------------------------
@@ -102,6 +114,10 @@ export interface RetentionAssumptions {
   monthlyChurnPct: Assumption<number>;
   annualChurnPct?: Assumption<number>;
   averageCustomerLifetimeMonths?: Assumption<number>;
+  /** Revenue expansion (upsell/cross-sell) as a % of MRR added each month, from existing customers. */
+  monthlyExpansionRevenuePct?: Assumption<number>;
+  /** Revenue contraction (downgrades) as a % of MRR lost each month, from existing customers. */
+  monthlyContractionRevenuePct?: Assumption<number>;
 }
 
 // ---------------------------------------------------------------------------
@@ -142,6 +158,12 @@ export interface FundingAssumptions {
   availableCash: Assumption<number>;
   initialInvestment: Assumption<number>;
   otherMonthlyIncome: Assumption<number>;
+  /**
+   * Pre-money valuation for the round represented by `initialInvestment`. Distinct from
+   * the pitch deck's narrative-only `PitchRoundDetails.valuation` (never affects
+   * calculations) — this field drives real dilution math.
+   */
+  preMoneyValuation?: Assumption<number>;
 }
 
 // ---------------------------------------------------------------------------
@@ -257,11 +279,17 @@ export interface PitchAssumptions {
 
 export interface Project {
   id: string;
+  /** Version of the persisted raw project document. */
+  schemaVersion: number;
+  /** Optimistic-concurrency revision assigned by the repository. */
+  revision: number;
   createdAt: string;
   updatedAt: string;
   basicInfo: BasicInfo;
   market: MarketAssumptions;
   pricing: PricingAssumptions;
+  /** Optional — only populated/shown when basicInfo.businessModel is "marketplace". */
+  marketplace?: MarketplaceAssumptions;
   acquisition: AcquisitionAssumptions;
   retention: RetentionAssumptions;
   unitEconomics: UnitEconomicsAssumptions;
@@ -302,6 +330,8 @@ export interface AcquisitionMetrics {
 export interface RetentionMetrics {
   monthlyChurnPct: number;
   customerLifetimeMonths: number | null;
+  /** Annualized Net Revenue Retention — point-in-time, from monthly churn/expansion/contraction. */
+  netRevenueRetentionPct: number;
 }
 
 export interface UnitEconomicsMetrics {
@@ -331,6 +361,26 @@ export interface BreakEvenMetrics {
   remainingCustomersToBreakEven: number | null;
 }
 
+export type ConcentrationRiskLevel = "low" | "moderate" | "high" | "severe";
+
+export interface DilutionMetrics {
+  postMoneyValuation: number | null;
+  equityGivenUpPct: number | null;
+  founderRemainingOwnershipPct: number | null;
+}
+
+export interface MarketplaceMetrics {
+  gmv: number;
+  takeRateRevenue: number;
+  effectiveArpu: number;
+  takeRatePct: number;
+}
+
+export interface ConcentrationMetrics {
+  topCustomersRevenueSharePct: number;
+  riskLevel: ConcentrationRiskLevel;
+}
+
 export interface CalculatedMetrics {
   market: MarketMetrics;
   revenue: RevenueMetrics;
@@ -340,6 +390,26 @@ export interface CalculatedMetrics {
   operating: OperatingMetrics;
   funding: FundingMetrics;
   breakEven: BreakEvenMetrics;
+  dilution: DilutionMetrics;
+  concentration: ConcentrationMetrics;
+  /** Only populated when businessModel is "marketplace" and the marketplace slice has data. */
+  marketplace: MarketplaceMetrics | null;
+}
+
+// ---------------------------------------------------------------------------
+// SaaS efficiency ratios — sibling to CalculatedMetrics, not a member of it,
+// since these are derived from a 12-month forecast and CalculatedMetrics must
+// not depend on the forecast (the forecast itself takes CalculatedMetrics as
+// an input — a dependency in the other direction would be circular).
+// ---------------------------------------------------------------------------
+
+export interface EfficiencyMetrics {
+  annualGrowthPct: number | null;
+  profitMarginPct: number | null;
+  ruleOf40Score: number | null;
+  burnMultiple: number | null;
+  magicNumber: number | null;
+  quickRatio: number | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -359,6 +429,10 @@ export interface ForecastMonth {
   operatingExpenses: number;
   netCashFlow: number;
   cashBalance: number;
+  /** Revenue added this month from upsell/cross-sell to existing customers (0 for non-recurring or when unset). */
+  expansionRevenue: number;
+  /** Revenue lost this month from downgrades among existing customers (0 for non-recurring or when unset). */
+  contractionRevenue: number;
 }
 
 // ---------------------------------------------------------------------------

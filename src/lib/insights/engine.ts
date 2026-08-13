@@ -223,6 +223,120 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
     opportunities.push(insight("Runway is long enough to iterate on the model before fundraising pressure sets in."));
   }
 
+  // --- Dilution & valuation -----------------------------------------------
+  const { dilution } = metrics;
+  if (dilution.equityGivenUpPct !== null) {
+    if (dilution.equityGivenUpPct > 40) {
+      criticalRisks.push(
+        insight(
+          "This round gives up an unusually large equity stake.",
+          "Giving up {pct}% in a single round is high — it can leave too little equity for future rounds and key hires.",
+          undefined,
+          { pct: dilution.equityGivenUpPct.toFixed(1) }
+        )
+      );
+    } else if (dilution.equityGivenUpPct > 25) {
+      warnings.push(
+        insight(
+          "This round's dilution is on the higher side.",
+          "Giving up {pct}% of the company in this round is above the typical range for an early round.",
+          undefined,
+          { pct: dilution.equityGivenUpPct.toFixed(1) }
+        )
+      );
+    } else if (dilution.equityGivenUpPct < 15) {
+      strengths.push(
+        insight("This round preserves most of your ownership.", "Only {pct}% equity given up at the modeled valuation.", undefined, {
+          pct: dilution.equityGivenUpPct.toFixed(1),
+        })
+      );
+    }
+  }
+
+  // --- Marketplace take rate -----------------------------------------------
+  if (metrics.marketplace !== null) {
+    const takeRateScore = interpolateScore(metrics.marketplace.takeRatePct, benchmarks.grossMarginPct);
+    if (takeRateScore < 45) {
+      warnings.push(
+        insight(
+          "Take rate is below the typical range for marketplaces.",
+          "A {pct}% take rate leaves thin margin to cover acquisition and operating costs.",
+          undefined,
+          { pct: metrics.marketplace.takeRatePct.toFixed(1) }
+        )
+      );
+    } else if (takeRateScore >= 85) {
+      strengths.push(
+        insight("Take rate is strong for a marketplace.", "{pct}% take rate on GMV.", undefined, {
+          pct: metrics.marketplace.takeRatePct.toFixed(1),
+        })
+      );
+    }
+  }
+
+  // --- Net revenue retention -----------------------------------------------
+  const hasExpansionData =
+    (project.retention.monthlyExpansionRevenuePct && project.retention.monthlyExpansionRevenuePct.quality !== "unknown") ||
+    (project.retention.monthlyContractionRevenuePct && project.retention.monthlyContractionRevenuePct.quality !== "unknown");
+  if (hasExpansionData) {
+    const nrr = retention.netRevenueRetentionPct;
+    if (nrr < 90) {
+      warnings.push(
+        insight(
+          "Net revenue retention is below a healthy level.",
+          "At {pct}% annualized NRR, the existing customer base is shrinking in revenue terms even before new sales.",
+          undefined,
+          { pct: nrr.toFixed(0) }
+        )
+      );
+    } else if (nrr > 120) {
+      opportunities.push(
+        insight(
+          "Net revenue retention is best-in-class.",
+          "{pct}% annualized NRR — double check the expansion/contraction inputs aren't overstated.",
+          undefined,
+          { pct: nrr.toFixed(0) }
+        )
+      );
+    } else if (nrr > 100) {
+      strengths.push(
+        insight("Existing customers are growing revenue on their own.", "{pct}% annualized net revenue retention.", undefined, {
+          pct: nrr.toFixed(0),
+        })
+      );
+    }
+  }
+
+  // --- Customer concentration -----------------------------------------------
+  if (project.pricing.topCustomersRevenueSharePct && project.pricing.topCustomersRevenueSharePct.quality !== "unknown") {
+    const { concentration } = metrics;
+    if (concentration.riskLevel === "severe") {
+      criticalRisks.push(
+        insight(
+          "Revenue is heavily concentrated in a few customers.",
+          "Your largest customers account for {pct}% of revenue — losing one could be existential.",
+          undefined,
+          { pct: concentration.topCustomersRevenueSharePct.toFixed(0) }
+        )
+      );
+    } else if (concentration.riskLevel === "high") {
+      warnings.push(
+        insight(
+          "Customer concentration is a meaningful risk.",
+          "Your largest customers account for {pct}% of revenue.",
+          undefined,
+          { pct: concentration.topCustomersRevenueSharePct.toFixed(0) }
+        )
+      );
+    } else if (concentration.riskLevel === "low") {
+      strengths.push(
+        insight("Revenue is well diversified across customers.", "Top customers account for only {pct}% of revenue.", undefined, {
+          pct: concentration.topCustomersRevenueSharePct.toFixed(0),
+        })
+      );
+    }
+  }
+
   // --- Recommended actions, derived from the weakest score categories -----
   const weakestCategories = Object.values(scores.categories)
     .slice()
@@ -240,8 +354,9 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
         recommendedActions.push(
           metrics.acquisition.cac === null
             ? insight("Acquisition spend isn't converting into customers yet — fix the funnel before scaling spend further.")
-            : insight("Reduce CAC below ${amount} or improve gross margin to strengthen unit economics.", undefined, {
-                amount: Math.max(1, Math.round(metrics.acquisition.cac * 0.7)).toLocaleString(),
+            : insight("Reduce CAC below {currency} {amount, number} or improve gross margin to strengthen unit economics.", undefined, {
+                currency: project.basicInfo.currency,
+                amount: Math.max(1, Math.round(metrics.acquisition.cac * 0.7)),
               })
         );
         break;

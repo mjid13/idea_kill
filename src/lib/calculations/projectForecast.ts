@@ -8,6 +8,8 @@ export interface ForecastOverrides {
   churnMultiplier?: number;
   priceMultiplier?: number;
   growthMultiplier?: number;
+  expansionMultiplier?: number;
+  contractionMultiplier?: number;
 }
 
 export function buildForecastInputs(
@@ -19,6 +21,8 @@ export function buildForecastInputs(
   const churnMultiplier = overrides.churnMultiplier ?? 1;
   const growthMultiplier = overrides.growthMultiplier ?? 1;
   const priceMultiplier = overrides.priceMultiplier ?? 1;
+  const expansionMultiplier = overrides.expansionMultiplier ?? 1;
+  const contractionMultiplier = overrides.contractionMultiplier ?? 1;
 
   return {
     startingCustomers: val(project.pricing.currentCustomers),
@@ -32,6 +36,8 @@ export function buildForecastInputs(
     startingCashBalance: val(project.funding.availableCash) + val(project.funding.initialInvestment),
     isRecurringRevenue: isRecurring(project.pricing.billingPeriod),
     months,
+    monthlyExpansionRevenuePct: val(project.retention.monthlyExpansionRevenuePct) * expansionMultiplier,
+    monthlyContractionRevenuePct: val(project.retention.monthlyContractionRevenuePct) * contractionMultiplier,
   };
 }
 

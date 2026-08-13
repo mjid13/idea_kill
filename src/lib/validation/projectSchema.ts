@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { pitchCompetitorSchema, pitchRoundDetailsSchema, pitchTeamMemberSchema, tractionDataPointSchema } from "./pitchDeckSchema";
 
 const dataQualitySchema = z.enum(["known", "estimated", "unknown"]);
 
@@ -38,6 +39,13 @@ export const pricingSchema = z.object({
   expectedCustomers12mo: nonNegativeAssumption,
   expectedMonthlyCustomerGrowthPct: assumptionSchema,
   freeToPaidConversionPct: optionalAssumptionSchema,
+  topCustomersRevenueSharePct: optionalAssumptionSchema,
+});
+
+export const marketplaceSchema = z.object({
+  averageOrderValue: nonNegativeAssumption,
+  takeRatePct: assumptionSchema,
+  transactionsPerCustomerPerMonth: nonNegativeAssumption,
 });
 
 export const acquisitionSchema = z.object({
@@ -52,6 +60,8 @@ export const retentionSchema = z.object({
   monthlyChurnPct: assumptionSchema,
   annualChurnPct: optionalAssumptionSchema,
   averageCustomerLifetimeMonths: optionalAssumptionSchema,
+  monthlyExpansionRevenuePct: optionalAssumptionSchema,
+  monthlyContractionRevenuePct: optionalAssumptionSchema,
 });
 
 export const unitEconomicsSchema = z.object({
@@ -80,6 +90,7 @@ export const fundingSchema = z.object({
   availableCash: nonNegativeAssumption,
   initialInvestment: nonNegativeAssumption,
   otherMonthlyIncome: nonNegativeAssumption,
+  preMoneyValuation: optionalAssumptionSchema,
 });
 
 const rating = z.number().min(1).max(5);
@@ -132,12 +143,17 @@ export const pitchSchema = z.object({
   vision: z.string(),
   fundingAsk: assumptionSchema,
   useOfFunds: z.string(),
+  tractionHistory: z.array(tractionDataPointSchema).optional(),
+  teamMembers: z.array(pitchTeamMemberSchema).optional(),
+  competitors: z.array(pitchCompetitorSchema).optional(),
+  round: pitchRoundDetailsSchema.optional(),
 });
 
 export const projectFormSchema = z.object({
   basicInfo: basicInfoSchema,
   market: marketSchema,
   pricing: pricingSchema,
+  marketplace: marketplaceSchema.optional(),
   acquisition: acquisitionSchema,
   retention: retentionSchema,
   unitEconomics: unitEconomicsSchema,
@@ -151,11 +167,22 @@ export const projectFormSchema = z.object({
 
 export type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
+export const projectDocumentSchema = projectFormSchema.extend({
+  id: z.string().min(1),
+  schemaVersion: z.number().int().positive().default(1),
+  revision: z.number().int().positive().default(1),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
+export type ProjectDocument = z.infer<typeof projectDocumentSchema>;
+
 /** Field paths (dot notation) that belong to each wizard step, used for per-step validation via RHF's trigger(). */
 export const STEP_FIELDS: Record<string, string[]> = {
   basicInfo: ["basicInfo"],
   market: ["market"],
   pricing: ["pricing"],
+  marketplace: ["marketplace"],
   acquisition: ["acquisition"],
   retention: ["retention"],
   unitEconomics: ["unitEconomics"],

@@ -66,4 +66,42 @@ describe("generateForecast", () => {
     );
     expect(findBreakEvenMonth(forecast)).toBeNull();
   });
+
+  it("is byte-identical to the pre-expansion behavior when expansion/contraction are omitted", () => {
+    const withDefaults = generateForecast(baseInputs());
+    const withExplicitZeros = generateForecast(
+      baseInputs({ monthlyExpansionRevenuePct: 0, monthlyContractionRevenuePct: 0 })
+    );
+    expect(withExplicitZeros).toEqual(withDefaults);
+    // Every month's expansion/contraction dollar amounts must be exactly zero too.
+    for (const m of withDefaults) {
+      expect(m.expansionRevenue).toBe(0);
+      expect(m.contractionRevenue).toBe(0);
+    }
+  });
+
+  it("grows MRR faster than the customer-count-only baseline when expansion revenue is applied", () => {
+    const baseline = generateForecast(baseInputs());
+    const withExpansion = generateForecast(baseInputs({ monthlyExpansionRevenuePct: 5 }));
+    expect(withExpansion[11].mrr).toBeGreaterThan(baseline[11].mrr);
+    expect(withExpansion[11].expansionRevenue).toBeGreaterThan(0);
+  });
+
+  it("shrinks MRR relative to the baseline when contraction revenue is applied", () => {
+    const baseline = generateForecast(baseInputs());
+    const withContraction = generateForecast(baseInputs({ monthlyContractionRevenuePct: 5 }));
+    expect(withContraction[11].mrr).toBeLessThan(baseline[11].mrr);
+    expect(withContraction[11].contractionRevenue).toBeGreaterThan(0);
+  });
+
+  it("never applies expansion/contraction revenue to non-recurring revenue", () => {
+    const forecast = generateForecast(
+      baseInputs({ isRecurringRevenue: false, monthlyExpansionRevenuePct: 10, monthlyContractionRevenuePct: 10 })
+    );
+    for (const m of forecast) {
+      expect(m.expansionRevenue).toBe(0);
+      expect(m.contractionRevenue).toBe(0);
+      expect(m.mrr).toBe(0);
+    }
+  });
 });

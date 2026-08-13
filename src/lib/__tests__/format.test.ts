@@ -28,6 +28,9 @@ describe("format helpers", () => {
   it("formatMonths pluralizes correctly", () => {
     expect(formatMonths(1)).toBe("1 month");
     expect(formatMonths(18)).toBe("18 months");
+    expect(formatMonths(1, 1, "ar")).toBe("١ شهر");
+    expect(formatMonths(3, 1, "ar")).toBe("٣ أشهر");
+    expect(formatMonths(18, 1, "ar")).toBe("١٨ شهرًا");
     expect(formatMonths(null)).toBe("—");
   });
 });

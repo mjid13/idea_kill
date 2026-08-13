@@ -1,4 +1,5 @@
-import type { CalculatedMetrics, CategoryScore, ValidationAssessment } from "@/types";
+import type { CalculatedMetrics, CategoryScore, Currency, ValidationAssessment } from "@/types";
+import { CURRENCY_TO_USD } from "@/lib/constants";
 import { interpolateScore, ratingToScore, weightedAverage } from "./interpolate";
 
 /**
@@ -9,12 +10,17 @@ import { interpolateScore, ratingToScore, weightedAverage } from "./interpolate"
  */
 export function scoreMarketOpportunity(
   metrics: CalculatedMetrics,
-  validation: ValidationAssessment
+  validation: ValidationAssessment,
+  currency: Currency
 ): CategoryScore {
-  // Log-scale bands: market size scoring is currency-relative, not absolute,
-  // so these anchors describe typical "meaningful opportunity" magnitudes in
-  // whatever currency unit the user entered.
-  const samScore = interpolateScore(metrics.market.sam, [
+  // Log-scale bands are calibrated in USD magnitudes, so SAM/SOM are converted to a
+  // USD-equivalent before scoring — otherwise a project priced in a stronger or weaker
+  // currency would be scored as if its numbers were already USD.
+  const toUsd = CURRENCY_TO_USD[currency] ?? 1;
+  const samUsd = metrics.market.sam * toUsd;
+  const somUsd = metrics.market.som * toUsd;
+
+  const samScore = interpolateScore(samUsd, [
     [0, 5],
     [100_000, 25],
     [1_000_000, 50],
@@ -23,7 +29,7 @@ export function scoreMarketOpportunity(
     [1_000_000_000, 100],
   ]);
 
-  const somScore = interpolateScore(metrics.market.som, [
+  const somScore = interpolateScore(somUsd, [
     [0, 5],
     [10_000, 20],
     [100_000, 45],
