@@ -3,17 +3,17 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Header } from "@/components/layout/header";
 import { ProjectWizard } from "@/components/forms/ProjectWizard";
 import { Button } from "@/components/ui/button";
-import { projectRepository } from "@/lib/storage/localStorageRepository";
+import { projectRepository } from "@/lib/storage/browserRepository";
 import type { Project } from "@/types";
 
 export default function EditProjectPage() {
   const params = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null | undefined>(undefined);
-  const t = useTranslations();
+  const t = useAppTranslations();
 
   useEffect(() => {
     let active = true;

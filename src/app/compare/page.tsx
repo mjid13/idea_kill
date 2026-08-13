@@ -3,11 +3,12 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { projectRepository } from "@/lib/storage/localStorageRepository";
+import { projectRepository } from "@/lib/storage/browserRepository";
 import { calculateMetrics } from "@/lib/calculations";
 import { calculateScoreBreakdown, classifyScore } from "@/lib/scoring";
 import { formatCurrency, formatMonths, formatMultiple, formatPercentage } from "@/lib/format";
@@ -38,7 +39,8 @@ export default function ComparePage() {
 }
 
 function CompareContent() {
-  const t = useTranslations();
+  const t = useAppTranslations();
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const ids = useMemo(() => (searchParams.get("ids") ?? "").split(",").filter(Boolean), [searchParams]);
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -77,13 +79,13 @@ function CompareContent() {
         { label: "LTV:CAC", get: (r) => formatMultiple(r.metrics.unitEconomics.ltvToCacRatio), raw: (r) => r.metrics.unitEconomics.ltvToCacRatio },
         {
           label: "Break-even customers",
-          get: (r) => (r.metrics.breakEven.breakEvenCustomers === null ? t("Unreachable") : r.metrics.breakEven.breakEvenCustomers.toLocaleString()),
+          get: (r) => (r.metrics.breakEven.breakEvenCustomers === null ? t("Unreachable") : r.metrics.breakEven.breakEvenCustomers.toLocaleString(locale)),
           raw: (r) => r.metrics.breakEven.breakEvenCustomers,
           higherIsBetter: false,
         },
         {
           label: "Runway",
-          get: (r) => (r.metrics.funding.isProfitable ? t("Profitable") : formatMonths(r.metrics.funding.runwayMonths)),
+          get: (r) => (r.metrics.funding.isProfitable ? t("Profitable") : formatMonths(r.metrics.funding.runwayMonths, 1, locale)),
           raw: (r) => r.metrics.funding.runwayMonths,
         },
         { label: "Validation", get: (r) => `${r.scores.categories.validation.score}/100`, raw: (r) => r.scores.categories.validation.score },

@@ -1,21 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
-import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
+import { useForm, useFieldArray, useController, useWatch, Controller, type Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { projectRepository } from "@/lib/storage/localStorageRepository";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { projectRepository } from "@/lib/storage/browserRepository";
 import { pitchDeckDetailsSchema, type PitchDeckDetailsFormValues } from "@/lib/validation/pitchDeckSchema";
 import { FUNDING_ROUND_LABELS, FUNDING_ROUND_OPTIONS } from "@/lib/constants";
+import { normalizeToMonthlyArpu } from "@/lib/calculations/helpers";
 import type { FundingRoundType, Project } from "@/types";
 
 function newId(): string {
@@ -26,7 +28,7 @@ function newId(): string {
 export default function PitchDeckEditPage() {
   const params = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null | undefined>(undefined);
-  const t = useTranslations();
+  const t = useAppTranslations();
 
   useEffect(() => {
     projectRepository.getById(params.id).then(setProject);
@@ -46,7 +48,7 @@ export default function PitchDeckEditPage() {
 
 function PitchDeckEditForm({ project }: { project: Project }) {
   const router = useRouter();
-  const t = useTranslations();
+  const t = useAppTranslations();
   const [submitting, setSubmitting] = useState(false);
 
   const { control, handleSubmit } = useForm<PitchDeckDetailsFormValues>({
@@ -62,6 +64,10 @@ function PitchDeckEditForm({ project }: { project: Project }) {
   const traction = useFieldArray({ control, name: "tractionHistory" });
   const team = useFieldArray({ control, name: "teamMembers" });
   const competitors = useFieldArray({ control, name: "competitors" });
+
+  // Same dollars-per-customer the wizard already collected — traction rows
+  // shouldn't force the user to redo that multiplication by hand.
+  const monthlyArpu = normalizeToMonthlyArpu(project.pricing.productPrice.value, project.pricing.billingPeriod);
 
   async function onSubmit(values: PitchDeckDetailsFormValues) {
     setSubmitting(true);
@@ -103,7 +109,7 @@ function PitchDeckEditForm({ project }: { project: Project }) {
                 render={({ field }) => <Input placeholder={t("e.g. Jan 2026")} {...field} className="sm:w-32" />}
               />
               <NumberController control={control} name={`tractionHistory.${i}.customers`} placeholder={t("Customers")} />
-              <NumberController control={control} name={`tractionHistory.${i}.mrr`} placeholder={t("MRR")} />
+              <TractionMrrField control={control} index={i} monthlyArpu={monthlyArpu} />
             </Row>
           ))}
           <AddButton onClick={() => traction.append({ id: newId(), label: "", customers: undefined, mrr: undefined })}>
@@ -195,7 +201,7 @@ function PitchDeckEditForm({ project }: { project: Project }) {
 }
 
 function FormSection({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   return (
     <div className="rounded-xl border border-border bg-card p-5 ring-1 ring-foreground/5">
       <h2 className="text-sm font-semibold text-foreground">{t(title)}</h2>
@@ -206,7 +212,7 @@ function FormSection({ title, description, children }: { title: string; descript
 }
 
 function Row({ children, onRemove, stacked }: { children: React.ReactNode; onRemove: () => void; stacked?: boolean }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   return (
     <div className={`flex gap-2 rounded-lg border border-border/60 p-3 ${stacked ? "flex-col" : "flex-col sm:flex-row sm:items-center"}`}>
       <div className={`flex-1 ${stacked ? "space-y-2" : "flex flex-col gap-2 sm:flex-row"}`}>{children}</div>
@@ -256,5 +262,85 @@ function NumberController({
         />
       )}
     />
+  );
+}
+
+/**
+ * MRR input for a traction row. While the row's own mrr value is still
+ * blank, it auto-fills from that row's customer count × the product price
+ * entered in the main wizard, so the user never has to multiply it out by
+ * hand. Editing mrr directly stops the auto-fill; the icon brings it back
+ * at any time.
+ */
+function TractionMrrField({
+  control,
+  index,
+  monthlyArpu,
+}: {
+  control: Control<PitchDeckDetailsFormValues>;
+  index: number;
+  monthlyArpu: number;
+}) {
+  const t = useAppTranslations();
+  const mrrField = useController({ control, name: `tractionHistory.${index}.mrr` });
+  const customers = useWatch({ control, name: `tractionHistory.${index}.customers` });
+
+  const linkedRef = useRef<boolean | null>(null);
+  const lastSetRef = useRef<number | null>(null);
+  if (linkedRef.current === null) {
+    linkedRef.current = mrrField.field.value === undefined;
+  }
+
+  const computed =
+    monthlyArpu > 0 && typeof customers === "number" && Number.isFinite(customers)
+      ? Math.round(customers * monthlyArpu * 100) / 100
+      : undefined;
+
+  const applyComputed = () => {
+    if (computed === undefined) return;
+    linkedRef.current = true;
+    lastSetRef.current = computed;
+    mrrField.field.onChange(computed);
+  };
+
+  useEffect(() => {
+    if (lastSetRef.current !== null && mrrField.field.value !== lastSetRef.current) {
+      // The user changed mrr independently — stop auto-filling this row.
+      linkedRef.current = false;
+    }
+    if (!linkedRef.current || computed === undefined) return;
+    lastSetRef.current = computed;
+    mrrField.field.onChange(computed);
+    // Only re-run when the computed value changes; refs/field are stable across the component's life.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [computed]);
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Input
+        type="number"
+        inputMode="decimal"
+        placeholder={t("MRR")}
+        value={mrrField.field.value ?? ""}
+        onChange={(e) => {
+          const next = e.target.valueAsNumber;
+          mrrField.field.onChange(Number.isFinite(next) ? next : undefined);
+        }}
+        onBlur={mrrField.field.onBlur}
+        className="sm:w-32"
+      />
+      {computed !== undefined && (
+        <Tooltip>
+          <TooltipTrigger
+            type="button"
+            onClick={applyComputed}
+            className="shrink-0 text-muted-foreground hover:text-foreground"
+          >
+            <RotateCcw className="size-3.5" />
+          </TooltipTrigger>
+          <TooltipContent>{t("Recalculate from the linked value")}</TooltipContent>
+        </Tooltip>
+      )}
+    </div>
   );
 }
