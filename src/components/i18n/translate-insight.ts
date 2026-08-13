@@ -1,7 +1,7 @@
-import type { useTranslations } from "next-intl";
+import type { AppTranslator } from "@/components/i18n/use-app-translations";
 import type { DecisionReason, Insight } from "@/types";
 
-type Translator = ReturnType<typeof useTranslations>;
+type Translator = AppTranslator;
 
 /**
  * decision.ts passes the category label itself (an English translation key, e.g.

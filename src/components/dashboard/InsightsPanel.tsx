@@ -1,4 +1,4 @@
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { AlertTriangle, CheckCircle2, Lightbulb, ShieldAlert, ListChecks } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { translateInsightMessage, translateInsightDetail } from "@/components/i18n/translate-insight";
@@ -15,7 +15,7 @@ function InsightGroup({
   items: Insight[];
   tone: "emerald" | "amber" | "red" | "blue";
 }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   if (items.length === 0) return null;
   const toneClass = {
     emerald: "text-emerald-600 dark:text-emerald-400",
@@ -43,7 +43,7 @@ function InsightGroup({
 }
 
 export function InsightsPanel({ report }: { report: InsightReport }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   const hasAny =
     report.strengths.length + report.warnings.length + report.criticalRisks.length + report.opportunities.length > 0;
 
@@ -65,7 +65,7 @@ export function InsightsPanel({ report }: { report: InsightReport }) {
 }
 
 export function RecommendedActions({ items }: { items: Insight[] }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   if (items.length === 0) return null;
   return (
     <Card>

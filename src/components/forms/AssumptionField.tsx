@@ -1,10 +1,14 @@
 "use client";
 
+import { RotateCcw } from "lucide-react";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { useController, type Control, type FieldPath } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { InfoTooltip } from "./InfoTooltip";
 import { QualityToggle } from "./QualityToggle";
+import { useFieldLink } from "./FieldLinker";
 import { cn } from "@/lib/utils";
 import type { ProjectFormValues } from "@/lib/validation/projectSchema";
 import type { DataQuality } from "@/types";
@@ -38,8 +42,10 @@ export function AssumptionField({
   placeholder,
   hint,
 }: AssumptionFieldProps) {
+  const t = useAppTranslations();
   const valueField = useController({ control, name: `${name}.value` as FieldPath<ProjectFormValues> });
   const qualityField = useController({ control, name: `${name}.quality` as FieldPath<ProjectFormValues> });
+  const recalculate = useFieldLink(name);
 
   const rawValue = valueField.field.value;
   const displayValue = typeof rawValue === "number" && Number.isFinite(rawValue) ? rawValue : 0;
@@ -50,6 +56,18 @@ export function AssumptionField({
         <Label className="flex items-center gap-1 text-xs font-medium text-foreground">
           {label}
           {description && <InfoTooltip description={description} formula={formula} />}
+          {recalculate && (
+            <Tooltip>
+              <TooltipTrigger
+                type="button"
+                onClick={recalculate}
+                className="inline-flex align-middle text-muted-foreground hover:text-foreground"
+              >
+                <RotateCcw className="size-3.5" />
+              </TooltipTrigger>
+              <TooltipContent>{t("Recalculate from the linked value")}</TooltipContent>
+            </Tooltip>
+          )}
         </Label>
         <QualityToggle
           value={qualityField.field.value as DataQuality}

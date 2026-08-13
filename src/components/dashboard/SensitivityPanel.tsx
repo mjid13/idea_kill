@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,8 @@ const LEVERS: Array<{ key: keyof SensitivityMultipliers; label: string; descript
 ];
 
 export function SensitivityPanel({ project }: { project: Project }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
+  const locale = useLocale();
   const [multipliers, setMultipliers] = useState<SensitivityMultipliers>(DEFAULT_MULTIPLIERS);
 
   const ranking = useMemo(() => calculateSensitivityRanking(project), [project]);
@@ -92,7 +94,7 @@ export function SensitivityPanel({ project }: { project: Project }) {
             <div>
               <p className="text-[11px] text-muted-foreground">{t("Runway")}</p>
               <p className="text-sm font-semibold tabular-nums text-foreground">
-                {adjustedMetrics.funding.isProfitable ? t("Profitable") : formatMonths(adjustedMetrics.funding.runwayMonths)}
+                {adjustedMetrics.funding.isProfitable ? t("Profitable") : formatMonths(adjustedMetrics.funding.runwayMonths, 1, locale)}
               </p>
             </div>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useController, type Control, type FieldPath } from "react-hook-form";
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Label } from "@/components/ui/label";
 import { InfoTooltip } from "./InfoTooltip";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,7 @@ interface RatingFieldProps {
 
 /** 1-5 qualitative rating input used across validation, team, and risk assessments. */
 export function RatingField({ control, name, label, description, lowLabel, highLabel }: RatingFieldProps) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   const { field } = useController({ control, name });
   const current = typeof field.value === "number" ? field.value : 3;
 

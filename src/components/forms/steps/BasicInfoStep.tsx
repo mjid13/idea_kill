@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Controller, type Control } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import type { BusinessModel, Currency } from "@/types";
 import type { ProjectFormValues } from "@/lib/validation/projectSchema";
 
 export function BasicInfoStep({ control }: { control: Control<ProjectFormValues> }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   return (
     <div className="space-y-5">
       <div className="space-y-1.5">
@@ -22,7 +22,7 @@ export function BasicInfoStep({ control }: { control: Control<ProjectFormValues>
           render={({ field, fieldState }) => (
             <>
               <Input id="basicInfo.name" placeholder={t("e.g. Acme Invoicing")} aria-invalid={!!fieldState.error} {...field} />
-              {fieldState.error && <p className="text-xs text-destructive">{fieldState.error.message}</p>}
+              {fieldState.error?.message && <p className="text-xs text-destructive">{t(fieldState.error.message)}</p>}
             </>
           )}
         />

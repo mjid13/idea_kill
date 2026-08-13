@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Download, FileOutput, FileText, Sheet, Presentation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
@@ -12,7 +12,7 @@ import { generateInsights } from "@/lib/insights";
 import type { Project } from "@/types";
 
 export function ExportMenu({ project }: { project: Project }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   function handleDownload(kind: "json" | "csv") {
     const metrics = calculateMetrics(project);
     const scores = calculateScoreBreakdown(project, metrics);

@@ -1,4 +1,4 @@
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { classifyScore, CLASSIFICATION_DESCRIPTIONS } from "@/lib/scoring";
@@ -13,7 +13,7 @@ const CLASSIFICATION_COLOR: Record<string, string> = {
 };
 
 export function ScoreHero({ scores }: { scores: ScoreBreakdown }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   const classification = classifyScore(scores.overall);
 
   return (

@@ -1,13 +1,13 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import type { Control } from "react-hook-form";
 import { RatingField } from "@/components/forms/RatingField";
 import { StepSection } from "@/components/forms/StepSection";
 import type { ProjectFormValues } from "@/lib/validation/projectSchema";
 
 export function ValidationStep({ control }: { control: Control<ProjectFormValues> }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   return (
     <div className="space-y-6">
       <StepSection title={t("Problem")} description={t("How real and urgent is the problem?")}>

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,11 +18,12 @@ import { DecisionSummary } from "./DecisionSummary";
 import { SensitivityPanel } from "./SensitivityPanel";
 import { ScenarioTable } from "./ScenarioTable";
 import { ForecastCharts } from "./ForecastCharts";
+import { EfficiencyPanel } from "./EfficiencyPanel";
 import { ExportMenu } from "./ExportMenu";
 import type { Project } from "@/types";
 
 export function ProjectDashboard({ project }: { project: Project }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   const metrics = useMemo(() => calculateMetrics(project), [project]);
   const scores = useMemo(() => calculateScoreBreakdown(project, metrics), [project, metrics]);
   const insights = useMemo(() => generateInsights(metrics, scores, project), [metrics, scores, project]);
@@ -60,6 +61,7 @@ export function ProjectDashboard({ project }: { project: Project }) {
       </div>
 
       <SensitivityPanel project={project} />
+      <EfficiencyPanel project={project} metrics={metrics} />
       <ScenarioTable result={scenarios} currency={project.basicInfo.currency} />
       <ForecastCharts project={project} metrics={metrics} />
     </div>

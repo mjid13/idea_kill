@@ -1,4 +1,4 @@
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Card, CardContent } from "@/components/ui/card";
 import { translateReason } from "@/components/i18n/translate-insight";
 import type { DecisionSummary as DecisionSummaryType } from "@/types";
@@ -12,7 +12,7 @@ const VERDICT_COLOR: Record<DecisionSummaryType["verdict"], string> = {
 };
 
 export function DecisionSummary({ summary }: { summary: DecisionSummaryType }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   return (
     <Card>
       <CardContent className="space-y-4">

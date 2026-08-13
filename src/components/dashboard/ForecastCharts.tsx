@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import {
   CartesianGrid,
   Legend,
@@ -36,7 +36,7 @@ function ChartBlock({ title, children }: { title: string; children: React.ReactE
 }
 
 export function ForecastCharts({ project, metrics }: { project: Project; metrics: CalculatedMetrics }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   const [months, setMonths] = useState<(typeof HORIZONS)[number]>(24);
   const forecast = useMemo(() => forecastProject(project, metrics, months), [project, metrics, months]);
   const currency = project.basicInfo.currency;
