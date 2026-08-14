@@ -1,5 +1,16 @@
 import { projectDocumentSchema, projectFormSchema } from "@/lib/validation/projectSchema";
 import type { Project } from "@/types";
+import {
+  emptyOnePager,
+  emptyIcp,
+  emptyValueProp,
+  emptyValidationPlan,
+  emptyMvpScope,
+  emptyGtmPlan,
+  emptySalesDocs,
+  emptyContractTerms,
+  emptyPilotReport,
+} from "@/lib/storage/factory";
 
 export interface ProjectRow {
   id: string;
@@ -12,8 +23,24 @@ export interface ProjectRow {
 }
 
 export function projectFromRow(row: ProjectRow): Project {
+  const parsed = projectFormSchema.parse(row.data);
+  // Backfill business-building documents for projects saved before this feature
+  // existed. These must be present (not undefined) so their leaf fields are
+  // addressable via MCP's update_project.
+  const backfilled = {
+    ...parsed,
+    onePager: parsed.onePager ?? emptyOnePager(),
+    icp: parsed.icp ?? emptyIcp(),
+    valueProp: parsed.valueProp ?? emptyValueProp(),
+    validationPlan: parsed.validationPlan ?? emptyValidationPlan(),
+    mvpScope: parsed.mvpScope ?? emptyMvpScope(),
+    gtmPlan: parsed.gtmPlan ?? emptyGtmPlan(),
+    salesDocs: parsed.salesDocs ?? emptySalesDocs(),
+    contractTerms: parsed.contractTerms ?? emptyContractTerms(),
+    pilotReport: parsed.pilotReport ?? emptyPilotReport(),
+  };
   return projectDocumentSchema.parse({
-    ...projectFormSchema.parse(row.data),
+    ...backfilled,
     id: row.id,
     schemaVersion: row.schema_version,
     revision: Number(row.revision),
