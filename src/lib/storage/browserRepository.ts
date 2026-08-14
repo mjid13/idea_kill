@@ -1,7 +1,11 @@
 "use client";
 
 import type { Project } from "@/types";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { LocalStorageProjectRepository } from "./localStorageRepository";
 import type { ProjectRepository } from "./types";
+
+type ErrorResponse = { error?: { message?: string } };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
@@ -9,9 +13,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { "content-type": "application/json", ...init?.headers },
     cache: "no-store",
   });
-  const body = await response.json().catch(() => ({}));
+  const body = await response.json().catch(() => ({})) as T & ErrorResponse;
   if (!response.ok) throw new Error(body.error?.message ?? "Project request failed.");
-  return body as T;
+  return body;
 }
 
 class BrowserProjectRepository implements ProjectRepository {
@@ -19,9 +23,9 @@ class BrowserProjectRepository implements ProjectRepository {
   async getById(id: string) {
     const response = await fetch(`/api/projects/${encodeURIComponent(id)}`, { cache: "no-store" });
     if (response.status === 404) return null;
-    const body = await response.json();
+    const body = await response.json().catch(() => ({})) as Project & ErrorResponse;
     if (!response.ok) throw new Error(body.error?.message ?? "Project request failed.");
-    return body as Project;
+    return body;
   }
   async save(project: Project) {
     const saved = await request<Project>(`/api/projects/${encodeURIComponent(project.id)}`, {
@@ -40,4 +44,6 @@ class BrowserProjectRepository implements ProjectRepository {
   }
 }
 
-export const projectRepository = new BrowserProjectRepository();
+export const projectRepository: ProjectRepository = isSupabaseConfigured()
+  ? new BrowserProjectRepository()
+  : new LocalStorageProjectRepository();
