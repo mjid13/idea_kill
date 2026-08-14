@@ -5,6 +5,12 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
+const mcpUrl = process.env.MCP_RESOURCE_URL
+  ?? `${(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "")}/mcp`;
+function CodeBlock({ children }: { children: string }) {
+  return <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs leading-relaxed"><code>{children}</code></pre>;
+}
+
 export default async function ConnectionsPage() {
   if (process.env.MCP_CONNECTIONS_ENABLED !== "true") redirect("/projects");
   const supabase = await createServerSupabaseClient();
@@ -20,6 +26,17 @@ export default async function ConnectionsPage() {
   return <div className="min-h-screen"><Header /><main className="mx-auto max-w-4xl space-y-6 px-4 py-8">
     <div><h1 className="text-2xl font-semibold">MCP connections</h1>
       <p className="text-sm text-muted-foreground">Manage client access and review recent safe mutations.</p></div>
+<Card><CardContent className="space-y-5 pt-6">
+  <div><h2 className="text-lg font-semibold">Connect your AI tool</h2><p className="mt-1 text-sm text-muted-foreground">IdeaKill uses MCP (Model Context Protocol) to let supported AI tools securely read your projects. Add the server once, then sign in with IdeaKill when the tool opens the OAuth page.</p></div>
+  <div className="rounded-lg border bg-background p-3"><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">MCP server URL</p><code className="mt-1 block break-all text-sm">{mcpUrl}</code><p className="mt-2 text-xs text-muted-foreground">Never share an access token here. Authentication is handled by OAuth.</p></div>
+  <div className="space-y-4">
+    <div><h3 className="font-medium">Codex CLI</h3><p className="mt-1 text-sm text-muted-foreground">Run these commands in a terminal:</p><CodeBlock>{"codex mcp add ideakill --url " + mcpUrl + " --oauth-resource " + mcpUrl + "\n\ncodex mcp login ideakill"}</CodeBlock><p className="mt-2 text-xs text-muted-foreground">A browser opens for OAuth. Verify later with <code>codex mcp get ideakill</code>.</p></div>
+    <div><h3 className="font-medium">Claude Code</h3><p className="mt-1 text-sm text-muted-foreground">Add the remote HTTP server, then authenticate from inside Claude Code:</p><CodeBlock>{"claude mcp add --transport http --scope user ideakill " + mcpUrl + "\n\nclaude"}</CodeBlock><p className="mt-2 text-xs text-muted-foreground">In Claude Code, type <code>/mcp</code>, choose <code>ideakill</code>, and complete OAuth. Verify with <code>claude mcp list</code>.</p></div>
+    <div><h3 className="font-medium">Claude Desktop or another MCP client</h3><p className="mt-1 text-sm text-muted-foreground">Choose “Add remote MCP server” (or Streamable HTTP), enter the URL above, and select OAuth when prompted.</p></div>
+  </div>
+  <div className="rounded-lg border border-dashed p-3 text-sm"><p className="font-medium">Using ChatGPT on the web?</p><p className="mt-1 text-muted-foreground">The standard chatgpt.com interface does not expose a custom MCP URL for every account. If your account has custom MCP support, add this URL from its Apps or MCP settings; otherwise use Codex, Claude Code, or an API client.</p></div>
+  <details className="rounded-lg border p-3 text-sm"><summary className="cursor-pointer font-medium">Troubleshooting</summary><ul className="mt-3 list-disc space-y-1 pl-5 text-muted-foreground"><li>Make sure the URL ends in <code>/mcp</code> and uses <code>https://</code> in production.</li><li>If the client reports a 404 or “no authorization support,” the server deployment is unavailable or outdated.</li><li>Reconnect with the client’s OAuth flow instead of pasting a Supabase or access token.</li></ul></details>
+</CardContent></Card>
     {(connections ?? []).map((connection) => <Card key={connection.client_id}><CardContent className="space-y-2">
       <div className="flex justify-between"><strong>{connection.client_name}</strong><span>{connection.status}</span></div>
       <p className="text-sm">Mode: {connection.access_mode} · Connected: {new Date(connection.created_at).toLocaleString()}</p>
