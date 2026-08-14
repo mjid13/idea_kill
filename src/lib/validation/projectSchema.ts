@@ -171,8 +171,11 @@ export const projectDocumentSchema = projectFormSchema.extend({
   id: z.string().min(1),
   schemaVersion: z.number().int().positive().default(1),
   revision: z.number().int().positive().default(1),
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
+  // PostgreSQL/PostgREST serializes `timestamptz` values with a numeric UTC
+  // offset (for example, `+00:00`) rather than the trailing `Z` produced by
+  // Date#toISOString. Both forms are valid ISO 8601 timestamps.
+  createdAt: z.iso.datetime({ offset: true }),
+  updatedAt: z.iso.datetime({ offset: true }),
 });
 
 export type ProjectDocument = z.infer<typeof projectDocumentSchema>;

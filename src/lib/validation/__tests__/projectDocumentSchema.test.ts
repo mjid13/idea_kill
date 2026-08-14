@@ -19,4 +19,15 @@ describe("projectDocumentSchema", () => {
   it("rejects invalid revisions", () => {
     expect(projectDocumentSchema.safeParse({ ...createEmptyProject(), revision: 0 }).success).toBe(false);
   });
+
+  it("accepts PostgreSQL timestamptz values with numeric offsets", () => {
+    const project = {
+      ...createEmptyProject(),
+      basicInfo: { ...createEmptyProject().basicInfo, name: "Offset timestamps" },
+      createdAt: "2026-08-14T10:30:00.123456+00:00",
+      updatedAt: "2026-08-14T14:30:00+04:00",
+    };
+
+    expect(projectDocumentSchema.safeParse(project).success).toBe(true);
+  });
 });
