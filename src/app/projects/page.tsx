@@ -3,14 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Copy, GitCompare, Plus, Trash2 } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ImportProjectButton } from "@/components/dashboard/ImportProjectButton";
-import { projectRepository } from "@/lib/storage/localStorageRepository";
+import { LegacyMigrationNotice } from "@/components/dashboard/LegacyMigrationNotice";
+import { projectRepository } from "@/lib/storage/browserRepository";
 import { duplicateProject } from "@/lib/storage/factory";
 import { calculateMetrics } from "@/lib/calculations";
 import { calculateScoreBreakdown, classifyScore } from "@/lib/scoring";
@@ -20,7 +22,8 @@ import type { Project } from "@/types";
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const t = useTranslations();
+  const t = useAppTranslations();
+  const locale = useLocale();
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -86,10 +89,11 @@ export default function ProjectsPage() {
       <Header />
       <main className="flex-1">
         <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
+          <LegacyMigrationNotice />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("Projects")}</h1>
-              <p className="text-sm text-muted-foreground">{t("Evaluations saved in this browser.")}</p>
+              <p className="text-sm text-muted-foreground">{t("Evaluations stored securely in your account.")}</p>
             </div>
             <div className="flex gap-2">
               {selected.size >= 2 && (
@@ -147,7 +151,7 @@ export default function ProjectsPage() {
                       <span>
                         {t("MRR:")} {formatCurrency(metrics.revenue.mrr, project.basicInfo.currency, { compact: true })}
                       </span>
-                      <span>{t("Updated {date}", { date: new Date(project.updatedAt).toLocaleDateString() })}</span>
+                      <span>{t("Updated {date}", { date: new Date(project.updatedAt).toLocaleDateString(locale) })}</span>
                     </div>
 
                     <div className="flex gap-1.5 border-t border-border pt-3">

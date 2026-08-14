@@ -1,4 +1,4 @@
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Card, CardContent } from "@/components/ui/card";
 import { HEALTH_BAR_COLOR, categoryHealth } from "@/lib/health";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ const CATEGORY_ORDER: Array<keyof ScoreBreakdownType["categories"]> = [
 ];
 
 export function ScoreBreakdown({ scores }: { scores: ScoreBreakdownType }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

@@ -1,11 +1,20 @@
-import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { MetricCard } from "./MetricCard";
-import { findFactorScore, scoreToHealth } from "@/lib/health";
+import { findFactorScore, scoreToHealth, type HealthStatus } from "@/lib/health";
 import { formatCurrency, formatMonths, formatMultiple, formatPercentage } from "@/lib/format";
-import type { CalculatedMetrics, Currency, ScoreBreakdown } from "@/types";
+import type { CalculatedMetrics, ConcentrationRiskLevel, Currency, ScoreBreakdown } from "@/types";
+
+const CONCENTRATION_HEALTH: Record<ConcentrationRiskLevel, HealthStatus> = {
+  low: "Strong",
+  moderate: "Weak",
+  high: "Risky",
+  severe: "Risky",
+};
 
 export function KeyMetricsGrid({ metrics, scores, currency }: { metrics: CalculatedMetrics; scores: ScoreBreakdown; currency: Currency }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
+  const locale = useLocale();
   const samScore = findFactorScore(scores, "market", "SAM");
   const somScore = findFactorScore(scores, "market", "SOM");
   const marginScore = findFactorScore(scores, "unitEconomics", "Gross margin");
@@ -65,7 +74,7 @@ export function KeyMetricsGrid({ metrics, scores, currency }: { metrics: Calcula
       />
       <MetricCard
         label={t("Break-even Customers")}
-        value={metrics.breakEven.breakEvenCustomers === null ? t("Unreachable") : metrics.breakEven.breakEvenCustomers.toLocaleString()}
+        value={metrics.breakEven.breakEvenCustomers === null ? t("Unreachable") : metrics.breakEven.breakEvenCustomers.toLocaleString(locale)}
         description={t("Customers needed to cover fixed monthly costs.")}
         formula={t("Fixed Monthly Costs / Contribution Margin Per Customer")}
         health={breakEvenScore !== null ? scoreToHealth(breakEvenScore) : undefined}
@@ -79,11 +88,57 @@ export function KeyMetricsGrid({ metrics, scores, currency }: { metrics: Calcula
       />
       <MetricCard
         label={t("Runway")}
-        value={metrics.funding.isProfitable ? t("No finite runway") : formatMonths(metrics.funding.runwayMonths)}
+        value={metrics.funding.isProfitable ? t("No finite runway") : formatMonths(metrics.funding.runwayMonths, 1, locale)}
         description={t("Months of operating cash remaining at the current burn rate.")}
         formula={t("Available Cash / Monthly Burn")}
         health={runwayScore !== null ? scoreToHealth(runwayScore) : undefined}
       />
+      <MetricCard
+        label={t("Net Revenue Retention")}
+        value={formatPercentage(metrics.retention.netRevenueRetentionPct, 0)}
+        description={t("Annualized revenue retained from existing customers after churn, contraction, and expansion. 100%+ means existing customers grow revenue on their own.")}
+        formula={t("(1 − Churn − Contraction + Expansion)^12")}
+      />
+      <MetricCard
+        label={t("Customer Concentration")}
+        value={formatPercentage(metrics.concentration.topCustomersRevenueSharePct, 0)}
+        description={t("Estimated share of revenue from your largest few customers.")}
+        formula={t("Top Customers' Revenue / Total Revenue")}
+        health={CONCENTRATION_HEALTH[metrics.concentration.riskLevel]}
+        healthLabel={metrics.concentration.riskLevel}
+      />
+      {metrics.marketplace && (
+        <>
+          <MetricCard
+            label={t("GMV")}
+            value={money(metrics.marketplace.gmv)}
+            description={t("Gross Merchandise Value — total monthly transaction volume flowing through the marketplace.")}
+            formula={t("Customers x Transactions per Customer x Average Order Value")}
+          />
+          <MetricCard
+            label={t("Take-rate Revenue")}
+            value={money(metrics.marketplace.takeRateRevenue)}
+            description={t("Your actual monthly revenue — GMV multiplied by your take rate.")}
+            formula={t("GMV x Take Rate")}
+          />
+        </>
+      )}
+      {metrics.dilution.postMoneyValuation !== null && (
+        <>
+          <MetricCard
+            label={t("Post-money Valuation")}
+            value={money(metrics.dilution.postMoneyValuation)}
+            description={t("Pre-money valuation plus the initial investment.")}
+            formula={t("Pre-Money Valuation + Initial Investment")}
+          />
+          <MetricCard
+            label={t("Equity Given Up")}
+            value={formatPercentage(metrics.dilution.equityGivenUpPct, 1)}
+            description={t("Share of the company traded away for this round's investment.")}
+            formula={t("Initial Investment / Post-Money Valuation")}
+          />
+        </>
+      )}
     </div>
   );
 }

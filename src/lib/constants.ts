@@ -35,6 +35,21 @@ export const CURRENCY_LABELS: Record<Currency, string> = Object.fromEntries(
   CURRENCY_OPTIONS.map((o) => [o.value, o.label])
 ) as Record<Currency, string>;
 
+/**
+ * Approximate currency -> USD conversion rates, used only to normalize market-size
+ * scoring bands (see scoring/market.ts) so a project priced in a stronger or weaker
+ * currency isn't scored against USD-scale anchors as if it were USD. Not intended for
+ * display or financial precision — static approximations, review periodically.
+ */
+export const CURRENCY_TO_USD: Record<Currency, number> = {
+  USD: 1,
+  EUR: 1.08,
+  GBP: 1.27,
+  AED: 0.272,
+  SAR: 0.267,
+  OMR: 2.6,
+};
+
 export const BILLING_PERIOD_LABELS: Record<BillingPeriod, string> = Object.fromEntries(
   BILLING_PERIOD_OPTIONS.map((o) => [o.value, o.label])
 ) as Record<BillingPeriod, string>;

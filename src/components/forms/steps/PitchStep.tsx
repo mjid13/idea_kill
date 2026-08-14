@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Controller, type Control } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -39,7 +39,7 @@ function NarrativeField({ control, name, label, placeholder, description, rows =
  * step blank never affects viability, it only leaves deck sections empty.
  */
 export function PitchStep({ control }: { control: Control<ProjectFormValues> }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   return (
     <div className="space-y-5">
       <p className="text-xs text-muted-foreground">

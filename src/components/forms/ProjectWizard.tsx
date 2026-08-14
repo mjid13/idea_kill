@@ -2,23 +2,24 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { useForm } from "react-hook-form";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { projectFormSchema, type ProjectFormValues } from "@/lib/validation/projectSchema";
-import { projectRepository } from "@/lib/storage/localStorageRepository";
+import { projectRepository } from "@/lib/storage/browserRepository";
 import { createEmptyProject } from "@/lib/storage/factory";
 import { exampleProject } from "@/lib/example";
 import { projectToFormValues, formValuesToProject } from "./formMapping";
 import { FieldLinker } from "./FieldLinker";
-import type { Project } from "@/types";
+import type { BusinessModel, Project } from "@/types";
 
 import { BasicInfoStep } from "./steps/BasicInfoStep";
 import { MarketStep } from "./steps/MarketStep";
 import { PricingStep } from "./steps/PricingStep";
+import { MarketplaceStep } from "./steps/MarketplaceStep";
 import { AcquisitionStep } from "./steps/AcquisitionStep";
 import { RetentionStep } from "./steps/RetentionStep";
 import { UnitEconomicsStep } from "./steps/UnitEconomicsStep";
@@ -34,14 +35,31 @@ interface StepDef {
   title: string;
   description: string;
   Component: (props: { control: ReturnType<typeof useForm<ProjectFormValues>>["control"] }) => React.ReactElement;
+  /** Business models for which this step is not applicable and should be skipped. */
+  hideFor?: BusinessModel[];
+  /** If set, this step is shown only for these business models (inverse of hideFor). */
+  showFor?: BusinessModel[];
 }
 
 const STEPS: StepDef[] = [
   { key: "basicInfo", title: "Basic information", description: "What are you building?", Component: BasicInfoStep },
   { key: "market", title: "Market", description: "Size the opportunity: TAM, SAM, SOM.", Component: MarketStep },
   { key: "pricing", title: "Pricing & customers", description: "How you charge and how many customers you have.", Component: PricingStep },
+  {
+    key: "marketplace",
+    title: "Marketplace GMV & take rate",
+    description: "Gross merchandise value and the take rate you keep as revenue.",
+    Component: MarketplaceStep,
+    showFor: ["marketplace"],
+  },
   { key: "acquisition", title: "Customer acquisition", description: "What it costs to acquire a customer.", Component: AcquisitionStep },
-  { key: "retention", title: "Retention", description: "How long customers stick around.", Component: RetentionStep },
+  {
+    key: "retention",
+    title: "Retention",
+    description: "How long customers stick around.",
+    Component: RetentionStep,
+    hideFor: ["one_time"],
+  },
   { key: "unitEconomics", title: "Unit economics", description: "Revenue and cost per customer.", Component: UnitEconomicsStep },
   { key: "costs", title: "Operating expenses", description: "Fixed monthly costs.", Component: OpexStep },
   { key: "funding", title: "Funding & runway", description: "Cash on hand and other income.", Component: FundingStep },
@@ -57,7 +75,7 @@ interface ProjectWizardProps {
 
 export function ProjectWizard({ initialProject }: ProjectWizardProps) {
   const router = useRouter();
-  const t = useTranslations();
+  const t = useAppTranslations();
   const [stepIndex, setStepIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
@@ -73,16 +91,35 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
   });
   const { control, handleSubmit, trigger, reset, formState } = form;
 
-  const step = STEPS[stepIndex];
-  const isFirst = stepIndex === 0;
-  const isLast = stepIndex === STEPS.length - 1;
-  const progressPct = Math.round(((stepIndex + 1) / STEPS.length) * 100);
+  const businessModel = useWatch({ control, name: "basicInfo.businessModel" });
+  const visibleSteps = useMemo(
+    () => STEPS.filter((s) => !s.hideFor?.includes(businessModel) && (!s.showFor || s.showFor.includes(businessModel))),
+    [businessModel]
+  );
+
+  // If switching business model mid-wizard removes the current step (or steps after
+  // it), clamp the index back into range instead of pointing past the end. Adjusted
+  // during render (React's recommended pattern for syncing state to a prop/derived
+  // value change) rather than in an effect, to avoid an extra commit-then-render pass.
+  const [prevVisibleLength, setPrevVisibleLength] = useState(visibleSteps.length);
+  if (prevVisibleLength !== visibleSteps.length) {
+    setPrevVisibleLength(visibleSteps.length);
+    setStepIndex((i) => Math.min(i, visibleSteps.length - 1));
+  }
+
+  // Guard against this same render still holding a stale stepIndex before the
+  // adjustment above is applied on the next render.
+  const safeIndex = Math.min(stepIndex, visibleSteps.length - 1);
+  const step = visibleSteps[safeIndex];
+  const isFirst = safeIndex === 0;
+  const isLast = safeIndex === visibleSteps.length - 1;
+  const progressPct = Math.round(((safeIndex + 1) / visibleSteps.length) * 100);
 
   async function goNext() {
     const valid = await trigger(step.key);
     if (!valid) return;
     if (isLast) return;
-    setStepIndex((i) => Math.min(STEPS.length - 1, i + 1));
+    setStepIndex((i) => Math.min(visibleSteps.length - 1, i + 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -99,7 +136,7 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
   async function onSubmit(values: ProjectFormValues) {
     setSubmitting(true);
     try {
-      const project = formValuesToProject(values, initialProject ? { id: initialProject.id, createdAt: initialProject.createdAt } : undefined);
+      const project = formValuesToProject(values, initialProject ? { id: initialProject.id, createdAt: initialProject.createdAt, schemaVersion: initialProject.schemaVersion, revision: initialProject.revision } : undefined);
       await projectRepository.save(project);
       router.push(`/project/${project.id}`);
     } finally {
@@ -114,7 +151,7 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
       <div className="mb-8 space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-xs font-medium text-muted-foreground">
-            {t("Step {current} of {total}", { current: stepIndex + 1, total: STEPS.length })}
+            {t("Step {current} of {total}", { current: safeIndex + 1, total: visibleSteps.length })}
           </p>
           {!initialProject && (
             <button
@@ -134,10 +171,11 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <FieldLinker form={form} />
-        <div className="rounded-xl border border-border bg-card p-5 ring-1 ring-foreground/5">
-          <StepComponent control={control} />
-        </div>
+        <FieldLinker form={form}>
+          <div className="rounded-xl border border-border bg-card p-5 ring-1 ring-foreground/5">
+            <StepComponent control={control} />
+          </div>
+        </FieldLinker>
 
         <div className="mt-6 flex items-center justify-between">
           <Button type="button" variant="outline" onClick={goBack} disabled={isFirst}>

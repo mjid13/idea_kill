@@ -4,10 +4,12 @@ import { known, unknownValue, type Project } from "@/types";
  * Pre-populated example project (spec section 28) so a new user can load a
  * realistic B2B SaaS scenario and understand the tool immediately.
  */
-export const EXAMPLE_PROJECT_ID = "example-b2b-saas";
+export const EXAMPLE_PROJECT_ID = "00000000-0000-4000-8000-000000000001";
 
 export const exampleProject: Project = {
   id: EXAMPLE_PROJECT_ID,
+  schemaVersion: 1,
+  revision: 1,
   createdAt: "2026-01-15T00:00:00.000Z",
   updatedAt: "2026-01-15T00:00:00.000Z",
   basicInfo: {

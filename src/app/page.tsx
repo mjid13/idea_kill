@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import {
   ArrowRight,
   BarChart3,
@@ -17,7 +17,7 @@ import {
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { projectRepository } from "@/lib/storage/localStorageRepository";
+import { projectRepository } from "@/lib/storage/browserRepository";
 import { exampleProject } from "@/lib/example";
 
 const CALCULATES = [
@@ -33,7 +33,7 @@ const CALCULATES = [
 
 export default function LandingPage() {
   const router = useRouter();
-  const t = useTranslations();
+  const t = useAppTranslations();
 
   async function viewExample() {
     await projectRepository.save(exampleProject);
@@ -60,7 +60,7 @@ export default function LandingPage() {
             </Button>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">
-            {t("No account needed. Evaluations are saved privately in your browser.")}
+            {t("Sign in securely with a magic link. Your evaluations are stored privately in your account.")}
           </p>
         </section>
 

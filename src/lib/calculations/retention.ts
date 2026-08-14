@@ -22,8 +22,17 @@ export function calculateRetentionMetrics(retention: RetentionAssumptions): Rete
     ? val(retention.averageCustomerLifetimeMonths)
     : safeDiv(1, pct(monthlyChurnPct));
 
+  const expansionPct = val(retention.monthlyExpansionRevenuePct);
+  const contractionPct = val(retention.monthlyContractionRevenuePct);
+  // Guard against absurd inputs (churn + contraction > 100 + expansion) producing a
+  // misleadingly positive NRR via an even exponent on a negative base. No upper clamp
+  // on the final NRR — >100% is the entire point of a healthy, expansion-driven business.
+  const netMonthlyRetentionPct = Math.max(0, 100 - monthlyChurnPct - contractionPct + expansionPct);
+  const netRevenueRetentionPct = Math.pow(netMonthlyRetentionPct / 100, 12) * 100;
+
   return {
     monthlyChurnPct,
     customerLifetimeMonths,
+    netRevenueRetentionPct,
   };
 }

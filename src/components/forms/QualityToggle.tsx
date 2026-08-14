@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { cn } from "@/lib/utils";
 import type { DataQuality } from "@/types";
 
@@ -17,7 +17,7 @@ interface QualityToggleProps {
 
 /** Lets the user mark whether an assumption is a real number, an estimate, or unknown (spec section 31). */
 export function QualityToggle({ value, onChange }: QualityToggleProps) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   return (
     <div className="inline-flex rounded-md border border-border p-0.5 text-[11px]">
       {OPTIONS.map((opt) => (

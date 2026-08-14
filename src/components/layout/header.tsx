@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Gauge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/i18n/language-provider";
 
 export function Header() {
   const { locale, setLocale } = useLanguage();
-  const t = useTranslations();
+  const t = useAppTranslations();
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
@@ -27,6 +27,7 @@ export function Header() {
           </Button>
           <Button variant="ghost" size="sm" render={<Link href="/projects">{t("Projects")}</Link>} />
           <Button variant="ghost" size="sm" render={<Link href="/compare">{t("Compare")}</Link>} />
+          <Button variant="ghost" size="sm" render={<Link href="/settings/connections">Connections</Link>} />
           <Button size="sm" render={<Link href="/new">{t("Evaluate an Idea")}</Link>} />
         </nav>
       </div>

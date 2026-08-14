@@ -1,3 +1,6 @@
+"use client";
+
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -8,6 +11,8 @@ interface InfoTooltipProps {
 
 /** Small (i) affordance used next to every calculated/derived metric label (spec section 30). */
 export function InfoTooltip({ description, formula }: InfoTooltipProps) {
+  const t = useAppTranslations();
+
   return (
     <Tooltip>
       <TooltipTrigger className="inline-flex align-middle text-muted-foreground hover:text-foreground">
@@ -18,7 +23,7 @@ export function InfoTooltip({ description, formula }: InfoTooltipProps) {
           <p>{description}</p>
           {formula && (
             <div>
-              <p className="text-[10px] font-semibold tracking-wide text-background/70 uppercase">Formula</p>
+              <p className="text-[10px] font-semibold tracking-wide text-background/70 uppercase">{t("Formula")}</p>
               <code className="block text-[11px]">{formula}</code>
             </div>
           )}

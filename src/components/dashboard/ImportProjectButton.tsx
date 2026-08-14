@@ -1,26 +1,29 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { parseImportBundle, ImportError } from "@/lib/export/importData";
-import { projectRepository } from "@/lib/storage/localStorageRepository";
+import { projectRepository } from "@/lib/storage/browserRepository";
 import type { Project } from "@/types";
 
 /** Pairs with ExportMenu's JSON export — reads a previously exported project back in as a new project. */
 export function ImportProjectButton({ onImported }: { onImported: (project: Project) => void }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleFile(file: File) {
+  async function handleFiles(files: File[]) {
     setError(null);
     try {
-      const text = await file.text();
-      const project = parseImportBundle(text);
-      await projectRepository.save(project);
-      onImported(project);
+      let last: Project | undefined;
+      for (const file of files) {
+        const project = parseImportBundle(await file.text());
+        await (projectRepository.saveImported?.(project) ?? projectRepository.save(project));
+        last = project;
+      }
+      if (last) onImported(last);
     } catch (err) {
       setError(err instanceof ImportError ? t(err.message) : t("This file isn't valid JSON."));
     }
@@ -39,12 +42,13 @@ export function ImportProjectButton({ onImported }: { onImported: (project: Proj
       <input
         ref={inputRef}
         type="file"
+        multiple
         accept="application/json,.json"
         className="hidden"
         onChange={(e) => {
-          const file = e.target.files?.[0];
+          const files = Array.from(e.target.files ?? []);
           e.target.value = "";
-          if (file) void handleFile(file);
+          if (files.length) void handleFiles(files);
         }}
       />
       {error && <p className="text-xs text-destructive">{error}</p>}

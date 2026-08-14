@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Controller, type Control } from "react-hook-form";
 import { AssumptionField } from "@/components/forms/AssumptionField";
 import { Switch } from "@/components/ui/switch";
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import type { ProjectFormValues } from "@/lib/validation/projectSchema";
 
 export function MarketStep({ control }: { control: Control<ProjectFormValues> }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   const [directEntry, setDirectEntry] = useState(false);
 
   return (

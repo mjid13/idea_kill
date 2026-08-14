@@ -1,4 +1,4 @@
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Card, CardContent } from "@/components/ui/card";
 import { InfoTooltip } from "@/components/forms/InfoTooltip";
 import { HEALTH_TEXT_COLOR, type HealthStatus } from "@/lib/health";
@@ -14,7 +14,7 @@ interface MetricCardProps {
 }
 
 export function MetricCard({ label, value, description, formula, health, healthLabel }: MetricCardProps) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   return (
     <Card size="sm">
       <CardContent className="space-y-1">

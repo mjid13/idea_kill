@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Printer, ArrowLeft, Pencil } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
-import { projectRepository } from "@/lib/storage/localStorageRepository";
+import { projectRepository } from "@/lib/storage/browserRepository";
 import { calculateMetrics, generateScenarios, val } from "@/lib/calculations";
 import { calculateScoreBreakdown, classifyScore } from "@/lib/scoring";
 import { generateInsights } from "@/lib/insights";
@@ -21,7 +22,7 @@ import type { Project } from "@/types";
 export default function PitchDeckPage() {
   const params = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null | undefined>(undefined);
-  const t = useTranslations();
+  const t = useAppTranslations();
 
   useEffect(() => {
     projectRepository.getById(params.id).then(setProject);
@@ -42,7 +43,8 @@ export default function PitchDeckPage() {
 }
 
 function PitchDeck({ project }: { project: Project }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
+  const locale = useLocale();
   const currency = project.basicInfo.currency;
   const metrics = useMemo(() => calculateMetrics(project), [project]);
   const scores = useMemo(() => calculateScoreBreakdown(project, metrics), [project, metrics]);
@@ -78,7 +80,7 @@ function PitchDeck({ project }: { project: Project }) {
         <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("Investor Pitch Deck")}</p>
         <h1 className="mt-1 text-3xl font-semibold text-foreground">{project.basicInfo.name || t("Untitled project")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {t(BUSINESS_MODEL_LABELS[project.basicInfo.businessModel])} · {currency} · {new Date().toLocaleDateString()}
+          {t(BUSINESS_MODEL_LABELS[project.basicInfo.businessModel])} · {currency} · {new Date().toLocaleDateString(locale)}
         </p>
         {project.basicInfo.description && <p className="mt-3 text-base text-foreground">{project.basicInfo.description}</p>}
       </header>
@@ -110,7 +112,7 @@ function PitchDeck({ project }: { project: Project }) {
           items={[
             ["Pricing", formatCurrency(val(project.pricing.productPrice), currency)],
             ["Billing", t(BILLING_PERIOD_LABELS[project.pricing.billingPeriod])],
-            ["Current customers", val(project.pricing.currentCustomers).toLocaleString()],
+            ["Current customers", val(project.pricing.currentCustomers).toLocaleString(locale)],
             ["Gross margin", formatPercentage(metrics.unitEconomics.grossMarginPct)],
           ]}
         />
@@ -134,7 +136,7 @@ function PitchDeck({ project }: { project: Project }) {
             ["CAC", formatCurrency(metrics.acquisition.cac, currency, { compact: true })],
             ["LTV", formatCurrency(metrics.unitEconomics.ltv, currency, { compact: true })],
             ["LTV:CAC", metrics.unitEconomics.ltvToCacRatio === null ? "—" : `${metrics.unitEconomics.ltvToCacRatio.toFixed(1)}x`],
-            ["CAC payback", formatMonths(metrics.unitEconomics.cacPaybackMonths)],
+            ["CAC payback", formatMonths(metrics.unitEconomics.cacPaybackMonths, 1, locale)],
           ]}
         />
       </Slide>
@@ -162,7 +164,7 @@ function PitchDeck({ project }: { project: Project }) {
               <td className="py-1.5 text-muted-foreground">{t("Customers")}</td>
               {(["conservative", "base", "optimistic"] as const).map((k) => (
                 <td key={k} className="py-1.5 text-right tabular-nums">
-                  {scenarios.scenarios[k].customers.toLocaleString()}
+                  {scenarios.scenarios[k].customers.toLocaleString(locale)}
                 </td>
               ))}
             </tr>
@@ -225,7 +227,7 @@ function PitchDeck({ project }: { project: Project }) {
             <p className="text-2xl font-semibold tabular-nums text-foreground">{formatCurrency(fundingAsk, currency, { compact: true })}</p>
             {extendedRunwayMonths !== null && (
               <p className="mt-1 text-sm text-muted-foreground">
-                {t("Extends runway to approximately")} {formatMonths(extendedRunwayMonths)} {t("at the current burn rate.")}
+                {t("Extends runway to approximately")} {formatMonths(extendedRunwayMonths, 1, locale)} {t("at the current burn rate.")}
               </p>
             )}
             {round && (round.roundType || round.valuation || round.previousInvestors) && (
@@ -264,7 +266,7 @@ function PitchDeck({ project }: { project: Project }) {
 }
 
 function Slide({ title, children, last }: { title: string; children: React.ReactNode; last?: boolean }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   return (
     <section className={`py-5 print:break-inside-avoid ${last ? "" : "border-b border-border"}`}>
       <h2 className="mb-3 text-sm font-semibold tracking-wide text-foreground uppercase">{t(title)}</h2>
@@ -281,7 +283,7 @@ function Prose({ text, placeholder, className }: { text: string | undefined; pla
 }
 
 function KeyValueGrid({ items }: { items: Array<[string, string]> }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   return (
     <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
       {items.map(([label, value]) => (
@@ -298,7 +300,7 @@ const AXIS_TICK = { fontSize: 11, fill: "var(--color-muted-foreground)" };
 const GRID_STROKE = "var(--color-border)";
 
 function TractionChart({ points }: { points: NonNullable<Project["pitch"]>["tractionHistory"] }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   const data = points ?? [];
   if (data.length < 2) return null;
 

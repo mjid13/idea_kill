@@ -5,6 +5,7 @@ import { calculateMetrics, generateScenarios } from "@/lib/calculations";
 import { calculateScoreBreakdown } from "@/lib/scoring";
 import { generateInsights } from "@/lib/insights";
 import { exampleProject } from "@/lib/example";
+import { known, type Project } from "@/types";
 
 function exportedJson() {
   const metrics = calculateMetrics(exampleProject);
@@ -22,6 +23,32 @@ describe("parseImportBundle", () => {
     expect(project.market.totalPotentialCustomers).toEqual(exampleProject.market.totalPotentialCustomers);
     expect(project.pricing.productPrice).toEqual(exampleProject.pricing.productPrice);
     expect(project.pitch).toEqual(exampleProject.pitch);
+  });
+
+  it("round-trips a marketplace project's new optional slice and fields", () => {
+    const marketplaceProject: Project = {
+      ...exampleProject,
+      basicInfo: { ...exampleProject.basicInfo, businessModel: "marketplace" },
+      marketplace: {
+        averageOrderValue: known(40),
+        takeRatePct: known(20),
+        transactionsPerCustomerPerMonth: known(2),
+      },
+      funding: { ...exampleProject.funding, preMoneyValuation: known(2000000) },
+      retention: { ...exampleProject.retention, monthlyExpansionRevenuePct: known(4) },
+      pricing: { ...exampleProject.pricing, topCustomersRevenueSharePct: known(15) },
+    };
+    const metrics = calculateMetrics(marketplaceProject);
+    const scores = calculateScoreBreakdown(marketplaceProject, metrics);
+    const insights = generateInsights(metrics, scores, marketplaceProject);
+    const scenarios = generateScenarios(marketplaceProject, metrics);
+    const bundle = buildExportBundle(marketplaceProject, metrics, scores, insights, scenarios);
+
+    const imported = parseImportBundle(JSON.stringify(bundle));
+    expect(imported.marketplace).toEqual(marketplaceProject.marketplace);
+    expect(imported.funding.preMoneyValuation).toEqual(known(2000000));
+    expect(imported.retention.monthlyExpansionRevenuePct).toEqual(known(4));
+    expect(imported.pricing.topCustomersRevenueSharePct).toEqual(known(15));
   });
 
   it("assigns a fresh id rather than reusing the exported one, so importing never collides with an existing project", () => {

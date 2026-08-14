@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { useWatch, type Control } from "react-hook-form";
 import { AssumptionField } from "@/components/forms/AssumptionField";
 import { ComputedField } from "@/components/forms/ComputedField";
@@ -8,7 +8,7 @@ import { formatPercentage } from "@/lib/format";
 import type { ProjectFormValues } from "@/lib/validation/projectSchema";
 
 export function AcquisitionStep({ control }: { control: Control<ProjectFormValues> }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   const leads = useWatch({ control, name: "acquisition.monthlyLeads.value" }) ?? 0;
   const leadsQuality = useWatch({ control, name: "acquisition.monthlyLeads.quality" });
   const newCustomers = useWatch({ control, name: "acquisition.newCustomersAcquiredMonthly.value" }) ?? 0;

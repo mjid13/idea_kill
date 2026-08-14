@@ -1,4 +1,4 @@
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Label } from "@/components/ui/label";
 import { InfoTooltip } from "./InfoTooltip";
 
@@ -11,7 +11,7 @@ interface ComputedFieldProps {
 
 /** A read-only value derived live from other fields — never asks the user to re-enter it. */
 export function ComputedField({ label, description, formula, value }: ComputedFieldProps) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   return (
     <div className="space-y-1.5">
       <Label className="flex items-center gap-1 text-xs font-medium text-foreground">

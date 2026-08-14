@@ -14,6 +14,8 @@ const importedPitchSchema = pitchSchema.extend(pitchDeckDetailsSchema.partial().
 
 const importedProjectSchema = projectFormSchema.extend({
   id: z.string().min(1),
+  schemaVersion: z.number().int().positive().optional().default(1),
+  revision: z.number().int().positive().optional().default(1),
   createdAt: z.string(),
   updatedAt: z.string(),
   pitch: importedPitchSchema,
@@ -44,6 +46,8 @@ export function parseImportBundle(raw: string): Project {
   return {
     ...result.data.project,
     id: createProjectId(),
+    schemaVersion: 1,
+    revision: 1,
     createdAt: now,
     updatedAt: now,
   };

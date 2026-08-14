@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Printer, ArrowLeft } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
-import { projectRepository } from "@/lib/storage/localStorageRepository";
+import { projectRepository } from "@/lib/storage/browserRepository";
 import { calculateMetrics, generateScenarios } from "@/lib/calculations";
 import { calculateScoreBreakdown, classifyScore, CLASSIFICATION_DESCRIPTIONS } from "@/lib/scoring";
 import { generateInsights, generateDecisionSummary } from "@/lib/insights";
@@ -20,7 +21,7 @@ import type { Project } from "@/types";
 export default function ReportPage() {
   const params = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null | undefined>(undefined);
-  const t = useTranslations();
+  const t = useAppTranslations();
 
   useEffect(() => {
     projectRepository.getById(params.id).then(setProject);
@@ -41,7 +42,8 @@ export default function ReportPage() {
 }
 
 function Report({ project }: { project: Project }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
+  const locale = useLocale();
   const currency = project.basicInfo.currency;
   const metrics = useMemo(() => calculateMetrics(project), [project]);
   const scores = useMemo(() => calculateScoreBreakdown(project, metrics), [project, metrics]);
@@ -69,7 +71,7 @@ function Report({ project }: { project: Project }) {
         <h1 className="mt-1 text-3xl font-semibold text-foreground">{project.basicInfo.name || t("Untitled project")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {t(BUSINESS_MODEL_LABELS[project.basicInfo.businessModel])} · {project.basicInfo.currency} ·{" "}
-          {t("Generated {date}", { date: new Date().toLocaleDateString() })}
+          {t("Generated {date}", { date: new Date().toLocaleDateString(locale) })}
         </p>
         {project.basicInfo.description && <p className="mt-3 text-sm text-foreground">{project.basicInfo.description}</p>}
       </header>
@@ -123,7 +125,7 @@ function Report({ project }: { project: Project }) {
             ["CAC", formatCurrency(metrics.acquisition.cac, currency, { compact: true })],
             ["LTV", formatCurrency(metrics.unitEconomics.ltv, currency, { compact: true })],
             ["LTV:CAC", formatMultiple(metrics.unitEconomics.ltvToCacRatio)],
-            ["CAC payback", formatMonths(metrics.unitEconomics.cacPaybackMonths)],
+            ["CAC payback", formatMonths(metrics.unitEconomics.cacPaybackMonths, 1, locale)],
           ]}
         />
       </Section>
@@ -132,12 +134,12 @@ function Report({ project }: { project: Project }) {
         <KeyValueGrid
           items={[
             ["Monthly burn", metrics.operating.isCashFlowPositive ? t("Cash Flow Positive") : formatCurrency(metrics.operating.monthlyBurn, currency, { compact: true })],
-            ["Runway", metrics.funding.isProfitable ? t("Profitable / no finite runway") : formatMonths(metrics.funding.runwayMonths)],
+            ["Runway", metrics.funding.isProfitable ? t("Profitable / no finite runway") : formatMonths(metrics.funding.runwayMonths, 1, locale)],
             [
               "Break-even customers",
               metrics.breakEven.breakEvenCustomers === null
                 ? t("Unreachable at current margins")
-                : metrics.breakEven.breakEvenCustomers.toLocaleString(),
+                : metrics.breakEven.breakEvenCustomers.toLocaleString(locale),
             ],
             ["Break-even revenue", formatCurrency(metrics.breakEven.breakEvenRevenue, currency, { compact: true })],
           ]}
@@ -167,7 +169,7 @@ function Report({ project }: { project: Project }) {
               <td className="py-1.5 text-muted-foreground">{t("Customers")}</td>
               {(["conservative", "base", "optimistic"] as const).map((k) => (
                 <td key={k} className="py-1.5 text-right tabular-nums">
-                  {scenarios.scenarios[k].customers.toLocaleString()}
+                  {scenarios.scenarios[k].customers.toLocaleString(locale)}
                 </td>
               ))}
             </tr>
@@ -203,8 +205,8 @@ function Report({ project }: { project: Project }) {
 
       <Section title="Assumptions" last>
         <p className="text-xs text-muted-foreground">
-          {t("This report evaluates the economics of the assumptions entered on")} {new Date(project.createdAt).toLocaleDateString()}
-          {t(", last updated")} {new Date(project.updatedAt).toLocaleDateString()}.{" "}
+          {t("This report evaluates the economics of the assumptions entered on")} {new Date(project.createdAt).toLocaleDateString(locale)}
+          {t(", last updated")} {new Date(project.updatedAt).toLocaleDateString(locale)}.{" "}
           {t("It does not predict success — it assesses whether the current numbers add up.")}
         </p>
       </Section>
@@ -213,7 +215,7 @@ function Report({ project }: { project: Project }) {
 }
 
 function Section({ title, children, last }: { title: string; children: React.ReactNode; last?: boolean }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   return (
     <section className={`py-5 ${last ? "" : "border-b border-border"}`}>
       <h2 className="mb-3 text-sm font-semibold tracking-wide text-foreground uppercase">{t(title)}</h2>
@@ -223,7 +225,7 @@ function Section({ title, children, last }: { title: string; children: React.Rea
 }
 
 function KeyValueGrid({ items }: { items: Array<[string, string]> }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   return (
     <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
       {items.map(([label, value]) => (
@@ -237,7 +239,7 @@ function KeyValueGrid({ items }: { items: Array<[string, string]> }) {
 }
 
 function BulletList({ items, empty, ordered }: { items: string[]; empty?: string; ordered?: boolean }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   if (items.length === 0) return <p className="text-sm text-muted-foreground">{empty ?? t("None.")}</p>;
   const Tag = ordered ? "ol" : "ul";
   return (

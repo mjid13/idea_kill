@@ -110,6 +110,7 @@ export function buildExportCsv(bundle: ExportBundle): string {
 
     ...flattenInputs("Market (input)", project.market),
     ...flattenInputs("Pricing (input)", project.pricing),
+    ...flattenInputs("Marketplace (input)", project.marketplace ?? {}),
     ...flattenInputs("Acquisition (input)", project.acquisition),
     ...flattenInputs("Retention (input)", project.retention),
     ...flattenInputs("Unit economics (input)", project.unitEconomics),
@@ -127,6 +128,9 @@ export function buildExportCsv(bundle: ExportBundle): string {
     ...flattenOutputs("Operating (calculated)", calculatedMetrics.operating),
     ...flattenOutputs("Funding (calculated)", calculatedMetrics.funding),
     ...flattenOutputs("Break-even (calculated)", calculatedMetrics.breakEven),
+    ...flattenOutputs("Dilution (calculated)", calculatedMetrics.dilution),
+    ...flattenOutputs("Concentration (calculated)", calculatedMetrics.concentration),
+    ...flattenOutputs("Marketplace (calculated)", calculatedMetrics.marketplace ?? {}),
 
     ["Score", "Overall", String(scoreBreakdown.overall), ""],
     ["Score", "Confidence", String(scoreBreakdown.confidence), ""],

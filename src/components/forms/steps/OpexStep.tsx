@@ -1,12 +1,12 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import type { Control } from "react-hook-form";
 import { AssumptionField } from "@/components/forms/AssumptionField";
 import type { ProjectFormValues } from "@/lib/validation/projectSchema";
 
 export function OpexStep({ control }: { control: Control<ProjectFormValues> }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <AssumptionField control={control} name="costs.founderSalaries" label={t("Founder salaries")} prefix="$" />

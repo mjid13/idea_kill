@@ -1,16 +1,20 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { Controller, type Control } from "react-hook-form";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
+import { Controller, useWatch, type Control } from "react-hook-form";
 import { AssumptionField } from "@/components/forms/AssumptionField";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BILLING_PERIOD_LABELS, BILLING_PERIOD_OPTIONS } from "@/lib/constants";
 import type { ProjectFormValues } from "@/lib/validation/projectSchema";
-import type { BillingPeriod } from "@/types";
+import type { BillingPeriod, BusinessModel } from "@/types";
+
+const FREEMIUM_ELIGIBLE_MODELS: BusinessModel[] = ["saas", "subscription", "usage_based"];
 
 export function PricingStep({ control }: { control: Control<ProjectFormValues> }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
+  const businessModel = useWatch({ control, name: "basicInfo.businessModel" });
+  const showFreeToPaidConversion = FREEMIUM_ELIGIBLE_MODELS.includes(businessModel);
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -55,13 +59,23 @@ export function PricingStep({ control }: { control: Control<ProjectFormValues> }
           step={0.5}
           description={t("Compounding month-over-month growth rate applied to new customer acquisition in forecasts.")}
         />
+        {showFreeToPaidConversion && (
+          <AssumptionField
+            control={control}
+            name="pricing.freeToPaidConversionPct"
+            label={t("Free-to-paid conversion rate")}
+            suffix="%"
+            step={0.5}
+            description={t("Optional — only relevant if you run a freemium funnel.")}
+          />
+        )}
         <AssumptionField
           control={control}
-          name="pricing.freeToPaidConversionPct"
-          label={t("Free-to-paid conversion rate")}
+          name="pricing.topCustomersRevenueSharePct"
+          label={t("Revenue share from top customers")}
           suffix="%"
-          step={0.5}
-          description={t("Optional — only relevant if you run a freemium funnel.")}
+          step={1}
+          description={t("Estimated % of monthly revenue coming from your largest 3-5 customers. Leave unset if revenue is spread evenly.")}
         />
       </div>
     </div>

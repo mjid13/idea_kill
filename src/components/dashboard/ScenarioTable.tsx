@@ -1,4 +1,5 @@
-import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { formatCompactNumber, formatCurrency, formatMonths } from "@/lib/format";
 import type { Currency, ScenarioResult } from "@/types";
@@ -11,7 +12,8 @@ const ROWS: Array<{ label: string; key: "revenue" | "mrr" | "customers" | "profi
 ];
 
 export function ScenarioTable({ result, currency }: { result: ScenarioResult; currency: Currency }) {
-  const t = useTranslations();
+  const t = useAppTranslations();
+  const locale = useLocale();
   const scenarios = [result.scenarios.conservative, result.scenarios.base, result.scenarios.optimistic];
 
   return (
@@ -48,7 +50,7 @@ export function ScenarioTable({ result, currency }: { result: ScenarioResult; cu
                 <td className="py-2 pr-4 text-muted-foreground">{t("Runway")}</td>
                 {scenarios.map((s) => (
                   <td key={s.name} className="py-2 pr-4 text-right tabular-nums text-foreground">
-                    {s.runwayMonths === null ? t("Profitable") : formatMonths(s.runwayMonths)}
+                    {s.runwayMonths === null ? t("Profitable") : formatMonths(s.runwayMonths, 1, locale)}
                   </td>
                 ))}
               </tr>

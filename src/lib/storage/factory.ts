@@ -14,6 +14,8 @@ export function createEmptyProject(businessModel: BusinessModel = "saas", curren
   const now = new Date().toISOString();
   return {
     id: id(),
+    schemaVersion: 1,
+    revision: 1,
     createdAt: now,
     updatedAt: now,
     basicInfo: { name: "", description: "", businessModel, currency },
@@ -31,7 +33,9 @@ export function createEmptyProject(businessModel: BusinessModel = "saas", curren
       expectedCustomers12mo: u0(),
       expectedMonthlyCustomerGrowthPct: u0(),
       freeToPaidConversionPct: u0(),
+      topCustomersRevenueSharePct: u0(),
     },
+    marketplace: emptyMarketplace(),
     acquisition: {
       monthlyMarketingSpend: u0(),
       monthlySalesSpend: u0(),
@@ -43,6 +47,8 @@ export function createEmptyProject(businessModel: BusinessModel = "saas", curren
       monthlyChurnPct: u0(),
       annualChurnPct: u0(),
       averageCustomerLifetimeMonths: u0(),
+      monthlyExpansionRevenuePct: u0(),
+      monthlyContractionRevenuePct: u0(),
     },
     unitEconomics: {
       revenuePerCustomer: u0(),
@@ -68,6 +74,7 @@ export function createEmptyProject(businessModel: BusinessModel = "saas", curren
       availableCash: u0(),
       initialInvestment: u0(),
       otherMonthlyIncome: u0(),
+      preMoneyValuation: u0(),
     },
     validation: {
       problemPain: 3,
@@ -110,6 +117,15 @@ export function createEmptyProject(businessModel: BusinessModel = "saas", curren
   };
 }
 
+/** Default empty marketplace GMV/take-rate content, also used to backfill projects saved before this slice existed. */
+export function emptyMarketplace() {
+  return {
+    averageOrderValue: u0(),
+    takeRatePct: u0(),
+    transactionsPerCustomerPerMonth: u0(),
+  };
+}
+
 /** Default empty pitch-narrative content, also used to backfill projects saved before this step existed. */
 export function emptyPitch() {
   return {
@@ -128,6 +144,7 @@ export function duplicateProject(project: Project): Project {
   return {
     ...project,
     id: id(),
+    revision: 1,
     createdAt: now,
     updatedAt: now,
     basicInfo: { ...project.basicInfo, name: `${project.basicInfo.name} (copy)` },

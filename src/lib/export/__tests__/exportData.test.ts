@@ -4,6 +4,7 @@ import { calculateMetrics, generateScenarios } from "@/lib/calculations";
 import { calculateScoreBreakdown } from "@/lib/scoring";
 import { generateInsights } from "@/lib/insights";
 import { exampleProject } from "@/lib/example";
+import { known, type Project } from "@/types";
 
 function buildBundle() {
   const metrics = calculateMetrics(exampleProject);
@@ -65,6 +66,38 @@ describe("buildExportCsv", () => {
     const bundle = buildExportBundle(projectWithSpecialChars, metrics, scores, insights, scenarios);
     const csv = buildExportCsv(bundle);
     expect(csv).toContain('"Handles ""quotes"", commas, and\nnewlines"');
+  });
+
+  it("includes dilution and concentration output rows, gracefully skipping unset marketplace fields", () => {
+    const csv = buildExportCsv(buildBundle());
+    // exampleProject never sets preMoneyValuation/topCustomersRevenueSharePct, so the
+    // metrics are null/0 — dilution rows should be entirely absent (all-null object),
+    // concentration should still show its 0%/low-risk default, and no literal "null"
+    // or "marketplace" section should leak through for a non-marketplace project.
+    expect(csv).toContain("Concentration (calculated),Top Customers Revenue Share Pct,0,");
+    expect(csv).not.toContain("Marketplace (calculated)");
+    expect(csv).not.toContain("null");
+  });
+
+  it("includes marketplace GMV/take-rate rows for a marketplace project", () => {
+    const project: Project = {
+      ...exampleProject,
+      basicInfo: { ...exampleProject.basicInfo, businessModel: "marketplace" },
+      marketplace: {
+        averageOrderValue: known(40),
+        takeRatePct: known(20),
+        transactionsPerCustomerPerMonth: known(2),
+      },
+    };
+    const metrics = calculateMetrics(project);
+    const scores = calculateScoreBreakdown(project, metrics);
+    const insights = generateInsights(metrics, scores, project);
+    const scenarios = generateScenarios(project, metrics);
+    const bundle = buildExportBundle(project, metrics, scores, insights, scenarios);
+    const csv = buildExportCsv(bundle);
+    expect(csv).toContain("Marketplace (input),Average Order Value,40,known");
+    expect(csv).toContain("Marketplace (calculated),Gmv,");
+    expect(csv).toContain("Marketplace (calculated),Take Rate Revenue,");
   });
 
   it("renders unreachable break-even as an empty field rather than the literal string null", () => {
