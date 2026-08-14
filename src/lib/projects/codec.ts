@@ -1,6 +1,7 @@
 import { projectDocumentSchema, projectFormSchema } from "@/lib/validation/projectSchema";
 import type { Project } from "@/types";
 import {
+  emptyMarketplace,
   emptyOnePager,
   emptyIcp,
   emptyValueProp,
@@ -24,11 +25,12 @@ export interface ProjectRow {
 
 export function projectFromRow(row: ProjectRow): Project {
   const parsed = projectFormSchema.parse(row.data);
-  // Backfill business-building documents for projects saved before this feature
-  // existed. These must be present (not undefined) so their leaf fields are
-  // addressable via MCP's update_project.
+  // Backfill optional slices (marketplace, business-building documents) for
+  // projects saved before they existed. These must be present (not undefined)
+  // so their leaf fields are addressable via MCP's update_project.
   const backfilled = {
     ...parsed,
+    marketplace: parsed.marketplace ?? emptyMarketplace(),
     onePager: parsed.onePager ?? emptyOnePager(),
     icp: parsed.icp ?? emptyIcp(),
     valueProp: parsed.valueProp ?? emptyValueProp(),
