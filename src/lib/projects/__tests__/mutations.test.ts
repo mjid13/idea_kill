@@ -26,4 +26,15 @@ describe("MCP project mutations", () => {
     ])).toThrow();
     expect(project.pricing.productPrice.value).toBe(0);
   });
+
+  it("allows writing business-document fields, defaulted empty by createEmptyProject", () => {
+    const project = validProject();
+    const result = applyProjectChanges(project, [{ path: "onePager.problem", value: "Customers can't find X" }]);
+    expect(result.project.onePager?.problem).toBe("Customers can't find X");
+    expect(project.onePager?.problem).toBe("");
+  });
+
+  it("rejects a non-existent business-document field", () => {
+    expect(() => applyProjectChanges(validProject(), [{ path: "onePager.notAField", value: 1 }])).toThrow(/not writable/);
+  });
 });

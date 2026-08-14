@@ -16,7 +16,24 @@ import { enforceRateLimit } from "./rateLimit";
 
 const jsonOutput = z.object({ data: z.json() });
 const projectId = z.object({ project_id: z.string().uuid() });
-const sections = z.enum(["basic", "market", "pricing", "acquisition", "retention", "unit_economics", "costs", "funding", "validation", "team", "risk", "pitch"]);
+
+/**
+ * Shared by `get_project`'s `sections` filter, `rawSections()`, and the
+ * per-document resource templates below, so a new document only needs one
+ * entry here to become readable through every MCP surface at once. Financial
+ * Model has no entry — it's fully derived, already exposed via
+ * `get_project_analysis`'s `metrics`, not a stored Project field.
+ */
+const SECTION_KEY_MAP: Record<string, keyof Project> = {
+  basic: "basicInfo", market: "market", pricing: "pricing", acquisition: "acquisition",
+  retention: "retention", unit_economics: "unitEconomics", costs: "costs", funding: "funding",
+  validation: "validation", team: "team", risk: "risk", pitch: "pitch",
+  one_pager: "onePager", icp: "icp", value_prop: "valueProp", validation_plan: "validationPlan",
+  mvp_scope: "mvpScope", gtm_plan: "gtmPlan", sales_docs: "salesDocs",
+  contract_terms: "contractTerms", pilot_report: "pilotReport",
+};
+
+const sections = z.enum(Object.keys(SECTION_KEY_MAP) as [string, ...string[]]);
 const quality = z.enum(["known", "estimated", "unknown"]);
 
 function result(data: unknown, summary = "Request completed.") {
@@ -38,14 +55,9 @@ function annotateAssumptions(value: unknown, path: string, includeUnknown: boole
 }
 
 function rawSections(project: Project, requested?: string[], includeUnknown = true) {
-  const map: Record<string, keyof Project> = {
-    basic: "basicInfo", market: "market", pricing: "pricing", acquisition: "acquisition",
-    retention: "retention", unit_economics: "unitEconomics", costs: "costs", funding: "funding",
-    validation: "validation", team: "team", risk: "risk", pitch: "pitch",
-  };
-  const names = requested?.length ? requested : Object.keys(map);
+  const names = requested?.length ? requested : Object.keys(SECTION_KEY_MAP);
   const selected: Record<string, unknown> = {};
-  for (const name of names) selected[name] = annotateAssumptions(project[map[name]], name, includeUnknown);
+  for (const name of names) selected[name] = annotateAssumptions(project[SECTION_KEY_MAP[name]], name, includeUnknown);
   return selected;
 }
 
@@ -107,7 +119,7 @@ export function createIdeaKillMcpServer(auth: AuthInfo) {
   });
 
   server.registerTool("get_project_analysis", {
-    description: "Calculate deterministic metrics, scores, insights, forecasts, and scenarios.",
+    description: "Calculate deterministic metrics, scores, insights, forecasts, and scenarios. This is also where the Financial Model document's numbers live (pricing, costs, CAC, LTV, gross margin, break-even, cash required) — it has no stored fields of its own.",
     inputSchema: projectId.extend({
       forecast_months: z.union([z.literal(0), z.literal(12), z.literal(24), z.literal(36)]).default(24),
       include_sensitivity: z.boolean().default(true), include_scenarios: z.boolean().default(true),
@@ -225,7 +237,12 @@ export function createIdeaKillMcpServer(auth: AuthInfo) {
   })));
   });
 
-  for (const kind of ["summary", "assumptions", "analysis", "pitch"] as const) {
+  // "summary" and "analysis" are computed views; "assumptions" is the full raw document;
+  // "pitch" plus the 9 business documents are the only individual sections exposed as
+  // their own resource (the rest of SECTION_KEY_MAP is only reachable via get_project).
+  const documentKinds = ["pitch", "one_pager", "icp", "value_prop", "validation_plan", "mvp_scope", "gtm_plan", "sales_docs", "contract_terms", "pilot_report"];
+  const resourceKinds = ["summary", "assumptions", "analysis", ...documentKinds];
+  for (const kind of resourceKinds) {
     server.registerResource(`project-${kind}`, new ResourceTemplate(`idea-kill://projects/{id}/${kind}`, { list: undefined }), {
       description: `Granted project ${kind}.`, mimeType: "application/json",
       annotations: { audience: ["user", "assistant"] }, cacheHint: { cacheScope: "private", ttlMs: 30_000 },
@@ -233,9 +250,9 @@ export function createIdeaKillMcpServer(auth: AuthInfo) {
       const project = await readProject(String(variables.id));
       const data = kind === "analysis" ? analyzeProject(project)
         : kind === "assumptions" ? projectData(project)
-        : kind === "pitch" ? project.pitch
-        : { id: project.id, name: project.basicInfo.name, revision: project.revision,
-          updatedAt: project.updatedAt, score: analyzeProject(project, 0).score };
+        : kind === "summary" ? { id: project.id, name: project.basicInfo.name, revision: project.revision,
+          updatedAt: project.updatedAt, score: analyzeProject(project, 0).score }
+        : project[SECTION_KEY_MAP[kind]];
       return resultResource(uri.href, data);
     });
   }

@@ -1,5 +1,16 @@
 import { z } from "zod";
 import { pitchCompetitorSchema, pitchRoundDetailsSchema, pitchTeamMemberSchema, tractionDataPointSchema } from "./pitchDeckSchema";
+import {
+  onePagerSchema,
+  icpSchema,
+  valuePropSchema,
+  validationPlanSchema,
+  mvpScopeSchema,
+  gtmPlanSchema,
+  salesDocsSchema,
+  contractTermsSchema,
+  pilotReportSchema,
+} from "./businessDocumentsSchema";
 
 const dataQualitySchema = z.enum(["known", "estimated", "unknown"]);
 
@@ -163,6 +174,18 @@ export const projectFormSchema = z.object({
   team: teamAssessmentSchema,
   risk: riskAssessmentSchema,
   pitch: pitchSchema,
+  // Business-building documents (post-viability-report). Optional — unlike
+  // `pitch`, which every project has had since creation — so parsing never
+  // throws for rows saved before this feature existed.
+  onePager: onePagerSchema.optional(),
+  icp: icpSchema.optional(),
+  valueProp: valuePropSchema.optional(),
+  validationPlan: validationPlanSchema.optional(),
+  mvpScope: mvpScopeSchema.optional(),
+  gtmPlan: gtmPlanSchema.optional(),
+  salesDocs: salesDocsSchema.optional(),
+  contractTerms: contractTermsSchema.optional(),
+  pilotReport: pilotReportSchema.optional(),
 });
 
 export type ProjectFormValues = z.infer<typeof projectFormSchema>;

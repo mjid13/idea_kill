@@ -114,6 +114,15 @@ export function createEmptyProject(businessModel: BusinessModel = "saas", curren
       dependencyRisk: 2,
     },
     pitch: emptyPitch(),
+    onePager: emptyOnePager(),
+    icp: emptyIcp(),
+    valueProp: emptyValueProp(),
+    validationPlan: emptyValidationPlan(),
+    mvpScope: emptyMvpScope(),
+    gtmPlan: emptyGtmPlan(),
+    salesDocs: emptySalesDocs(),
+    contractTerms: emptyContractTerms(),
+    pilotReport: emptyPilotReport(),
   };
 }
 
@@ -137,6 +146,50 @@ export function emptyPitch() {
     fundingAsk: u0(),
     useOfFunds: "",
   };
+}
+
+/**
+ * Default empty content for the business-building documents, also used to
+ * backfill projects saved before this feature existed. Kept present (not
+ * undefined) unconditionally, like `emptyPitch`/`emptyMarketplace` above, so
+ * every leaf field is addressable via MCP's `update_project` from creation —
+ * `applyProjectChanges`'s allowlist only contains paths already present in
+ * the parsed project, and Zod's `.optional()` omits absent keys entirely.
+ */
+export function emptyOnePager() {
+  return { problem: "", customer: "", solution: "", differentiation: "" };
+}
+
+export function emptyIcp() {
+  return { customerProfile: "", buyerDecisionMaker: "", painPoints: "", currentAlternatives: "", buyingTriggers: "" };
+}
+
+export function emptyValueProp() {
+  return { whatYouSell: "", customerOutcome: "", scope: "", whyBuyNow: "" };
+}
+
+export function emptyValidationPlan() {
+  return { interviewQuestions: [], targetInterviews: undefined, successFailureCriteria: "" };
+}
+
+export function emptyMvpScope() {
+  return { mustHaveFunctionality: "", explicitlyExcluded: "", userFlow: "", acceptanceCriteria: [] };
+}
+
+export function emptyGtmPlan() {
+  return { acquisitionChannels: "", salesProcess: "", messaging: "", prospectList: [], salesTargets: undefined };
+}
+
+export function emptySalesDocs() {
+  return { demoScript: [], proposalTemplate: "", faq: [] };
+}
+
+export function emptyContractTerms() {
+  return { scope: "", payment: "", ip: "", liability: "", cancellation: "", supportTerms: "" };
+}
+
+export function emptyPilotReport() {
+  return { whoContacted: "", whatHappened: [], salesResults: "", customerFeedback: [], updatedAssumptions: [], decision: undefined };
 }
 
 export function duplicateProject(project: Project): Project {
