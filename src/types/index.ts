@@ -274,6 +274,160 @@ export interface PitchAssumptions {
 }
 
 // ---------------------------------------------------------------------------
+// Step 12 - Business-building documents (optional, post-viability-report).
+// Each slice backs one document under /project/[id]/<slug> — structured
+// forms only, no AI. Fields present elsewhere on Project (description,
+// pricing, competitors) are auto-filled into these via useLinkedField and
+// stay editable; absence never affects viability scoring.
+// ---------------------------------------------------------------------------
+
+/** Business One-Pager (/project/[id]/one-pager). */
+export interface OnePagerAssumptions {
+  problem?: string;
+  /** Shared default with IcpAssumptions.customerProfile via useLinkedField. */
+  customer?: string;
+  /** Defaults to basicInfo.description via useLinkedField. */
+  solution?: string;
+  differentiation?: string;
+}
+
+/** ICP Document (/project/[id]/icp). */
+export interface IcpAssumptions {
+  /** Shared default with OnePagerAssumptions.customer via useLinkedField. */
+  customerProfile?: string;
+  buyerDecisionMaker?: string;
+  painPoints?: string;
+  /** Defaults to a list of PitchAssumptions.competitors names via useLinkedField. */
+  currentAlternatives?: string;
+  buyingTriggers?: string;
+}
+
+/** Value Proposition & Offer (/project/[id]/value-prop). */
+export interface ValuePropAssumptions {
+  /** Defaults to basicInfo.description via useLinkedField. */
+  whatYouSell?: string;
+  customerOutcome?: string;
+  scope?: string;
+  whyBuyNow?: string;
+}
+
+export interface ValidationInterviewQuestion {
+  id: string;
+  text: string;
+}
+
+/** Customer Validation Plan (/project/[id]/validation-plan). */
+export interface ValidationPlanAssumptions {
+  interviewQuestions?: ValidationInterviewQuestion[];
+  /** Defaults to a static suggestion (15) via useLinkedField. */
+  targetInterviews?: number;
+  successFailureCriteria?: string;
+}
+
+export interface AcceptanceCriterion {
+  id: string;
+  text: string;
+}
+
+/** MVP / Product Scope (/project/[id]/mvp-scope). */
+export interface MvpScopeAssumptions {
+  /** Shared default with ValuePropAssumptions.scope via useLinkedField. */
+  mustHaveFunctionality?: string;
+  explicitlyExcluded?: string;
+  userFlow?: string;
+  acceptanceCriteria?: AcceptanceCriterion[];
+}
+
+export interface ProspectListItem {
+  id: string;
+  company: string;
+  contact?: string;
+  status?: string;
+}
+
+/** Go-To-Market Plan (/project/[id]/gtm-plan). */
+export interface GtmPlanAssumptions {
+  acquisitionChannels?: string;
+  salesProcess?: string;
+  /** Defaults to a composed draft from ValuePropAssumptions via useLinkedField. */
+  messaging?: string;
+  prospectList?: ProspectListItem[];
+  /** Defaults to pricing.expectedCustomers12mo via useLinkedField. */
+  salesTargets?: number;
+}
+
+export interface DemoScriptStep {
+  id: string;
+  text: string;
+}
+
+export interface FaqItem {
+  id: string;
+  question: string;
+  answer?: string;
+}
+
+/**
+ * Sales Documents (/project/[id]/sales-docs). The "sales one-pager/deck"
+ * item is deliberately not a stored field here — it reuses the Business
+ * One-Pager and Investor Pitch Deck content directly rather than asking the
+ * user to re-enter it.
+ */
+export interface SalesDocsAssumptions {
+  demoScript?: DemoScriptStep[];
+  /** Defaults to a composed template from pricing via useLinkedField. */
+  proposalTemplate?: string;
+  faq?: FaqItem[];
+}
+
+/** Contract / Terms (/project/[id]/contract-terms). */
+export interface ContractTermsAssumptions {
+  /** Shared default with MvpScopeAssumptions.mustHaveFunctionality via useLinkedField. */
+  scope?: string;
+  /** Defaults to a composed template from pricing via useLinkedField. */
+  payment?: string;
+  ip?: string;
+  liability?: string;
+  cancellation?: string;
+  supportTerms?: string;
+}
+
+export type PilotAssumptionStatus = "open" | "confirmed" | "invalidated";
+
+export interface PilotAssumptionUpdate {
+  id: string;
+  label: string;
+  status: PilotAssumptionStatus;
+}
+
+export interface PilotLogEntry {
+  id: string;
+  label: string;
+  text?: string;
+}
+
+export interface PilotFeedbackItem {
+  id: string;
+  quote: string;
+  source?: string;
+}
+
+export type PilotDecision = "continue" | "pivot" | "kill";
+
+/** Pilot / Experiment Report (/project/[id]/pilot-report) — the last stage, closing the loop back into the viability engine's own verdict. */
+export interface PilotReportAssumptions {
+  /** Defaults to a joined list from GtmPlanAssumptions.prospectList via useLinkedField. */
+  whoContacted?: string;
+  whatHappened?: PilotLogEntry[];
+  salesResults?: string;
+  customerFeedback?: PilotFeedbackItem[];
+  /** Defaults to the unverified assumptions list via a "Suggest from assumptions" action, each starting "open". */
+  updatedAssumptions?: PilotAssumptionUpdate[];
+  /** Defaults from generateDecisionSummary's verdict, mapped via suggestPilotDecision. */
+  decision?: PilotDecision;
+}
+
+// ---------------------------------------------------------------------------
 // Aggregate project record
 // ---------------------------------------------------------------------------
 
@@ -300,6 +454,16 @@ export interface Project {
   risk: RiskAssessment;
   /** Optional — absent on projects created before this step existed. */
   pitch?: PitchAssumptions;
+  /** Optional — absent until the user starts building business documents. */
+  onePager?: OnePagerAssumptions;
+  icp?: IcpAssumptions;
+  valueProp?: ValuePropAssumptions;
+  validationPlan?: ValidationPlanAssumptions;
+  mvpScope?: MvpScopeAssumptions;
+  gtmPlan?: GtmPlanAssumptions;
+  salesDocs?: SalesDocsAssumptions;
+  contractTerms?: ContractTermsAssumptions;
+  pilotReport?: PilotReportAssumptions;
 }
 
 // ---------------------------------------------------------------------------

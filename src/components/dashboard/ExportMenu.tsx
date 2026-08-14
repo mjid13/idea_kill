@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useAppTranslations } from "@/components/i18n/use-app-translations";
-import { Download, FileOutput, FileText, Sheet, Presentation } from "lucide-react";
+import { Download, FileOutput, FileText, Sheet, Presentation, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { buildExportBundle, downloadProjectCsv, downloadProjectJson } from "@/lib/export/exportData";
@@ -45,6 +45,12 @@ export function ExportMenu({ project }: { project: Project }) {
             title={t("Investor pitch deck")}
             description={t("Narrative deck: problem, market, traction, economics, the ask.")}
             render={<Link href={`/project/${project.id}/pitch-deck`} target="_blank" />}
+          />
+          <ExportRow
+            icon={LayoutGrid}
+            title={t("Business documents")}
+            description={t("One-pager, ICP, validation plan, GTM, financial model, and more — built from this project.")}
+            render={<Link href={`/project/${project.id}/documents`} />}
           />
           <ExportRow
             icon={Download}

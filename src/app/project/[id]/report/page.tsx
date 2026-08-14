@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 import { useAppTranslations } from "@/components/i18n/use-app-translations";
-import { Printer, ArrowLeft } from "lucide-react";
+import { Printer, ArrowLeft, ArrowRight } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { projectRepository } from "@/lib/storage/browserRepository";
@@ -210,6 +210,18 @@ function Report({ project }: { project: Project }) {
           {t("It does not predict success — it assesses whether the current numbers add up.")}
         </p>
       </Section>
+
+      <div className="no-print mt-8 flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-5 ring-1 ring-foreground/5">
+        <div>
+          <p className="text-sm font-semibold text-foreground">{t("Ready to build?")}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("Turn this idea into a business — one-pager, ICP, validation plan, financial model, and more.")}
+          </p>
+        </div>
+        <Button size="sm" render={<Link href={`/project/${project.id}/documents`} />}>
+          {t("Create business documents")} <ArrowRight />
+        </Button>
+      </div>
     </div>
   );
 }

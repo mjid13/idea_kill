@@ -3,9 +3,10 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { useAppTranslations } from "@/components/i18n/use-app-translations";
-import { Pencil } from "lucide-react";
+import { ArrowRight, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { calculateMetrics, generateScenarios } from "@/lib/calculations";
 import { calculateScoreBreakdown } from "@/lib/scoring";
 import { generateInsights, generateDecisionSummary } from "@/lib/insights";
@@ -64,6 +65,22 @@ export function ProjectDashboard({ project }: { project: Project }) {
       <EfficiencyPanel project={project} metrics={metrics} />
       <ScenarioTable result={scenarios} currency={project.basicInfo.currency} />
       <ForecastCharts project={project} metrics={metrics} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("Turn this idea into a business")}</CardTitle>
+          <CardDescription>
+            {t(
+              "Build a Business One-Pager, ICP, Value Proposition, Validation Plan, and more — structured documents filled in automatically from what you've already entered here."
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardFooter className="justify-end border-t-0 bg-transparent p-(--card-spacing)">
+          <Button size="sm" render={<Link href={`/project/${project.id}/documents`} />}>
+            {t("Build business documents")} <ArrowRight />
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

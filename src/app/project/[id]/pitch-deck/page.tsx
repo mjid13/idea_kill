@@ -16,6 +16,7 @@ import { generateInsights } from "@/lib/insights";
 import { BUSINESS_MODEL_LABELS, BILLING_PERIOD_LABELS, FUNDING_ROUND_LABELS } from "@/lib/constants";
 import { formatCurrency, formatCompactNumber, formatMonths, formatPercentage } from "@/lib/format";
 import { ExportMenu } from "@/components/dashboard/ExportMenu";
+import { Slide, Prose, KeyValueGrid, BulletList } from "@/components/documents/DocumentPrimitives";
 import { translateInsightMessage } from "@/components/i18n/translate-insight";
 import type { Project } from "@/types";
 
@@ -265,37 +266,6 @@ function PitchDeck({ project }: { project: Project }) {
   );
 }
 
-function Slide({ title, children, last }: { title: string; children: React.ReactNode; last?: boolean }) {
-  const t = useAppTranslations();
-  return (
-    <section className={`py-5 print:break-inside-avoid ${last ? "" : "border-b border-border"}`}>
-      <h2 className="mb-3 text-sm font-semibold tracking-wide text-foreground uppercase">{t(title)}</h2>
-      {children}
-    </section>
-  );
-}
-
-function Prose({ text, placeholder, className }: { text: string | undefined; placeholder: string; className?: string }) {
-  if (!text || !text.trim()) {
-    return <p className={`text-sm text-muted-foreground italic ${className ?? ""}`}>{placeholder}</p>;
-  }
-  return <p className={`text-sm whitespace-pre-wrap text-foreground ${className ?? ""}`}>{text}</p>;
-}
-
-function KeyValueGrid({ items }: { items: Array<[string, string]> }) {
-  const t = useAppTranslations();
-  return (
-    <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
-      {items.map(([label, value]) => (
-        <div key={label}>
-          <dt className="text-xs text-muted-foreground">{t(label)}</dt>
-          <dd className="text-sm font-medium tabular-nums text-foreground">{value}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
 const AXIS_TICK = { fontSize: 11, fill: "var(--color-muted-foreground)" };
 const GRID_STROKE = "var(--color-border)";
 
@@ -348,16 +318,5 @@ function TractionChart({ points }: { points: NonNullable<Project["pitch"]>["trac
         </div>
       )}
     </div>
-  );
-}
-
-function BulletList({ items, empty }: { items: string[]; empty: string }) {
-  if (items.length === 0) return <p className="text-sm text-muted-foreground">{empty}</p>;
-  return (
-    <ul className="list-inside list-disc space-y-1 text-sm text-foreground">
-      {items.map((item, i) => (
-        <li key={i}>{item}</li>
-      ))}
-    </ul>
   );
 }
