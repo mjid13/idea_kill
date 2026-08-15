@@ -8,10 +8,10 @@ function interpolate(template: string, params?: Record<string, string | number>)
 }
 
 function englishInsight(item: Insight) {
-  return {
-    message: interpolate(item.message, item.messageParams),
-    detail: item.detail ? interpolate(item.detail, item.detailParams) : undefined,
-  };
+  const detail = item.detail ? interpolate(item.detail, item.detailParams) : undefined;
+  return detail === undefined
+    ? { message: interpolate(item.message, item.messageParams) }
+    : { message: interpolate(item.message, item.messageParams), detail };
 }
 
 export function analyzeProject(project: Project, forecastMonths: 0 | 12 | 24 | 36 = 24) {

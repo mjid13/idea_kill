@@ -13,6 +13,8 @@ import { calculateMetrics, forecastProject } from "@/lib/calculations";
 import { calculateScoreBreakdown } from "@/lib/scoring";
 import type { Project } from "@/types";
 import { enforceRateLimit } from "./rateLimit";
+import { publicMcpPath, normalizeMcpPath, SECTION_KEY_MAP } from "./paths";
+import { toJsonSafe } from "./serialization";
 
 const jsonOutput = z.object({ data: z.json() });
 const projectId = z.object({ project_id: z.string().uuid() });
@@ -24,22 +26,14 @@ const projectId = z.object({ project_id: z.string().uuid() });
  * Model has no entry — it's fully derived, already exposed via
  * `get_project_analysis`'s `metrics`, not a stored Project field.
  */
-const SECTION_KEY_MAP: Record<string, keyof Project> = {
-  basic: "basicInfo", market: "market", pricing: "pricing", acquisition: "acquisition",
-  retention: "retention", unit_economics: "unitEconomics", costs: "costs", funding: "funding",
-  validation: "validation", team: "team", risk: "risk", pitch: "pitch",
-  one_pager: "onePager", icp: "icp", value_prop: "valueProp", validation_plan: "validationPlan",
-  mvp_scope: "mvpScope", gtm_plan: "gtmPlan", sales_docs: "salesDocs",
-  contract_terms: "contractTerms", pilot_report: "pilotReport",
-};
-
 const sections = z.enum(Object.keys(SECTION_KEY_MAP) as [string, ...string[]]);
 const quality = z.enum(["known", "estimated", "unknown"]);
 
 function result(data: unknown, summary = "Request completed.") {
+  const safeData = toJsonSafe(data);
   return {
-    structuredContent: { data: data as never },
-    content: [{ type: "text" as const, text: `${summary}\n${JSON.stringify(data)}` }],
+    structuredContent: { data: safeData as never },
+    content: [{ type: "text" as const, text: `${summary}\n${JSON.stringify(safeData)}` }],
   };
 }
 
@@ -57,7 +51,7 @@ function annotateAssumptions(value: unknown, path: string, includeUnknown: boole
 function rawSections(project: Project, requested?: string[], includeUnknown = true) {
   const names = requested?.length ? requested : Object.keys(SECTION_KEY_MAP);
   const selected: Record<string, unknown> = {};
-  for (const name of names) selected[name] = annotateAssumptions(project[SECTION_KEY_MAP[name]], name, includeUnknown);
+  for (const name of names) selected[name] = annotateAssumptions(project[SECTION_KEY_MAP[name as keyof typeof SECTION_KEY_MAP]], name, includeUnknown);
   return selected;
 }
 
@@ -134,17 +128,23 @@ export function createIdeaKillMcpServer(auth: AuthInfo) {
     description: "List unknown and estimated assumptions and explain why they matter.",
     inputSchema: projectId.extend({ section: sections.optional() }), outputSchema: jsonOutput,
     annotations: { readOnlyHint: true, idempotentHint: true },
-  }, async ({ project_id, section }) => result({ assumptions: findMissingAssumptions(await readProject(project_id), section) }));
+  }, async ({ project_id, section }) => {
+    const assumptions = findMissingAssumptions(await readProject(project_id), section ? SECTION_KEY_MAP[section as keyof typeof SECTION_KEY_MAP] : undefined)
+      .map((assumption) => ({ ...assumption, path: publicMcpPath(assumption.path) }));
+    return result({ assumptions });
+  });
 
   server.registerTool("run_scenario", {
-    description: "Run temporary assumption overrides without saving them.",
+    description: "Run temporary assumption overrides without saving them. Change paths use public MCP section names, such as one_pager.problem or pricing.productPrice.value.",
     inputSchema: projectId.extend({
       horizon: z.union([z.literal(12), z.literal(24), z.literal(36)]),
       overrides: z.array(z.object({ path: z.string(), value: z.number(), quality: quality.optional() })).min(1).max(20),
     }), outputSchema: jsonOutput, annotations: { readOnlyHint: true, idempotentHint: true },
   }, async ({ project_id, horizon, overrides }) => {
     const baseline = await readProject(project_id);
-    const scenario = applyProjectChanges(baseline, overrides).project;
+    const scenario = applyProjectChanges(baseline, overrides.map((override) => ({
+      ...override, path: normalizeMcpPath(override.path),
+    }))).project;
     const baselineMetrics = calculateMetrics(baseline);
     const scenarioMetrics = calculateMetrics(scenario);
     const baselineScore = calculateScoreBreakdown(baseline, baselineMetrics);
@@ -197,7 +197,7 @@ export function createIdeaKillMcpServer(auth: AuthInfo) {
   });
 
   server.registerTool("update_project", {
-    description: "Atomically apply allowlisted field changes with revision and idempotency checks.",
+    description: "Atomically apply allowlisted field changes with revision and idempotency checks. Change paths use public MCP section names, such as one_pager.problem or pricing.productPrice.value.",
     inputSchema: projectId.extend({
       expected_revision: z.number().int().positive(), idempotency_key: z.string().min(8).max(200),
       reason: z.string().min(1).max(500), changes: z.array(z.object({
@@ -211,7 +211,8 @@ export function createIdeaKillMcpServer(auth: AuthInfo) {
     if (process.env.MCP_WRITES_ENABLED !== "true" || conn.access_mode !== "write") throw new Error("FORBIDDEN: writes are disabled.");
     const previous = await readProject(project_id);
     if (previous.revision !== expected_revision) throw new Error(`REVISION_CONFLICT: current revision is ${previous.revision}, updated ${previous.updatedAt}`);
-    const applied = applyProjectChanges(previous, changes);
+    const normalizedChanges = changes.map((change) => ({ ...change, path: normalizeMcpPath(change.path) }));
+    const applied = applyProjectChanges(previous, normalizedChanges);
     const { data, error } = await db.rpc("apply_project_mutation", {
       target_project_id: project_id, expected_revision, request_idempotency_key: idempotency_key,
       project_name: applied.project.basicInfo.name, project_data: projectData(applied.project),
@@ -220,7 +221,8 @@ export function createIdeaKillMcpServer(auth: AuthInfo) {
     if (error) throw new Error(error.message);
     const updated = projectFromRow(data as ProjectRow);
     const before = analyzeProject(previous, 0); const after = analyzeProject(updated, 0);
-    return result({ previousRevision: previous.revision, revision: updated.revision, diff: applied.diff,
+    const publicDiff = applied.diff.map((change, index) => ({ ...change, path: changes[index].path }));
+    return result({ previousRevision: previous.revision, revision: updated.revision, diff: publicDiff,
       scoreDelta: after.score.overall - before.score.overall,
       metricDeltas: { mrr: after.metrics.revenue.mrr - before.metrics.revenue.mrr,
         runwayMonths: (after.metrics.funding.runwayMonths ?? 0) - (before.metrics.funding.runwayMonths ?? 0) },
@@ -252,7 +254,7 @@ export function createIdeaKillMcpServer(auth: AuthInfo) {
         : kind === "assumptions" ? projectData(project)
         : kind === "summary" ? { id: project.id, name: project.basicInfo.name, revision: project.revision,
           updatedAt: project.updatedAt, score: analyzeProject(project, 0).score }
-        : project[SECTION_KEY_MAP[kind]];
+        : project[SECTION_KEY_MAP[kind as keyof typeof SECTION_KEY_MAP]];
       return resultResource(uri.href, data);
     });
   }

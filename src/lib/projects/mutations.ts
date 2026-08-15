@@ -50,7 +50,9 @@ export function applyProjectChanges(project: Project, changes: FieldChange[]): {
       if (!assumptionPath) throw new DomainError("VALIDATION_FAILED", "Quality is only valid with an assumption value path.");
       parent.quality = change.quality;
     }
-    diff.push({ path: change.path, value: change.value, quality: change.quality, previous } as FieldChange);
+    const diffEntry = { path: change.path, value: change.value, previous } as FieldChange & { previous: unknown };
+    if (change.quality !== undefined) diffEntry.quality = change.quality;
+    diff.push(diffEntry);
   }
   const validated = projectFormSchema.safeParse(next);
   if (!validated.success) throw new DomainError("VALIDATION_FAILED", "Changes make the project invalid.", {
