@@ -177,7 +177,25 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form
+        // The form must only ever submit from an explicit click of the final
+        // button (which calls handleSubmit itself). A native submit control is
+        // deliberately NOT rendered: React reuses the button's DOM node when
+        // "Next" is swapped for it on the last step, and mutating the clicked
+        // node into type="submit" makes the browser run the pending click's
+        // default action — submitting the form the instant the last step
+        // appears. onSubmit is therefore a no-op guard against any stray
+        // submit event (Enter key implicit submission, password managers,
+        // autofill, etc.).
+        onSubmit={(e) => e.preventDefault()}
+        onKeyDown={(e) => {
+          // Block implicit submission when Enter is pressed inside an input.
+          // Buttons and textareas keep native Enter behavior.
+          if (e.key === "Enter" && (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement)) {
+            e.preventDefault();
+          }
+        }}
+      >
         <FieldLinker form={form}>
           <div className="rounded-xl border border-border bg-card p-5 ring-1 ring-foreground/5">
             <StepComponent control={control} />
@@ -190,7 +208,7 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
           </Button>
 
           {isLast ? (
-            <Button type="submit" disabled={submitting}>
+            <Button type="button" onClick={() => void handleSubmit(onSubmit)()} disabled={submitting}>
               {submitting ? t("Saving…") : t("Calculate viability")} <Check />
             </Button>
           ) : (
