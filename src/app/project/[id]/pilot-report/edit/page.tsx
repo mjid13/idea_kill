@@ -109,7 +109,7 @@ function PilotReportEditForm({ project }: { project: Project }) {
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("Edit pilot report")}</h1>
           <p className="text-sm text-muted-foreground">
-            {t("Who was contacted defaults from your GTM prospect list, and the decision defaults from your current viability score — both editable here.")}
+            {t("Who was contacted defaults from our GTM prospect list, and the decision defaults from our current viability score — both editable here.")}
           </p>
         </div>
       </div>
@@ -233,7 +233,7 @@ function PilotReportEditForm({ project }: { project: Project }) {
             )}
           />
           <p className="text-xs text-muted-foreground">
-            {t("Suggested value")}: {t(DECISION_LABELS[suggestedDecision])} ({t("from your current viability score")})
+            {t("Suggested value")}: {t(DECISION_LABELS[suggestedDecision])} ({t("from our current viability score")})
           </p>
         </div>
 

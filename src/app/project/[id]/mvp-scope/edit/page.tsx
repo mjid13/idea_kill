@@ -79,7 +79,7 @@ function MvpScopeEditForm({ project }: { project: Project }) {
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("Edit MVP scope")}</h1>
           <p className="text-sm text-muted-foreground">
-            {t("Must-have functionality defaults to the Scope you entered on the Value Proposition — edit it here without changing the original.")}
+            {t("Must-have functionality defaults to the Scope we entered on the Value Proposition — edit it here without changing the original.")}
           </p>
         </div>
       </div>
@@ -97,7 +97,7 @@ function MvpScopeEditForm({ project }: { project: Project }) {
 
         <div className="space-y-1.5">
           <Label>{t("What is explicitly excluded")}</Label>
-          <LinkedTextField control={control} name="explicitlyExcluded" computed={undefined} placeholder={t("What are you deliberately leaving out?")} />
+          <LinkedTextField control={control} name="explicitlyExcluded" computed={undefined} placeholder={t("What are we deliberately leaving out?")} />
         </div>
 
         <div className="space-y-1.5">

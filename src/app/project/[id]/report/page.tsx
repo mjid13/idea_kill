@@ -177,7 +177,7 @@ function Report({ project }: { project: Project }) {
         </table>
       </Section>
 
-      <Section title="Should you pursue this idea?">
+      <Section title="Should we pursue this idea?">
         <p className="font-medium text-foreground">{t(decision.title)}</p>
         <p className="mt-1 text-sm text-muted-foreground">{t(decision.description)}</p>
         <ul className="mt-2 list-inside list-decimal space-y-1 text-sm text-foreground">

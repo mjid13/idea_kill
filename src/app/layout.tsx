@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Product Viability Calculator",
-  description: "Evaluate market size, unit economics, profitability, runway, and overall product viability before you build.",
+  title: "IdeaUp",
+  description: "Evaluate market size, unit economics, profitability, runway, and overall product viability before we build.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

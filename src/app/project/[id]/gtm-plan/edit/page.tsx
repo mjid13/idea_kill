@@ -81,7 +81,7 @@ function GtmPlanEditForm({ project }: { project: Project }) {
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("Edit go-to-market plan")}</h1>
           <p className="text-sm text-muted-foreground">
-            {t("Messaging drafts itself from your Value Proposition, and sales targets default to your 12-month customer target — both editable here.")}
+            {t("Messaging drafts itself from our Value Proposition, and sales targets default to our 12-month customer target — both editable here.")}
           </p>
         </div>
       </div>
@@ -89,7 +89,7 @@ function GtmPlanEditForm({ project }: { project: Project }) {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-1.5">
           <Label>{t("Acquisition channels")}</Label>
-          <LinkedTextField control={control} name="acquisitionChannels" computed={undefined} placeholder={t("Where will you find customers?")} />
+          <LinkedTextField control={control} name="acquisitionChannels" computed={undefined} placeholder={t("Where will we find customers?")} />
         </div>
 
         <div className="space-y-1.5">
@@ -99,7 +99,7 @@ function GtmPlanEditForm({ project }: { project: Project }) {
 
         <div className="space-y-1.5">
           <Label>{t("Messaging")}</Label>
-          <LinkedTextField control={control} name="messaging" computed={composeMessaging(project.valueProp)} placeholder={t("How will you describe this to prospects?")} />
+          <LinkedTextField control={control} name="messaging" computed={composeMessaging(project.valueProp)} placeholder={t("How will we describe this to prospects?")} />
         </div>
 
         <div className="rounded-xl border border-border bg-card p-5 ring-1 ring-foreground/5">

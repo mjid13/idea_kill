@@ -81,7 +81,7 @@ function SalesDocsEditForm({ project }: { project: Project }) {
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("Edit sales documents")}</h1>
           <p className="text-sm text-muted-foreground">
-            {t("The sales one-pager/deck reuses your Business One-Pager and Pitch Deck directly — there's nothing to edit here for it.")}
+            {t("The sales one-pager/deck reuses our Business One-Pager and Pitch Deck directly — there's nothing to edit here for it.")}
           </p>
         </div>
       </div>
@@ -96,7 +96,7 @@ function SalesDocsEditForm({ project }: { project: Project }) {
                 <Controller
                   control={control}
                   name={`demoScript.${i}.text`}
-                  render={({ field }) => <Input placeholder={t("What do you show/say at this step?")} {...field} className="flex-1" />}
+                  render={({ field }) => <Input placeholder={t("What do we show/say at this step?")} {...field} className="flex-1" />}
                 />
                 <Button type="button" variant="ghost" size="icon-sm" onClick={() => script.remove(i)} aria-label={t("Remove")}>
                   <Trash2 />
@@ -132,7 +132,7 @@ function SalesDocsEditForm({ project }: { project: Project }) {
                 <Controller
                   control={control}
                   name={`faq.${i}.answer`}
-                  render={({ field }) => <Textarea rows={2} placeholder={t("Your response")} {...field} />}
+                  render={({ field }) => <Textarea rows={2} placeholder={t("Our response")} {...field} />}
                 />
               </div>
             ))}

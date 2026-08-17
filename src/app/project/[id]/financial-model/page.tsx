@@ -9,7 +9,7 @@ import { Printer, ArrowLeft } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { projectRepository } from "@/lib/storage/browserRepository";
-import { calculateMetrics } from "@/lib/calculations";
+import { calculateMetrics, calculateFundingRequirement } from "@/lib/calculations";
 import { val } from "@/lib/calculations/helpers";
 import { BUSINESS_MODEL_LABELS } from "@/lib/constants";
 import { formatCurrency, formatMonths, formatMultiple, formatPercentage } from "@/lib/format";
@@ -45,6 +45,7 @@ function FinancialModel({ project }: { project: Project }) {
   const locale = useLocale();
   const currency = project.basicInfo.currency;
   const metrics = useMemo(() => calculateMetrics(project), [project]);
+  const requirement = useMemo(() => calculateFundingRequirement(project, metrics), [project, metrics]);
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10 print:max-w-none print:px-0">
@@ -66,9 +67,6 @@ function FinancialModel({ project }: { project: Project }) {
         <p className="mt-1 text-sm text-muted-foreground">
           {t(BUSINESS_MODEL_LABELS[project.basicInfo.businessModel])} · {currency} · {new Date().toLocaleDateString(locale)}
         </p>
-        <p className="mt-3 text-xs text-muted-foreground">
-          {t("Every figure below is calculated automatically from the assumptions you entered — nothing here is re-entered by hand.")}
-        </p>
       </header>
 
       <Slide title="Pricing">
@@ -80,6 +78,23 @@ function FinancialModel({ project }: { project: Project }) {
           ]}
         />
       </Slide>
+
+      {metrics.revenueMix && (
+        <Slide title="Revenue streams">
+          <KeyValueGrid
+            items={[
+              ...metrics.revenueMix.streams.map(
+                (stream): [string, string] => [
+                  stream.name || t("Untitled stream"),
+                  `${formatCurrency(stream.monthlyRevenue, currency, { compact: true })} · ${formatPercentage(stream.grossMarginPct)}`,
+                ]
+              ),
+              ["Recurring share of revenue", formatPercentage(metrics.revenueMix.recurringRevenueSharePct)],
+              ["Blended gross margin", formatPercentage(metrics.revenueMix.blendedGrossMarginPct)],
+            ]}
+          />
+        </Slide>
+      )}
 
       <Slide title="Costs">
         <KeyValueGrid
@@ -111,6 +126,28 @@ function FinancialModel({ project }: { project: Project }) {
                 : metrics.breakEven.breakEvenCustomers.toLocaleString(locale),
             ],
             ["Break-even revenue", formatCurrency(metrics.breakEven.breakEvenRevenue, currency, { compact: true })],
+          ]}
+        />
+      </Slide>
+
+      <Slide title="Funding requirement">
+        <KeyValueGrid
+          items={[
+            [
+              "Required financing",
+              requirement.isSelfFunded ? t("No raise needed") : formatCurrency(requirement.requiredFinancing, currency, { compact: true }),
+            ],
+            [
+              "Recommended raise",
+              requirement.isSelfFunded ? "—" : formatCurrency(requirement.recommendedRaise, currency, { compact: true }),
+            ],
+            ["Contingency", formatPercentage(requirement.contingencyPct, 0)],
+            ["Cash needed until milestone", formatCurrency(requirement.operatingSpendToMilestone, currency, { compact: true })],
+            ["Safety buffer", formatCurrency(requirement.safetyBuffer, currency, { compact: true })],
+            ["Working capital", formatCurrency(requirement.workingCapital, currency, { compact: true })],
+            ["CAPEX", formatCurrency(requirement.capex, currency, { compact: true })],
+            ["Expected cash receipts", formatCurrency(requirement.expectedCashReceipts, currency, { compact: true })],
+            ["Cash on hand", formatCurrency(requirement.cashOnHand, currency, { compact: true })],
           ]}
         />
       </Slide>

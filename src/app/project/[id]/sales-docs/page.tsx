@@ -69,7 +69,7 @@ function SalesDocs({ project }: { project: Project }) {
 
       <Slide title="Sales one-pager / deck">
         <p className="mb-3 text-sm text-muted-foreground">
-          {t("Reused directly from your other documents — no need to write this twice.")}
+          {t("Reused directly from our other documents — no need to write this twice.")}
         </p>
         <div className="no-print flex gap-2">
           <Button variant="outline" size="sm" render={<Link href={`/project/${project.id}/one-pager`} target="_blank" />}>

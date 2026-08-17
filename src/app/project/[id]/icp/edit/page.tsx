@@ -73,7 +73,7 @@ function IcpEditForm({ project }: { project: Project }) {
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("Edit ICP document")}</h1>
           <p className="text-sm text-muted-foreground">
-            {t("Customer profile defaults to the Customer you entered on the One-Pager — edit it here without changing the original.")}
+            {t("Customer profile defaults to the Customer we entered on the One-Pager — edit it here without changing the original.")}
           </p>
         </div>
       </div>
@@ -85,7 +85,7 @@ function IcpEditForm({ project }: { project: Project }) {
             control={control}
             name="customerProfile"
             computed={project.onePager?.customer || undefined}
-            placeholder={t("Who exactly are you selling to?")}
+            placeholder={t("Who exactly are we selling to?")}
           />
         </div>
 

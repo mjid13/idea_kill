@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { createMcpHandler, type AuthInfo } from "@modelcontextprotocol/server";
-import { createIdeaKillMcpServer } from "@/lib/mcp/server";
+import { createIdeaUpMcpServer } from "@/lib/mcp/server";
 import { verifyMcpBearer } from "@/lib/mcp/auth";
 import { canonicalMcpUrl } from "@/lib/supabase/env";
 import { createBearerSupabaseClient } from "@/lib/supabase/server";
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 const handler = createMcpHandler((context) => {
   if (!context.authInfo) throw new Error("Authentication context missing.");
-  return createIdeaKillMcpServer(context.authInfo);
+  return createIdeaUpMcpServer(context.authInfo);
 }, { legacy: "stateless", responseMode: "auto" });
 
 function challenge() {

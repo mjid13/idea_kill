@@ -149,7 +149,7 @@ function PilotReport({ project }: { project: Project }) {
         <div className="flex items-center gap-3">
           <Badge variant={DECISION_VARIANTS[decision]}>{t(DECISION_LABELS[decision])}</Badge>
           {!report?.decision && (
-            <p className="text-xs text-muted-foreground">{t("Suggested from your current viability score — confirm or override in Edit.")}</p>
+            <p className="text-xs text-muted-foreground">{t("Suggested from our current viability score — confirm or override in Edit.")}</p>
           )}
         </div>
       </Slide>

@@ -74,7 +74,7 @@ function ContractTermsEditForm({ project }: { project: Project }) {
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("Edit contract / terms")}</h1>
           <p className="text-sm text-muted-foreground">
-            {t("Scope defaults from MVP Scope and payment defaults from your pricing — both editable here. This is a starting draft, not legal advice.")}
+            {t("Scope defaults from MVP Scope and payment defaults from our pricing — both editable here. This is a starting draft, not legal advice.")}
           </p>
         </div>
       </div>

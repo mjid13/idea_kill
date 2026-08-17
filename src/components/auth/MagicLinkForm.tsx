@@ -16,7 +16,7 @@ export function MagicLinkForm({ next }: { next: string }) {
     const { error } = await createBrowserSupabaseClient().auth.signInWithOtp({
       email, options: { emailRedirectTo: callback.href },
     });
-    setMessage(error ? error.message : "Check your email for the secure sign-in link.");
+    setMessage(error ? error.message : "Check the inbox for the secure sign-in link.");
     setBusy(false);
   }
   return <form onSubmit={submit} className="space-y-4">

@@ -179,7 +179,7 @@ function PitchDeck({ project }: { project: Project }) {
             <thead>
               <tr className="border-b border-border text-left text-xs text-muted-foreground">
                 <th className="py-1.5 pr-4">{t("Competitor")}</th>
-                <th className="py-1.5">{t("Your edge")}</th>
+                <th className="py-1.5">{t("Our edge")}</th>
               </tr>
             </thead>
             <tbody>
@@ -243,7 +243,7 @@ function PitchDeck({ project }: { project: Project }) {
             <Prose text={pitch?.useOfFunds} placeholder={t("No use-of-funds breakdown entered yet.")} className="mt-3" />
           </>
         ) : (
-          <p className="text-sm text-muted-foreground">{t("No funding ask entered — add an amount in the Pitch narrative step if you're raising.")}</p>
+          <p className="text-sm text-muted-foreground">{t("No funding ask entered — add an amount in the Pitch narrative step if we're raising.")}</p>
         )}
       </Slide>
 

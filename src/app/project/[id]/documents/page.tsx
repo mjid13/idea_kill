@@ -68,7 +68,7 @@ function DocumentsHub({ project }: { project: Project }) {
           <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("Business documents")}</h1>
           <p className="text-sm text-muted-foreground">
             {t(
-              "Turn this idea into a business — structured documents built from the assumptions you already entered. Anything that's already known elsewhere is filled in automatically and stays editable."
+              "Turn this idea into a business — structured documents built from the assumptions we already entered. Anything that's already known elsewhere is filled in automatically and stays editable."
             )}
           </p>
         </div>

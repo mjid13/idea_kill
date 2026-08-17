@@ -90,7 +90,7 @@ function PitchDeckEditForm({ project }: { project: Project }) {
           <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("Deck details")}</h1>
           <p className="text-sm text-muted-foreground">
             {t(
-              "Structured content used only by the investor pitch deck — growth over time, named team members, named competitors, and round terms. None of this affects your viability score."
+              "Structured content used only by the investor pitch deck — growth over time, named team members, named competitors, and round terms. None of this affects our viability score."
             )}
           </p>
         </div>
@@ -99,7 +99,7 @@ function PitchDeckEditForm({ project }: { project: Project }) {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         <FormSection
           title="Traction history"
-          description="A few data points showing growth over time — as many or as few as you have."
+          description="A few data points showing growth over time — as many or as few as we have."
         >
           {traction.fields.map((field, i) => (
             <Row key={field.id} onRemove={() => traction.remove(i)}>
@@ -134,7 +134,7 @@ function PitchDeckEditForm({ project }: { project: Project }) {
           <AddButton onClick={() => team.append({ id: newId(), name: "", role: "", bio: "" })}>{t("Add team member")}</AddButton>
         </FormSection>
 
-        <FormSection title="Competitors" description="Who else solves this, and how are you different from each one specifically.">
+        <FormSection title="Competitors" description="Who else solves this, and how are we different from each one specifically.">
           {competitors.fields.map((field, i) => (
             <Row key={field.id} onRemove={() => competitors.remove(i)} stacked>
               <Controller
@@ -145,14 +145,14 @@ function PitchDeckEditForm({ project }: { project: Project }) {
               <Controller
                 control={control}
                 name={`competitors.${i}.edge`}
-                render={({ field }) => <Textarea rows={2} placeholder={t("Your edge against them")} {...field} />}
+                render={({ field }) => <Textarea rows={2} placeholder={t("Our edge against them")} {...field} />}
               />
             </Row>
           ))}
           <AddButton onClick={() => competitors.append({ id: newId(), name: "", edge: "" })}>{t("Add competitor")}</AddButton>
         </FormSection>
 
-        <FormSection title="Round details" description="Optional terms for the round you're raising, if applicable.">
+        <FormSection title="Round details" description="Optional terms for the round we're raising, if applicable.">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label>{t("Round type")}</Label>

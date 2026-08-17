@@ -70,7 +70,7 @@ function ValueProp({ project }: { project: Project }) {
         </p>
       </header>
 
-      <Slide title="What you sell">
+      <Slide title="What we sell">
         <Prose text={valueProp?.whatYouSell || project.basicInfo.description} placeholder={t("No offer summary entered yet.")} />
       </Slide>
 

@@ -71,14 +71,14 @@ function ValuePropEditForm({ project }: { project: Project }) {
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("Edit value proposition")}</h1>
           <p className="text-sm text-muted-foreground">
-            {t("What you sell defaults to your project description — edit it here without changing the original. Pricing is read from Pricing & customers.")}
+            {t("What we sell defaults to our project description — edit it here without changing the original. Pricing is read from Pricing & customers.")}
           </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-1.5">
-          <Label>{t("What you sell")}</Label>
+          <Label>{t("What we sell")}</Label>
           <LinkedTextField
             control={control}
             name="whatYouSell"

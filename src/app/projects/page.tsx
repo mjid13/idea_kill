@@ -93,7 +93,7 @@ export default function ProjectsPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("Projects")}</h1>
-              <p className="text-sm text-muted-foreground">{t("Evaluations stored securely in your account.")}</p>
+              <p className="text-sm text-muted-foreground">{t("Evaluations stored securely in our account.")}</p>
             </div>
             <div className="flex gap-2">
               {selected.size >= 2 && (
@@ -111,9 +111,9 @@ export default function ProjectsPage() {
           {projects && projects.length === 0 && (
             <Card>
               <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-                <p className="text-sm text-muted-foreground">{t("You haven't evaluated any ideas yet.")}</p>
+                <p className="text-sm text-muted-foreground">{t("We haven't evaluated any ideas yet.")}</p>
                 <Button render={<Link href="/new" />}>
-                  <Plus /> {t("Evaluate your first idea")}
+                  <Plus /> {t("Evaluate our first idea")}
                 </Button>
               </CardContent>
             </Card>

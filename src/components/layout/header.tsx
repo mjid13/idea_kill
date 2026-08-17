@@ -14,7 +14,7 @@ export function Header() {
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
           <Gauge className="size-4.5 text-primary" />
-          <span>{t("Product Viability Calculator")}</span>
+          <span>{t("IdeaUp")}</span>
         </Link>
         <nav className="flex items-center gap-1">
           <Button
@@ -27,7 +27,7 @@ export function Header() {
           </Button>
           <Button variant="ghost" size="sm" render={<Link href="/projects">{t("Projects")}</Link>} />
           <Button variant="ghost" size="sm" render={<Link href="/compare">{t("Compare")}</Link>} />
-          <Button variant="ghost" size="sm" render={<Link href="/settings/connections">Connections</Link>} />
+          <Button variant="ghost" size="sm" render={<Link href="/settings/connections">MCP</Link>} />
           <Button size="sm" render={<Link href="/new">{t("Evaluate an Idea")}</Link>} />
         </nav>
       </div>

@@ -116,7 +116,7 @@ function ValidationPlanEditForm({ project }: { project: Project }) {
                 <Controller
                   control={control}
                   name={`interviewQuestions.${i}.text`}
-                  render={({ field }) => <Textarea rows={2} placeholder={t("What will you ask?")} {...field} className="flex-1" />}
+                  render={({ field }) => <Textarea rows={2} placeholder={t("What will we ask?")} {...field} className="flex-1" />}
                 />
                 <Button type="button" variant="ghost" size="icon-sm" onClick={() => questions.remove(i)} aria-label={t("Remove")}>
                   <Trash2 />

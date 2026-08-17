@@ -71,7 +71,7 @@ function OnePagerEditForm({ project }: { project: Project }) {
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("Edit one-pager")}</h1>
           <p className="text-sm text-muted-foreground">
-            {t("Solution defaults to your project description — edit it here without changing the original.")}
+            {t("Solution defaults to our project description — edit it here without changing the original.")}
           </p>
         </div>
       </div>
@@ -89,12 +89,12 @@ function OnePagerEditForm({ project }: { project: Project }) {
 
         <div className="space-y-1.5">
           <Label>{t("Solution")}</Label>
-          <LinkedTextField control={control} name="solution" computed={project.basicInfo.description || undefined} placeholder={t("How do you solve it?")} />
+          <LinkedTextField control={control} name="solution" computed={project.basicInfo.description || undefined} placeholder={t("How do we solve it?")} />
         </div>
 
         <div className="space-y-1.5">
           <Label>{t("Differentiation")}</Label>
-          <LinkedTextField control={control} name="differentiation" computed={undefined} placeholder={t("Why you, and not the alternatives?")} />
+          <LinkedTextField control={control} name="differentiation" computed={undefined} placeholder={t("Why us, and not the alternatives?")} />
         </div>
 
         <div className="flex justify-end">
