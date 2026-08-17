@@ -21,11 +21,11 @@ import { projectRepository } from "@/lib/storage/browserRepository";
 import { exampleProject } from "@/lib/example";
 
 const CALCULATES = [
-  { icon: Target, title: "Market opportunity", description: "TAM, SAM, SOM, and the market penetration our plan actually requires." },
-  { icon: TrendingUp, title: "Revenue potential", description: "MRR, ARR, and 12/24/36-month forecasts built from our growth assumptions." },
+  { icon: Target, title: "Market opportunity", description: "TAM, SAM, SOM, and the market penetration your plan actually requires." },
+  { icon: TrendingUp, title: "Revenue potential", description: "MRR, ARR, and 12/24/36-month forecasts built from your growth assumptions." },
   { icon: Percent, title: "Unit economics", description: "CAC, LTV, LTV:CAC, gross margin, and CAC payback — benchmarked by business model." },
   { icon: BarChart3, title: "Break-even", description: "Contribution margin, break-even customers, and break-even revenue." },
-  { icon: PiggyBank, title: "Cash runway", description: "Burn rate and months of runway at our current spend." },
+  { icon: PiggyBank, title: "Cash runway", description: "Burn rate and months of runway at your current spend." },
   { icon: LineChart, title: "Product validation", description: "Problem severity, demonstrated demand, and a separate validation maturity stage." },
   { icon: ShieldAlert, title: "Risk", description: "Technical, market, regulatory, competitive, and financial risk, weighted transparently." },
   { icon: Gauge, title: "Overall viability", description: "A single 0-100 score with a confidence rating and a clear next step." },
@@ -46,10 +46,10 @@ export default function LandingPage() {
       <main className="flex-1">
         <section className="mx-auto max-w-4xl px-4 pt-20 pb-16 text-center">
           <h1 className="text-4xl font-semibold tracking-tight text-balance text-foreground sm:text-5xl">
-            {t("Know if our product economics make sense before we spend months building it.")}
+            {t("Know if your product economics make sense before you spend months building it.")}
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
-            {t("Enter our assumptions and instantly evaluate market size, unit economics, profitability, runway, and overall product viability.")}
+            {t("Enter your assumptions and instantly evaluate market size, unit economics, profitability, runway, and overall product viability.")}
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button size="lg" render={<Link href="/new" />}>
@@ -60,7 +60,7 @@ export default function LandingPage() {
             </Button>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">
-            {t("Sign in securely with a magic link. Our evaluations are stored privately in our account.")}
+            {t("Sign in securely with a magic link. Your evaluations are stored privately in your account.")}
           </p>
         </section>
 
@@ -83,12 +83,12 @@ export default function LandingPage() {
 
         <section className="mx-auto max-w-4xl px-4 py-16 text-center">
           <p className="text-sm text-muted-foreground">
-            {t("This tool does not predict whether our startup will succeed. It evaluates the quality of our current assumptions and economics — so we know what to fix, validate, or build next.")}
+            {t("This tool does not predict whether your startup will succeed. It evaluates the quality of your current assumptions and economics — so you know what to fix, validate, or build next.")}
           </p>
         </section>
       </main>
       <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
-        {t("IdeaUp — evaluate before we build.")}
+        {t("IdeaUp — evaluate before you build.")}
       </footer>
     </div>
   );
