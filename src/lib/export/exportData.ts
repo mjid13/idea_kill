@@ -57,7 +57,9 @@ export function downloadProjectJson(bundle: ExportBundle): void {
 // CSV — flattened, spreadsheet-friendly view of the same bundle.
 // ---------------------------------------------------------------------------
 
-type Row = [section: string, field: string, value: string, quality: string];
+// Low/High are only filled for assumptions entered as a range; every other row
+// leaves them off and they are padded out when the CSV is assembled.
+type Row = [section: string, field: string, value: string, quality: string, low?: string, high?: string];
 
 function csvEscape(value: string): string {
   if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
@@ -65,8 +67,12 @@ function csvEscape(value: string): string {
 }
 
 function toCsv(rows: Row[]): string {
-  const header: Row = ["Section", "Field", "Value", "Data quality"];
-  return [header, ...rows].map((r) => r.map(csvEscape).join(",")).join("\n");
+  // "Value" is the single number, or the most likely point when Low/High are filled.
+  const header: Row = ["Section", "Field", "Value", "Data quality", "Low", "High"];
+  const width = header.length;
+  return [header, ...rows]
+    .map((r) => Array.from({ length: width }, (_, i) => csvEscape(r[i] ?? "")).join(","))
+    .join("\n");
 }
 
 function isAssumption(v: unknown): v is Assumption<number> {
@@ -80,7 +86,8 @@ function flattenInputs(section: string, obj: object): Row[] {
     if (raw === undefined) continue;
     const label = key.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
     if (isAssumption(raw)) {
-      rows.push([section, label, String(raw.value), raw.quality]);
+      const range = raw.range;
+      rows.push([section, label, String(raw.value), raw.quality, range ? String(range.low) : "", range ? String(range.high) : ""]);
     } else if (typeof raw === "number" || typeof raw === "string" || typeof raw === "boolean") {
       rows.push([section, label, String(raw), ""]);
     }
@@ -110,6 +117,11 @@ export function buildExportCsv(bundle: ExportBundle): string {
 
     ...flattenInputs("Market (input)", project.market),
     ...flattenInputs("Pricing (input)", project.pricing),
+    // Each revenue stream gets its own CSV section so a hybrid mix stays legible
+    // in a spreadsheet instead of collapsing into one anonymous "streams" row.
+    ...(project.revenueStreams ?? []).flatMap((stream, index) =>
+      flattenInputs(`Revenue stream ${index + 1}: ${stream.name || "Untitled"} (input)`, stream)
+    ),
     ...flattenInputs("Marketplace (input)", project.marketplace ?? {}),
     ...flattenInputs("Acquisition (input)", project.acquisition),
     ...flattenInputs("Retention (input)", project.retention),
@@ -131,6 +143,14 @@ export function buildExportCsv(bundle: ExportBundle): string {
     ...flattenOutputs("Dilution (calculated)", calculatedMetrics.dilution),
     ...flattenOutputs("Concentration (calculated)", calculatedMetrics.concentration),
     ...flattenOutputs("Marketplace (calculated)", calculatedMetrics.marketplace ?? {}),
+    ...(calculatedMetrics.revenueMix
+      ? [
+          ...flattenOutputs("Revenue mix (calculated)", calculatedMetrics.revenueMix),
+          ...calculatedMetrics.revenueMix.streams.flatMap((stream) =>
+            flattenOutputs(`Revenue stream: ${stream.name || "Untitled"} (calculated)`, stream)
+          ),
+        ]
+      : []),
 
     ["Score", "Overall", String(scoreBreakdown.overall), ""],
     ["Score", "Confidence", String(scoreBreakdown.confidence), ""],

@@ -53,7 +53,7 @@ export interface InterviewQuestionSuggestion {
 /** One deterministic interview-question template per unverified assumption. */
 export function suggestInterviewQuestions(unverified: UnverifiedAssumption[]): InterviewQuestionSuggestion[] {
   return unverified.map((a) => ({
-    template: 'How does "{label}" (currently assumed at {value}) actually hold up with your real customers?',
+    template: 'How does "{label}" (currently assumed at {value}) actually hold up with our real customers?',
     params: { label: a.label, value: a.value },
   }));
 }
@@ -89,7 +89,7 @@ export function suggestProposalTemplate(project: Project): string {
     "",
     `Price: ${formatCurrency(price, currency)} (${billing})${monthly !== price ? ` — ${formatCurrency(monthly, currency)}/mo equivalent` : ""}`,
     "",
-    "Scope: [fill in from your Value Proposition and MVP Scope documents]",
+    "Scope: [fill in from our Value Proposition and MVP Scope documents]",
     "Timeline: [fill in]",
     "Next steps: [fill in]",
   ].join("\n");

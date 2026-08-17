@@ -49,7 +49,7 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
     } else {
       strengths.push(
         insight(
-          "Your customer economics appear healthy based on the current assumptions.",
+          "Our customer economics appear healthy based on the current assumptions.",
           "LTV:CAC is {value}x.",
           undefined,
           { value: unitEconomics.ltvToCacRatio.toFixed(1) }
@@ -141,7 +141,7 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
     warnings.push(
       insight(
         "Required market penetration looks unrealistic.",
-        "Hitting your target requires capturing {pct}% of the addressable market.",
+        "Hitting our target requires capturing {pct}% of the addressable market.",
         undefined,
         { pct: market.requiredMarketPenetrationPct.toFixed(1) }
       )
@@ -150,7 +150,7 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
     strengths.push(
       insight(
         "Required market penetration is modest.",
-        "Your target only requires {pct}% of the addressable market.",
+        "Our target only requires {pct}% of the addressable market.",
         undefined,
         { pct: market.requiredMarketPenetrationPct.toFixed(2) }
       )
@@ -246,9 +246,65 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
       );
     } else if (dilution.equityGivenUpPct < 15) {
       strengths.push(
-        insight("This round preserves most of your ownership.", "Only {pct}% equity given up at the modeled valuation.", undefined, {
+        insight("This round preserves most of our ownership.", "Only {pct}% equity given up at the modeled valuation.", undefined, {
           pct: dilution.equityGivenUpPct.toFixed(1),
         })
+      );
+    }
+  }
+
+  // --- Hybrid revenue mix ---------------------------------------------------
+  // A stack of streams is a strength when the recurring half carries the
+  // business and a risk when the revenue is really one-time project work
+  // wearing a product's clothes.
+  if (metrics.revenueMix !== null && metrics.revenueMix.streams.length > 1) {
+    const mix = metrics.revenueMix;
+    if (mix.recurringRevenueSharePct < 40) {
+      warnings.push(
+        insight(
+          "Most revenue has to be re-sold every month.",
+          "Only {pct}% of revenue recurs — the rest depends on winning new one-time work, so revenue restarts from near zero if sales pause.",
+          undefined,
+          { pct: mix.recurringRevenueSharePct.toFixed(0) }
+        )
+      );
+    } else if (mix.recurringRevenueSharePct >= 70) {
+      strengths.push(
+        insight(
+          "The revenue base is mostly recurring.",
+          "{pct}% of revenue arrives again next month without new sales.",
+          undefined,
+          { pct: mix.recurringRevenueSharePct.toFixed(0) }
+        )
+      );
+    }
+
+    const lowMarginStream = [...mix.streams]
+      .filter((s) => s.revenueSharePct >= 20)
+      .sort((a, b) => a.grossMarginPct - b.grossMarginPct)[0];
+    if (lowMarginStream && lowMarginStream.grossMarginPct < 40) {
+      opportunities.push(
+        insight(
+          "One stream is pulling the blended margin down.",
+          "{name} runs at a {margin}% margin on {share}% of revenue. Productizing or repricing it lifts the whole blend.",
+          undefined,
+          {
+            name: lowMarginStream.name || "Untitled stream",
+            margin: lowMarginStream.grossMarginPct.toFixed(0),
+            share: lowMarginStream.revenueSharePct.toFixed(0),
+          }
+        )
+      );
+    }
+
+    if (unitEconomics.oneTimeGrossProfitPerCustomer > 0 && unitEconomics.cacPaybackMonths === 0) {
+      strengths.push(
+        insight(
+          "Upfront work pays for customer acquisition on day one.",
+          "One-time streams contribute {amount} of margin per new customer, more than the cost of acquiring them.",
+          undefined,
+          { amount: unitEconomics.oneTimeGrossProfitPerCustomer.toFixed(0) }
+        )
       );
     }
   }
@@ -314,7 +370,7 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
       criticalRisks.push(
         insight(
           "Revenue is heavily concentrated in a few customers.",
-          "Your largest customers account for {pct}% of revenue — losing one could be existential.",
+          "Our largest customers account for {pct}% of revenue — losing one could be existential.",
           undefined,
           { pct: concentration.topCustomersRevenueSharePct.toFixed(0) }
         )
@@ -323,7 +379,7 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
       warnings.push(
         insight(
           "Customer concentration is a meaningful risk.",
-          "Your largest customers account for {pct}% of revenue.",
+          "Our largest customers account for {pct}% of revenue.",
           undefined,
           { pct: concentration.topCustomersRevenueSharePct.toFixed(0) }
         )
@@ -348,7 +404,7 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
     switch (category.category) {
       case "validation":
         recommendedActions.push(insight("Interview 10 potential customers to strengthen problem validation."));
-        recommendedActions.push(insight("Acquire your first 5 paying customers before expanding development."));
+        recommendedActions.push(insight("Acquire our first 5 paying customers before expanding development."));
         break;
       case "unitEconomics":
         recommendedActions.push(
@@ -364,7 +420,7 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
         recommendedActions.push(insight("Reduce fixed costs or extend runway before scaling acquisition spend."));
         break;
       case "market":
-        recommendedActions.push(insight("Test willingness to pay at your current price point with a small sample of prospects."));
+        recommendedActions.push(insight("Test willingness to pay at our current price point with a small sample of prospects."));
         break;
       case "execution":
         recommendedActions.push(insight("Identify a distribution channel or partnership before increasing build scope."));
@@ -386,7 +442,7 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
     }
   }
 
-  recommendedActions.push(insight("Test a landing page before building the full product, if you haven't already."));
+  recommendedActions.push(insight("Test a landing page before building the full product, if we haven't already."));
 
   return {
     strengths,

@@ -36,8 +36,21 @@ describe("buildExportCsv", () => {
   it("produces a header row followed by data rows", () => {
     const csv = buildExportCsv(buildBundle());
     const lines = csv.split("\n");
-    expect(lines[0]).toBe("Section,Field,Value,Data quality");
+    expect(lines[0]).toBe("Section,Field,Value,Data quality,Low,High");
     expect(lines.length).toBeGreaterThan(50); // every input + output + score row
+  });
+
+  it("writes the low/high bounds of a ranged assumption", () => {
+    const project: Project = {
+      ...exampleProject,
+      pricing: { ...exampleProject.pricing, productPrice: { value: 4000, quality: "estimated", range: { low: 2500, high: 5000 } } },
+    };
+    const metrics = calculateMetrics(project);
+    const scores = calculateScoreBreakdown(project, metrics);
+    const csv = buildExportCsv(
+      buildExportBundle(project, metrics, scores, generateInsights(metrics, scores, project), generateScenarios(project, metrics))
+    );
+    expect(csv).toContain("Product Price,4000,estimated,2500,5000");
   });
 
   it("includes basic info, known-quality inputs, and calculated outputs", () => {

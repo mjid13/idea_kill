@@ -46,7 +46,7 @@ export const DOCUMENT_REGISTRY: DocumentMeta[] = [
   {
     slug: "value-prop",
     title: "Value Proposition & Offer",
-    description: "What you sell, the customer outcome, scope, pricing, and why buy now.",
+    description: "What we sell, the customer outcome, scope, pricing, and why buy now.",
     group: "validate",
     hasEdit: true,
   },
@@ -60,7 +60,7 @@ export const DOCUMENT_REGISTRY: DocumentMeta[] = [
   {
     slug: "financial-model",
     title: "Financial Model",
-    description: "Pricing, costs, CAC, LTV, gross margin, break-even, and cash required — pulled from your assumptions automatically.",
+    description: "Pricing, costs, CAC, LTV, gross margin, break-even, and cash required — pulled from our assumptions automatically.",
     group: "validate",
     hasEdit: false,
   },
