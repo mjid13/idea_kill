@@ -14,22 +14,66 @@ import {
 
 const dataQualitySchema = z.enum(["known", "estimated", "unknown"]);
 
-const assumptionSchema = z.object({
-  value: z.number().finite("Must be a finite number"),
-  quality: dataQualitySchema,
+const assumptionRangeSchema = z.object({
+  low: z.number().finite("Must be a finite number"),
+  high: z.number().finite("Must be a finite number"),
 });
+
+const assumptionSchema = z
+  .object({
+    value: z.number().finite("Must be a finite number"),
+    quality: dataQualitySchema,
+    // Optional — absent means a single point estimate. Present means `value` is
+    // the most likely point inside [low, high].
+    range: assumptionRangeSchema.optional(),
+  })
+  .refine((a) => !a.range || a.range.low <= a.range.high, {
+    message: "The low end must not exceed the high end",
+    path: ["range", "low"],
+  })
+  .refine((a) => !a.range || (a.value >= a.range.low && a.value <= a.range.high), {
+    message: "The most likely value must sit inside the range",
+    path: ["value"],
+  });
 
 const optionalAssumptionSchema = assumptionSchema.optional();
 
-const nonNegativeAssumption = assumptionSchema.refine((a) => a.quality === "unknown" || a.value >= 0, {
-  message: "Must be zero or greater",
-});
+const nonNegativeAssumption = assumptionSchema
+  .refine((a) => a.quality === "unknown" || a.value >= 0, {
+    message: "Must be zero or greater",
+  })
+  .refine((a) => !a.range || a.range.low >= 0, {
+    message: "Must be zero or greater",
+    path: ["range", "low"],
+  });
 
 export const basicInfoSchema = z.object({
   name: z.string().min(1, "Project name is required"),
   description: z.string(),
   businessModel: z.enum(["saas", "subscription", "marketplace", "ecommerce", "one_time", "service", "usage_based", "other"]),
   currency: z.enum(["OMR", "USD", "SAR", "AED", "EUR", "GBP"]),
+});
+
+export const marketFunnelStageSchema = z
+  .object({
+    id: z.string().min(1),
+    label: z.string(),
+    mode: z.enum(["count", "percent"]),
+    value: nonNegativeAssumption,
+    note: z.string().optional(),
+  })
+  .refine((s) => s.mode !== "percent" || s.value.quality === "unknown" || s.value.value <= 100, {
+    message: "A survival percentage cannot exceed 100",
+    path: ["value", "value"],
+  });
+
+export const marketFunnelSchema = z.object({
+  baseLabel: z.string(),
+  baseCount: nonNegativeAssumption,
+  stages: z.array(marketFunnelStageSchema),
+  samStageId: z.string().optional(),
+  somStageId: z.string().optional(),
+  winRatePct: assumptionSchema,
 });
 
 export const marketSchema = z.object({
@@ -40,6 +84,8 @@ export const marketSchema = z.object({
   tamOverride: z.number().optional(),
   samOverride: z.number().optional(),
   somOverride: z.number().optional(),
+  sizingMethod: z.enum(["simple", "funnel", "direct"]).optional(),
+  funnel: marketFunnelSchema.optional(),
   targetCustomers: nonNegativeAssumption,
 });
 
@@ -51,6 +97,23 @@ export const pricingSchema = z.object({
   expectedMonthlyCustomerGrowthPct: assumptionSchema,
   freeToPaidConversionPct: optionalAssumptionSchema,
   topCustomersRevenueSharePct: optionalAssumptionSchema,
+});
+
+/**
+ * Hybrid revenue mix. Optional and array-shaped: a business is not one of SaaS
+ * *or* services *or* usage — it can be all of them at once, and each stream
+ * carries its own price basis and delivery margin.
+ */
+export const revenueStreamSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1, "Stream name is required"),
+  kind: z.enum(["one_time", "recurring", "usage", "transactional"]),
+  price: nonNegativeAssumption,
+  billingPeriod: z.enum(["monthly", "annual", "one_time", "usage_based"]),
+  attachRatePct: assumptionSchema,
+  unitsPerCustomerPerMonth: nonNegativeAssumption,
+  takeRatePct: optionalAssumptionSchema,
+  deliveryCostPct: assumptionSchema,
 });
 
 export const marketplaceSchema = z.object({
@@ -102,7 +165,38 @@ export const fundingSchema = z.object({
   initialInvestment: nonNegativeAssumption,
   otherMonthlyIncome: nonNegativeAssumption,
   preMoneyValuation: optionalAssumptionSchema,
+  // Funding requirement inputs — optional so projects saved before the
+  // requirement calculator existed still parse; the calculator falls back to
+  // documented defaults for anything absent.
+  monthsToMilestone: optionalAssumptionSchema,
+  safetyBufferMonths: optionalAssumptionSchema,
+  receivableDays: optionalAssumptionSchema,
+  capex: optionalAssumptionSchema,
+  contingencyPct: optionalAssumptionSchema,
 });
+
+/**
+ * Debt-financing inputs (Lender Mode). Every numeric field is optional so
+ * projects saved before Lender Mode existed still parse — `calculateLenderMetrics`
+ * falls back to documented defaults (60-month term, 1.25x target DSCR, 30%
+ * downside haircut) for anything absent.
+ */
+export const debtSchema = z.object({
+  loanAmount: optionalAssumptionSchema,
+  annualInterestRatePct: optionalAssumptionSchema,
+  termMonths: optionalAssumptionSchema,
+  gracePeriodMonths: optionalAssumptionSchema,
+  existingMonthlyDebtService: optionalAssumptionSchema,
+  founderContribution: optionalAssumptionSchema,
+  collateralValue: optionalAssumptionSchema,
+  collateralDescription: z.string().optional(),
+  personalGuarantee: z.boolean().optional(),
+  contractedMonthlyRevenue: optionalAssumptionSchema,
+  targetDscr: optionalAssumptionSchema,
+  downsideRevenueHaircutPct: optionalAssumptionSchema,
+});
+
+export type DebtFormValues = z.infer<typeof debtSchema>;
 
 const rating = z.number().min(1).max(5);
 
@@ -164,12 +258,15 @@ export const projectFormSchema = z.object({
   basicInfo: basicInfoSchema,
   market: marketSchema,
   pricing: pricingSchema,
+  revenueStreams: z.array(revenueStreamSchema).max(12).optional(),
   marketplace: marketplaceSchema.optional(),
   acquisition: acquisitionSchema,
   retention: retentionSchema,
   unitEconomics: unitEconomicsSchema,
   costs: costsSchema,
   funding: fundingSchema,
+  // Optional — Lender Mode inputs, absent on projects saved before it existed.
+  debt: debtSchema.optional(),
   validation: validationAssessmentSchema,
   team: teamAssessmentSchema,
   risk: riskAssessmentSchema,
@@ -208,6 +305,7 @@ export const STEP_FIELDS: Record<string, string[]> = {
   basicInfo: ["basicInfo"],
   market: ["market"],
   pricing: ["pricing"],
+  revenueStreams: ["revenueStreams"],
   marketplace: ["marketplace"],
   acquisition: ["acquisition"],
   retention: ["retention"],

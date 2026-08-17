@@ -1,4 +1,4 @@
-// Domain model types for the Product Viability Calculator.
+// Domain model types for IdeaUp.
 // Kept free of any UI or persistence concerns so they can be reused by the
 // calculation engine, scoring engine, insight engine, and presentation layer.
 
@@ -19,10 +19,24 @@ export type BillingPeriod = "monthly" | "annual" | "one_time" | "usage_based";
 /** Marks whether an input represents a real, estimated, or missing value. */
 export type DataQuality = "known" | "estimated" | "unknown";
 
+/**
+ * Plausible span for a numeric assumption. Paired with the assumption's own
+ * `value`, which is read as the most likely point inside the span, it turns a
+ * falsely precise "CAC = 4,000" into "CAC is 2,500-5,000, most likely 4,000"
+ * and gives the Monte Carlo engine something to sample.
+ */
+export interface AssumptionRange {
+  low: number;
+  high: number;
+}
+
 /** A single numeric input paired with metadata about how reliable it is. */
 export interface Assumption<T = number> {
+  /** Single number, or the most likely value when `range` is present. */
   value: T;
   quality: DataQuality;
+  /** Optional low/high span. Absent means the input is a single point estimate. */
+  range?: AssumptionRange;
 }
 
 export function known<T>(value: T): Assumption<T> {
@@ -35,6 +49,17 @@ export function estimated<T>(value: T): Assumption<T> {
 
 export function unknownValue<T>(fallback: T): Assumption<T> {
   return { value: fallback, quality: "unknown" };
+}
+
+/** An estimated assumption expressed as low / most likely / high. */
+export function ranged(low: number, likely: number, high: number, quality: DataQuality = "estimated"): Assumption<number> {
+  return { value: likely, quality, range: { low, high } };
+}
+
+/** True when the assumption carries a usable (non-degenerate) low/high span. */
+export function hasRange(a: Assumption<number> | undefined | null): a is Assumption<number> & { range: AssumptionRange } {
+  const r = a?.range;
+  return !!r && Number.isFinite(r.low) && Number.isFinite(r.high) && r.high > r.low;
 }
 
 // ---------------------------------------------------------------------------
@@ -52,6 +77,63 @@ export interface BasicInfo {
 // Step 1 - Market
 // ---------------------------------------------------------------------------
 
+/**
+ * How TAM/SAM/SOM are derived:
+ * - "simple"  — customers x spend, then two percentage haircuts (the original model).
+ * - "funnel"  — a bottom-up qualification funnel that narrows a starting universe
+ *               of accounts through successive filters (sector, size, digital
+ *               maturity, workflow fit, budget, reachability).
+ * - "direct"  — the founder already knows TAM/SAM/SOM and enters them outright.
+ */
+export type MarketSizingMethod = "simple" | "funnel" | "direct";
+
+/**
+ * How a funnel stage's population is expressed: either the absolute number of
+ * accounts left after the filter, or the share (0-100) of the previous stage
+ * that survives it.
+ */
+export type FunnelStageMode = "count" | "percent";
+
+export interface MarketFunnelStage {
+  /** Stable id — referenced by MarketFunnel.samStageId/somStageId. */
+  id: string;
+  /** What this filter selects for, e.g. "Digitally ready". */
+  label: string;
+  mode: FunnelStageMode;
+  /** Account count (mode "count") or survival percentage (mode "percent"). */
+  value: Assumption<number>;
+  /** Where the number came from — a source, a query, a rationale. */
+  note?: string;
+}
+
+/**
+ * A bottom-up account funnel: a starting universe narrowed by ordered filters
+ * down to the accounts we can actually sell to. Example:
+ * 130,000 SMEs -> 19,880 small/medium -> 6,500 relevant sectors ->
+ * 2,300 digitally ready -> 1,400 with budget -> 600 qualified accounts.
+ */
+export interface MarketFunnel {
+  /** Describes the starting universe, e.g. "Registered SMEs in Oman". */
+  baseLabel: string;
+  /** Size of the starting universe — the population TAM is built on. */
+  baseCount: Assumption<number>;
+  /** Ordered filters, each applied to the population left by the one before it. */
+  stages: MarketFunnelStage[];
+  /**
+   * Stage whose surviving population defines SAM. Defaults to the
+   * second-to-last stage when unset (the last stage then defines SOM).
+   */
+  samStageId?: string;
+  /** Stage whose surviving population defines SOM. Defaults to the last stage. */
+  somStageId?: string;
+  /**
+   * Share (0-100) of the SOM-stage accounts we expect to actually win.
+   * Left "unknown" it is treated as 100% — the funnel's final stage is already
+   * a qualified-accounts count, so no extra haircut is implied until asked for.
+   */
+  winRatePct: Assumption<number>;
+}
+
 export interface MarketAssumptions {
   /** Total number of potential customers in the wider market. */
   totalPotentialCustomers: Assumption<number>;
@@ -61,10 +143,14 @@ export interface MarketAssumptions {
   addressableMarketPct: Assumption<number>;
   /** Percentage (0-100) of the addressable market realistically obtainable. */
   obtainableMarketPct: Assumption<number>;
-  /** Optional direct overrides, used instead of the derived calculation when provided. */
+  /** Optional direct overrides, applied only when sizingMethod is "direct". */
   tamOverride?: number;
   samOverride?: number;
   somOverride?: number;
+  /** Absent on projects saved before the funnel existed — treated as "simple". */
+  sizingMethod?: MarketSizingMethod;
+  /** Bottom-up account funnel, used when sizingMethod is "funnel". */
+  funnel?: MarketFunnel;
   /** Customers targeted within the planning horizon, used for penetration. */
   targetCustomers: Assumption<number>;
 }
@@ -82,6 +168,62 @@ export interface PricingAssumptions {
   freeToPaidConversionPct?: Assumption<number>;
   /** Estimated % of monthly revenue coming from your largest few customers. */
   topCustomersRevenueSharePct?: Assumption<number>;
+}
+
+// ---------------------------------------------------------------------------
+// Step 2a - Revenue streams (hybrid economics)
+//
+// `basicInfo.businessModel` is a label, not an economic straitjacket: real
+// companies stack an upfront audit, a paid implementation, a platform
+// subscription, metered AI usage, and an enterprise support retainer inside a
+// single business. Each of those behaves differently (one-time cash on
+// acquisition vs. recurring cash every month, 90% software margin vs. 35%
+// services margin), so they are modelled as separate streams and blended,
+// rather than collapsed into one price and one margin.
+// ---------------------------------------------------------------------------
+
+export type RevenueStreamKind =
+  /** Charged once per customer (audit, setup fee, implementation project). */
+  | "one_time"
+  /** Charged every billing period for as long as the customer stays (platform, support retainer). */
+  | "recurring"
+  /** Metered consumption billed monthly (AI tokens, API calls, seats-by-usage). */
+  | "usage"
+  /** A cut of transaction volume flowing through the product (marketplace take rate). */
+  | "transactional";
+
+export interface RevenueStream {
+  id: string;
+  /** Founder-facing label, e.g. "AI audit" or "Enterprise support". */
+  name: string;
+  kind: RevenueStreamKind;
+  /**
+   * Price on this stream's own basis: per purchase (`one_time`), per billing
+   * period (`recurring`), per billable unit (`usage`), or the average
+   * transaction value the take rate applies to (`transactional`).
+   */
+  price: Assumption<number>;
+  /** Only read for `recurring` — normalizes an annual contract into a monthly figure. */
+  billingPeriod: BillingPeriod;
+  /** % of customers (0-100) who buy this stream. Treated as 100% while still unknown. */
+  attachRatePct: Assumption<number>;
+  /**
+   * `usage`: billable units per attached customer per month.
+   * `transactional`: transactions per attached customer per month.
+   * `one_time`: purchases per attached customer (1 for a single setup fee).
+   * `recurring`: ignored.
+   * Treated as 1 while still unknown.
+   */
+  unitsPerCustomerPerMonth: Assumption<number>;
+  /** `transactional` only: % of transaction value kept as revenue. */
+  takeRatePct?: Assumption<number>;
+  /**
+   * Cost of delivering this stream, as a % of its own revenue — the number that
+   * separates a 90%-margin platform from a 40%-margin implementation project.
+   * Customer-level costs that are not stream-specific stay in
+   * `UnitEconomicsAssumptions` and apply on top.
+   */
+  deliveryCostPct: Assumption<number>;
 }
 
 // ---------------------------------------------------------------------------
@@ -164,6 +306,60 @@ export interface FundingAssumptions {
    * calculations) — this field drives real dilution math.
    */
   preMoneyValuation?: Assumption<number>;
+  // -------------------------------------------------------------------------
+  // Funding requirement inputs — the founder describes the plan, and the app
+  // derives how much financing it needs (`FundingRequirementMetrics`) instead
+  // of asking for a raise amount directly.
+  // -------------------------------------------------------------------------
+  /** Months of operating plan to fund before the next milestone is reached. Defaults to 12 when absent. */
+  monthsToMilestone?: Assumption<number>;
+  /** Extra months of net burn held back beyond the milestone window. Defaults to 3 when absent. */
+  safetyBufferMonths?: Assumption<number>;
+  /** Average days between invoicing a customer and collecting cash — drives the working-capital requirement. */
+  receivableDays?: Assumption<number>;
+  /** One-time capital expenditure (equipment, fit-out, deposits, licenses) the plan must cover. */
+  capex?: Assumption<number>;
+  /** Percentage added on top of required financing to produce the recommended raise. Defaults to 18 when absent. */
+  contingencyPct?: Assumption<number>;
+}
+
+// ---------------------------------------------------------------------------
+// Step 7b - Debt financing (Lender Mode)
+//
+// A bank underwrites a different question than an investor does: not "how big
+// can this get" but "can this service the loan every month, and what happens
+// when it doesn't". These inputs exist only for that question — absence never
+// affects viability scoring or the investor view.
+// ---------------------------------------------------------------------------
+
+export interface DebtAssumptions {
+  /**
+   * Principal being requested. Left unknown, Lender Mode sizes it from the
+   * derived funding requirement so a founder sees a schedule before deciding
+   * on a number.
+   */
+  loanAmount?: Assumption<number>;
+  annualInterestRatePct?: Assumption<number>;
+  /** Total loan life in months, grace period included. Defaults to 60 when absent. */
+  termMonths?: Assumption<number>;
+  /** Interest-only months before principal amortization starts. */
+  gracePeriodMonths?: Assumption<number>;
+  /** Debt service already committed on existing facilities, per month. */
+  existingMonthlyDebtService?: Assumption<number>;
+  /** Cash the founders put in themselves alongside the loan (equity injection). */
+  founderContribution?: Assumption<number>;
+  /** Appraised value of assets pledged as security. */
+  collateralValue?: Assumption<number>;
+  /** What is being pledged — property, equipment, receivables, deposits. */
+  collateralDescription?: string;
+  /** Whether the founders are personally on the hook for the debt. */
+  personalGuarantee?: boolean;
+  /** Monthly revenue already under signed contract — the part a lender treats as committed. */
+  contractedMonthlyRevenue?: Assumption<number>;
+  /** Minimum DSCR the lender underwrites to. Defaults to 1.25 when absent. */
+  targetDscr?: Assumption<number>;
+  /** Revenue haircut applied in the downside case. Defaults to 30 when absent. */
+  downsideRevenueHaircutPct?: Assumption<number>;
 }
 
 // ---------------------------------------------------------------------------
@@ -442,6 +638,13 @@ export interface Project {
   basicInfo: BasicInfo;
   market: MarketAssumptions;
   pricing: PricingAssumptions;
+  /**
+   * Optional hybrid revenue mix. When at least one stream carries data it
+   * drives revenue, margin, LTV and the forecast instead of the single
+   * `pricing.productPrice` x `billingPeriod` model, which stays as the
+   * fallback for projects that only sell one thing.
+   */
+  revenueStreams?: RevenueStream[];
   /** Optional — only populated/shown when basicInfo.businessModel is "marketplace". */
   marketplace?: MarketplaceAssumptions;
   acquisition: AcquisitionAssumptions;
@@ -449,6 +652,8 @@ export interface Project {
   unitEconomics: UnitEconomicsAssumptions;
   costs: CostAssumptions;
   funding: FundingAssumptions;
+  /** Optional — debt-financing inputs, read only by Lender Mode. */
+  debt?: DebtAssumptions;
   validation: ValidationAssessment;
   team: TeamAssessment;
   risk: RiskAssessment;
@@ -470,11 +675,46 @@ export interface Project {
 // Calculated outputs
 // ---------------------------------------------------------------------------
 
+export interface MarketFunnelStageMetrics {
+  id: string;
+  label: string;
+  /** Accounts left after this filter. */
+  accounts: number;
+  /** Share (0-100) of the immediately preceding population that survives here. */
+  survivalPct: number;
+  /** Share (0-100) of the starting universe that survives to here. */
+  shareOfUniversePct: number;
+  /** Annual revenue this population represents at the average annual spend. */
+  annualValue: number;
+  /** True when the stage holds more accounts than the one before it — a filter that adds accounts is a data error. */
+  isExpanding: boolean;
+}
+
+export interface MarketFunnelMetrics {
+  /** The starting universe first, then one entry per filter stage. */
+  stages: MarketFunnelStageMetrics[];
+  universeAccounts: number;
+  /** Population behind SAM. */
+  addressableAccounts: number;
+  /** Population behind SOM before the win rate is applied. */
+  qualifiedAccounts: number;
+  /** Qualified accounts x win rate — the accounts SOM assumes we close. */
+  obtainableAccounts: number;
+  /** Share (0-100) of the starting universe that survives the whole funnel. */
+  overallQualificationPct: number;
+}
+
 export interface MarketMetrics {
   tam: number;
   sam: number;
   som: number;
   requiredMarketPenetrationPct: number;
+  /** Which model produced the numbers above. */
+  method: MarketSizingMethod;
+  /** Accounts SAM is built on — the denominator of required penetration. */
+  addressableCustomers: number;
+  /** Stage-by-stage breakdown; null unless the funnel method is active. */
+  funnel: MarketFunnelMetrics | null;
 }
 
 export interface RevenueMetrics {
@@ -505,6 +745,17 @@ export interface UnitEconomicsMetrics {
   ltv: number;
   ltvToCacRatio: number | null;
   cacPaybackMonths: number | null;
+  /**
+   * Monthly contribution from the recurring part of the mix (subscription,
+   * usage, take rate) — the part that compounds over a customer's lifetime.
+   * Equals `grossProfitPerCustomer` for single-stream projects.
+   */
+  recurringGrossProfitPerCustomer: number;
+  /**
+   * Contribution earned once, on acquisition (audit, setup, implementation).
+   * 0 for single-stream projects; it offsets CAC instead of compounding.
+   */
+  oneTimeGrossProfitPerCustomer: number;
 }
 
 export interface OperatingMetrics {
@@ -545,6 +796,50 @@ export interface ConcentrationMetrics {
   riskLevel: ConcentrationRiskLevel;
 }
 
+export interface RevenueStreamMetrics {
+  id: string;
+  name: string;
+  kind: RevenueStreamKind;
+  /** True for recurring/usage/transactional — revenue that repeats while the customer stays. */
+  isRecurring: boolean;
+  /**
+   * Revenue this stream contributes each month: recurring kinds bill the whole
+   * customer base, `one_time` bills only that month's newly acquired customers.
+   */
+  monthlyRevenue: number;
+  /** Share of total monthly revenue, 0-100. */
+  revenueSharePct: number;
+  /** Recurring kinds: per existing customer per month. `one_time`: per newly acquired customer. */
+  revenuePerCustomer: number;
+  grossMarginPct: number;
+  monthlyGrossProfit: number;
+  /** Transaction volume this stream runs through the product (transactional kind only, else 0). */
+  monthlyGmv: number;
+}
+
+/**
+ * Blended economics across every revenue stream. Null when a project has no
+ * stream data, in which case the single-price `pricing` model still governs.
+ */
+export interface RevenueMixMetrics {
+  streams: RevenueStreamMetrics[];
+  /** Recurring revenue per existing customer per month (the ARPU that compounds). */
+  recurringArpu: number;
+  /** One-time revenue collected per newly acquired customer. */
+  oneTimeRevenuePerNewCustomer: number;
+  monthlyRecurringRevenue: number;
+  monthlyOneTimeRevenue: number;
+  totalMonthlyRevenue: number;
+  /** 0-100. How much of this month's revenue repeats next month without new sales. */
+  recurringRevenueSharePct: number;
+  /** Revenue-weighted margins. `blended` mixes both halves at the current new-customer rate. */
+  blendedGrossMarginPct: number;
+  recurringGrossMarginPct: number;
+  oneTimeGrossMarginPct: number;
+  /** Total transaction volume across transactional streams. */
+  monthlyGmv: number;
+}
+
 export interface CalculatedMetrics {
   market: MarketMetrics;
   revenue: RevenueMetrics;
@@ -558,6 +853,8 @@ export interface CalculatedMetrics {
   concentration: ConcentrationMetrics;
   /** Only populated when businessModel is "marketplace" and the marketplace slice has data. */
   marketplace: MarketplaceMetrics | null;
+  /** Only populated when the project defines at least one revenue stream with data. */
+  revenueMix: RevenueMixMetrics | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -574,6 +871,39 @@ export interface EfficiencyMetrics {
   burnMultiple: number | null;
   magicNumber: number | null;
   quickRatio: number | null;
+}
+
+/**
+ * How much external financing the plan actually needs, derived from the
+ * forecast rather than entered by the founder. Same sibling-of-
+ * CalculatedMetrics rule as EfficiencyMetrics above: it consumes a forecast,
+ * so it cannot live inside CalculatedMetrics.
+ */
+export interface FundingRequirementMetrics {
+  /** Length of the funded window, in months. */
+  monthsToMilestone: number;
+  /** Cash out over the window: operating expenses plus variable costs. */
+  operatingSpendToMilestone: number;
+  /** Cash in over the window: revenue plus other monthly income. */
+  expectedCashReceipts: number;
+  /** Safety buffer: `safetyBufferMonths` of net burn at the milestone-month run rate. */
+  safetyBuffer: number;
+  /** Cash tied up in receivables at the milestone-month revenue run rate. */
+  workingCapital: number;
+  /** One-time capital expenditure carried straight through from the assumptions. */
+  capex: number;
+  /** Cash already on hand (excludes `initialInvestment`, which is the raise being sized). */
+  cashOnHand: number;
+  /** Spend + buffer + working capital + CAPEX − receipts − cash on hand, floored at 0. */
+  requiredFinancing: number;
+  contingencyPct: number;
+  contingencyAmount: number;
+  /** Required financing plus contingency, rounded up to a round number a founder would actually ask for. */
+  recommendedRaise: number;
+  /** First forecast month with non-negative net cash flow, or null if none within 36 months. */
+  breakEvenMonth: number | null;
+  /** True when receipts and cash on hand already cover the plan — nothing to raise. */
+  isSelfFunded: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -593,6 +923,10 @@ export interface ForecastMonth {
   operatingExpenses: number;
   netCashFlow: number;
   cashBalance: number;
+  /** Revenue that repeats: subscription/usage/take-rate MRR including expansion. */
+  recurringRevenue: number;
+  /** Revenue earned once, from this month's newly acquired customers (audits, setup, implementation). */
+  oneTimeRevenue: number;
   /** Revenue added this month from upsell/cross-sell to existing customers (0 for non-recurring or when unset). */
   expansionRevenue: number;
   /** Revenue lost this month from downgrades among existing customers (0 for non-recurring or when unset). */
@@ -709,4 +1043,184 @@ export interface DecisionSummary {
   title: string;
   description: string;
   reasons: DecisionReason[];
+}
+
+// ---------------------------------------------------------------------------
+// Audience modes (Investor / Lender)
+//
+// The same project, underwritten by two different readers. A VC buys the upside
+// distribution — market size, growth, moat, expansion, the exit. A bank buys
+// the downside floor — can this pay a fixed amount every month, and what backs
+// it if it can't. Neither one is a subset of the other, so each audience gets
+// its own metric set, its own pass/fail checks, and its own verdict.
+// ---------------------------------------------------------------------------
+
+export type AudienceCheckStatus = "pass" | "warn" | "fail";
+
+/**
+ * One underwriting test, phrased the way the audience would phrase it.
+ * `label`, `requirement` and `detail` are translation keys (the English source
+ * string used verbatim as an i18n message id), with any numbers travelling as
+ * params so the UI can translate them — the same convention as `Insight`.
+ */
+export interface AudienceCheck {
+  id: string;
+  label: string;
+  status: AudienceCheckStatus;
+  /** Already-formatted figure for this project, e.g. "1.4x" or "OMR 120,000". */
+  value: string;
+  /** What the audience wants to see, e.g. "≥ 1.25x". */
+  requirement: string;
+  detail?: string;
+  detailParams?: Record<string, string | number>;
+}
+
+// --- Lender Mode -----------------------------------------------------------
+
+export interface RepaymentMonth {
+  month: number;
+  openingBalance: number;
+  interest: number;
+  /** 0 during the interest-only grace period. */
+  principal: number;
+  payment: number;
+  closingBalance: number;
+}
+
+export interface DebtServiceMonth {
+  month: number;
+  /**
+   * Cash Available For Debt Service: gross profit − operating expenses + other
+   * income, i.e. the forecast's net cash flow before any debt service.
+   */
+  cashAvailableForDebtService: number;
+  /** This loan's payment plus any debt service already committed elsewhere. */
+  debtService: number;
+  /** CFADS / debt service. Null when there is no debt service to cover. */
+  dscr: number | null;
+  /** Running cash after debt service, starting from cash + founder contribution + loan proceeds. */
+  cashBalance: number;
+}
+
+export interface AnnualDebtService {
+  year: number;
+  cashAvailableForDebtService: number;
+  debtService: number;
+  dscr: number | null;
+}
+
+/** Same DSCR math re-run on a revenue-haircut forecast — the bank's stress case. */
+export interface DownsideCase {
+  revenueHaircutPct: number;
+  minDscr: number | null;
+  /** Aggregate DSCR: total CFADS / total debt service over the term. */
+  aggregateDscr: number | null;
+  monthsBelowOne: number;
+  lowestCashBalance: number;
+  /** True when the stressed plan still covers every payment without running the cash to zero. */
+  survives: boolean;
+}
+
+export interface LenderMetrics {
+  loanAmount: number;
+  /** True when `loanAmount` came from the derived funding requirement rather than being entered. */
+  loanAmountIsDerived: boolean;
+  annualInterestRatePct: number;
+  termMonths: number;
+  gracePeriodMonths: number;
+  /** Level payment once amortization starts (interest-only payments are lower). */
+  monthlyPayment: number;
+  /** Loan payment plus existing commitments — what has to clear every month. */
+  totalMonthlyDebtService: number;
+  totalInterest: number;
+  totalRepayment: number;
+  schedule: RepaymentMonth[];
+  service: DebtServiceMonth[];
+  annual: AnnualDebtService[];
+  targetDscr: number;
+  minDscr: number | null;
+  /** Total CFADS / total debt service across the term — the figure a credit memo quotes. */
+  aggregateDscr: number | null;
+  monthsBelowTargetDscr: number;
+  /** First month the loan is fully covered (DSCR ≥ 1), or null if it never is. */
+  firstCoveredMonth: number | null;
+  /** Largest principal the plan's own cash flow supports at the target DSCR. */
+  debtCapacity: number;
+  /** Debt capacity − loan amount. Negative means the ask exceeds what the plan services. */
+  headroom: number;
+  /** Collateral value / loan amount. Null when no collateral was entered. */
+  collateralCoverageRatio: number | null;
+  /** Founder cash as a share of total funding (founder + loan), 0-100. */
+  founderContributionPct: number | null;
+  /** Contracted monthly revenue / total monthly debt service. Null when nothing is contracted. */
+  contractedRevenueCover: number | null;
+  /** Cash tied up in receivables at the current revenue run rate. */
+  receivablesBalance: number;
+  breakEvenMonth: number | null;
+  lowestCashBalance: number;
+  monthsCashNegative: number;
+  downside: DownsideCase;
+}
+
+export type LenderVerdict = "bankable" | "conditional" | "not_bankable";
+
+export interface LenderAssessment {
+  verdict: LenderVerdict;
+  title: string;
+  description: string;
+  checks: AudienceCheck[];
+}
+
+// --- Investor Mode ---------------------------------------------------------
+
+/** A dated point the plan reaches, used to answer "what does this round buy". */
+export interface InvestorMilestone {
+  id: string;
+  /** Forecast month it lands in, or null when the plan never reaches it. */
+  month: number | null;
+  label: string;
+  labelParams?: Record<string, string | number>;
+  detail: string;
+  detailParams?: Record<string, string | number>;
+}
+
+export interface InvestorSummary {
+  arrNow: number;
+  arrMonth12: number;
+  arrMonth24: number;
+  /** ARR multiple over the next 12 months. Null before there is any ARR to grow. */
+  growthMultiple12mo: number | null;
+  customersMonth12: number;
+  netRevenueRetentionPct: number;
+  monthlyExpansionRevenuePct: number;
+  ltvToCacRatio: number | null;
+  cacPaybackMonths: number | null;
+  grossMarginPct: number;
+  /** Growth rate + profit margin over the next 12 months. Null for non-recurring models. */
+  ruleOf40Score: number | null;
+  burnMultiple: number | null;
+  magicNumber: number | null;
+  /** 0-100, built from the differentiation/switching-cost/distribution ratings. */
+  moatScore: number;
+  /** 0-100, built from the paying-customers/LOI/interview evidence. */
+  tractionScore: number;
+  /** Share of SAM the plan needs to hit its target — the "is this credible" sanity check. */
+  requiredMarketPenetrationPct: number;
+  /** Ask from the pitch narrative when entered, otherwise the derived recommended raise. */
+  fundingAsk: number;
+  fundingAskIsDerived: boolean;
+  /** Months of runway the ask buys at the milestone-month net burn. Null when cash-flow positive. */
+  runwayFromAskMonths: number | null;
+  equityGivenUpPct: number | null;
+  postMoneyValuation: number | null;
+  milestones: InvestorMilestone[];
+  checks: AudienceCheck[];
+}
+
+export type InvestorVerdict = "fundable" | "promising" | "too_early";
+
+export interface InvestorAssessment {
+  verdict: InvestorVerdict;
+  title: string;
+  description: string;
 }
