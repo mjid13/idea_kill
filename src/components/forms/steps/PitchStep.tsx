@@ -43,21 +43,21 @@ export function PitchStep({ control }: { control: Control<ProjectFormValues> }) 
   return (
     <div className="space-y-5">
       <p className="text-xs text-muted-foreground">
-        {t("Optional — used only to fill in the narrative sections of the investor pitch deck export. None of this affects your viability score.")}
+        {t("Optional — used only to fill in the narrative sections of the investor pitch deck export. None of this affects our viability score.")}
       </p>
 
       <NarrativeField
         control={control}
         name="pitch.problemStatement"
         label={t("Problem")}
-        placeholder={t("What problem are you solving, and for whom? Why does it matter?")}
+        placeholder={t("What problem are we solving, and for whom? Why does it matter?")}
       />
 
       <NarrativeField
         control={control}
         name="pitch.competitiveLandscape"
         label={t("Competitive landscape")}
-        placeholder={t("Who else solves this today, and how are you meaningfully different?")}
+        placeholder={t("Who else solves this today, and how are we meaningfully different?")}
       />
 
       <NarrativeField
@@ -82,7 +82,7 @@ export function PitchStep({ control }: { control: Control<ProjectFormValues> }) 
           name="pitch.fundingAsk"
           label={t("Funding ask")}
           prefix="$"
-          description={t("The amount you're raising in this round, if applicable.")}
+          description={t("The amount we're raising in this round, if applicable.")}
         />
         <div className="sm:col-span-1">
           <NarrativeField

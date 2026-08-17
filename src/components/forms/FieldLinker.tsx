@@ -53,14 +53,26 @@ function useLinkedAssumption(
     linkedRef.current = initial.value === 0 && initial.quality === "unknown";
   }
 
+  /**
+   * Writes the linked value, widening an existing low/high range to keep
+   * containing it — the most likely value must stay inside its own range, and a
+   * recalculated number is allowed to land outside the bounds the user typed.
+   */
+  const setLinkedValue = (nextValue: number, nextQuality: DataQuality, shouldDirty: boolean) => {
+    form.setValue(`${targetPath}.value`, nextValue, { shouldDirty });
+    form.setValue(`${targetPath}.quality`, nextQuality, { shouldDirty });
+    const range = (form.getValues(targetPath) as Assumption<number>).range;
+    if (range && (nextValue < range.low || nextValue > range.high)) {
+      form.setValue(`${targetPath}.range`, { low: Math.min(range.low, nextValue), high: Math.max(range.high, nextValue) }, { shouldDirty });
+    }
+  };
+
   const applyFromSource = () => {
     if (sourceQuality === "unknown") return;
     const nextValue = Math.round(sourceValue * 100) / 100;
-    const nextQuality = inheritedQuality(sourceQuality);
     linkedRef.current = true;
     lastSetRef.current = nextValue;
-    form.setValue(`${targetPath}.value`, nextValue, { shouldDirty: true });
-    form.setValue(`${targetPath}.quality`, nextQuality, { shouldDirty: true });
+    setLinkedValue(nextValue, inheritedQuality(sourceQuality), true);
   };
 
   useEffect(() => {
@@ -73,10 +85,8 @@ function useLinkedAssumption(
     if (sourceQuality === "unknown") return;
 
     const nextValue = Math.round(sourceValue * 100) / 100;
-    const nextQuality = inheritedQuality(sourceQuality);
     lastSetRef.current = nextValue;
-    form.setValue(`${targetPath}.value`, nextValue, { shouldDirty: false });
-    form.setValue(`${targetPath}.quality`, nextQuality, { shouldDirty: false });
+    setLinkedValue(nextValue, inheritedQuality(sourceQuality), false);
     // Only re-run when the source changes; targetPath/form are stable across the component's life.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sourceValue, sourceQuality]);

@@ -16,11 +16,11 @@ export function ValidationStep({ control }: { control: Control<ProjectFormValues
         <RatingField control={control} name="validation.problemAlreadySpendingMoney" label={t("Is the customer already spending money solving it?")} lowLabel={t("No")} highLabel={t("Significant spend")} />
       </StepSection>
 
-      <StepSection title={t("Validation")} description={t("What evidence do you have?")}>
+      <StepSection title={t("Validation")} description={t("What evidence do we have?")}>
         <RatingField control={control} name="validation.customersInterviewed" label={t("Have customers been interviewed?")} lowLabel={t("None")} highLabel={t("Many")} />
-        <RatingField control={control} name="validation.hasUsers" label={t("Do you have users?")} lowLabel={t("None")} highLabel={t("Many")} />
-        <RatingField control={control} name="validation.hasPayingCustomers" label={t("Do you have paying customers?")} lowLabel={t("None")} highLabel={t("Many")} />
-        <RatingField control={control} name="validation.hasSignedLois" label={t("Do you have signed LOIs/contracts?")} lowLabel={t("None")} highLabel={t("Several")} />
+        <RatingField control={control} name="validation.hasUsers" label={t("Do we have users?")} lowLabel={t("None")} highLabel={t("Many")} />
+        <RatingField control={control} name="validation.hasPayingCustomers" label={t("Do we have paying customers?")} lowLabel={t("None")} highLabel={t("Many")} />
+        <RatingField control={control} name="validation.hasSignedLois" label={t("Do we have signed LOIs/contracts?")} lowLabel={t("None")} highLabel={t("Several")} />
         <RatingField control={control} name="validation.customersRequestedSolution" label={t("Have customers actively requested the solution?")} lowLabel={t("No")} highLabel={t("Frequently")} />
       </StepSection>
 
@@ -30,11 +30,11 @@ export function ValidationStep({ control }: { control: Control<ProjectFormValues
         <RatingField control={control} name="validation.productDifferentiation" label={t("How differentiated is the product?")} lowLabel={t("Commodity")} highLabel={t("Highly unique")} />
       </StepSection>
 
-      <StepSection title={t("Distribution")} description={t("Can you reach customers efficiently?")}>
-        <RatingField control={control} name="validation.knowsHowToReachCustomers" label={t("Do you know how to reach customers?")} lowLabel={t("No")} highLabel={t("Clear plan")} />
-        <RatingField control={control} name="validation.hasAudience" label={t("Do you already have an audience?")} lowLabel={t("None")} highLabel={t("Large")} />
-        <RatingField control={control} name="validation.hasPartnerships" label={t("Do you have partnerships or distribution channels?")} lowLabel={t("None")} highLabel={t("Several")} />
-        <RatingField control={control} name="validation.hasUnfairDistributionAdvantage" label={t("Do you have an unfair distribution advantage?")} lowLabel={t("None")} highLabel={t("Strong")} />
+      <StepSection title={t("Distribution")} description={t("Can we reach customers efficiently?")}>
+        <RatingField control={control} name="validation.knowsHowToReachCustomers" label={t("Do we know how to reach customers?")} lowLabel={t("No")} highLabel={t("Clear plan")} />
+        <RatingField control={control} name="validation.hasAudience" label={t("Do we already have an audience?")} lowLabel={t("None")} highLabel={t("Large")} />
+        <RatingField control={control} name="validation.hasPartnerships" label={t("Do we have partnerships or distribution channels?")} lowLabel={t("None")} highLabel={t("Several")} />
+        <RatingField control={control} name="validation.hasUnfairDistributionAdvantage" label={t("Do we have an unfair distribution advantage?")} lowLabel={t("None")} highLabel={t("Strong")} />
       </StepSection>
 
       <StepSection title={t("Competition")}>

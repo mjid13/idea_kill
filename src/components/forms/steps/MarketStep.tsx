@@ -35,7 +35,7 @@ export function MarketStep({ control }: { control: Control<ProjectFormValues> })
             control={control}
             name="market.addressableMarketPct"
             label={t("Addressable market %")}
-            description={t("Percentage of the total market realistically addressable given your positioning and geography.")}
+            description={t("Percentage of the total market realistically addressable given our positioning and geography.")}
             suffix="%"
             step={1}
           />
@@ -43,7 +43,7 @@ export function MarketStep({ control }: { control: Control<ProjectFormValues> })
             control={control}
             name="market.obtainableMarketPct"
             label={t("Obtainable market %")}
-            description={t("Percentage of the addressable market you could realistically capture.")}
+            description={t("Percentage of the addressable market we could realistically capture.")}
             suffix="%"
             step={1}
           />
@@ -53,7 +53,7 @@ export function MarketStep({ control }: { control: Control<ProjectFormValues> })
       <div className="flex items-center justify-between rounded-lg border border-border p-3">
         <div>
           <Label className="text-xs font-medium">{t("Enter TAM/SAM/SOM directly")}</Label>
-          <p className="text-[11px] text-muted-foreground">{t("Skip the bottom-up build if you already know your market sizing.")}</p>
+          <p className="text-[11px] text-muted-foreground">{t("Skip the bottom-up build if we already know our market sizing.")}</p>
         </div>
         <Switch checked={directEntry} onCheckedChange={setDirectEntry} />
       </div>
@@ -93,7 +93,7 @@ export function MarketStep({ control }: { control: Control<ProjectFormValues> })
         control={control}
         name="market.targetCustomers"
         label={t("Target customers (planning horizon)")}
-        description={t("Customers you're targeting within your planning horizon — used to compute required market penetration.")}
+        description={t("Customers we're targeting within our planning horizon — used to compute required market penetration.")}
         step={10}
       />
     </div>

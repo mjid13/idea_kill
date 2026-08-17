@@ -43,12 +43,12 @@ export function PricingStep({ control }: { control: Control<ProjectFormValues> }
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <AssumptionField control={control} name="pricing.currentCustomers" label={t("Current customers")} description={t("Paying customers you have today.")} />
+        <AssumptionField control={control} name="pricing.currentCustomers" label={t("Current customers")} description={t("Paying customers we have today.")} />
         <AssumptionField
           control={control}
           name="pricing.expectedCustomers12mo"
           label={t("Expected customers after 12 months")}
-          description={t("Defaults to the target customers you set on the Market step.")}
+          description={t("Defaults to the target customers we set on the Market step.")}
           hint={t("Pre-filled from Market → Target customers — edit to override.")}
         />
         <AssumptionField
@@ -66,7 +66,7 @@ export function PricingStep({ control }: { control: Control<ProjectFormValues> }
             label={t("Free-to-paid conversion rate")}
             suffix="%"
             step={0.5}
-            description={t("Optional — only relevant if you run a freemium funnel.")}
+            description={t("Optional — only relevant if we run a freemium funnel.")}
           />
         )}
         <AssumptionField
@@ -75,7 +75,7 @@ export function PricingStep({ control }: { control: Control<ProjectFormValues> }
           label={t("Revenue share from top customers")}
           suffix="%"
           step={1}
-          description={t("Estimated % of monthly revenue coming from your largest 3-5 customers. Leave unset if revenue is spread evenly.")}
+          description={t("Estimated % of monthly revenue coming from our largest 3-5 customers. Leave unset if revenue is spread evenly.")}
         />
       </div>
     </div>

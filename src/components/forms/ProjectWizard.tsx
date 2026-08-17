@@ -19,6 +19,7 @@ import type { BusinessModel, Project } from "@/types";
 import { BasicInfoStep } from "./steps/BasicInfoStep";
 import { MarketStep } from "./steps/MarketStep";
 import { PricingStep } from "./steps/PricingStep";
+import { RevenueStreamsStep } from "./steps/RevenueStreamsStep";
 import { MarketplaceStep } from "./steps/MarketplaceStep";
 import { AcquisitionStep } from "./steps/AcquisitionStep";
 import { RetentionStep } from "./steps/RetentionStep";
@@ -42,13 +43,19 @@ interface StepDef {
 }
 
 const STEPS: StepDef[] = [
-  { key: "basicInfo", title: "Basic information", description: "What are you building?", Component: BasicInfoStep },
+  { key: "basicInfo", title: "Basic information", description: "What are we building?", Component: BasicInfoStep },
   { key: "market", title: "Market", description: "Size the opportunity: TAM, SAM, SOM.", Component: MarketStep },
-  { key: "pricing", title: "Pricing & customers", description: "How you charge and how many customers you have.", Component: PricingStep },
+  { key: "pricing", title: "Pricing & customers", description: "How we charge and how many customers we have.", Component: PricingStep },
+  {
+    key: "revenueStreams",
+    title: "Revenue streams",
+    description: "Every distinct way we make money — most businesses have more than one.",
+    Component: RevenueStreamsStep,
+  },
   {
     key: "marketplace",
     title: "Marketplace GMV & take rate",
-    description: "Gross merchandise value and the take rate you keep as revenue.",
+    description: "Gross merchandise value and the take rate we keep as revenue.",
     Component: MarketplaceStep,
     showFor: ["marketplace"],
   },
@@ -64,7 +71,7 @@ const STEPS: StepDef[] = [
   { key: "costs", title: "Operating expenses", description: "Fixed monthly costs.", Component: OpexStep },
   { key: "funding", title: "Funding & runway", description: "Cash on hand and other income.", Component: FundingStep },
   { key: "validation", title: "Validation", description: "Evidence the problem and solution are real.", Component: ValidationStep },
-  { key: "team", title: "Team", description: "Rate your team's capability to execute.", Component: TeamStep },
+  { key: "team", title: "Team", description: "Rate our team's capability to execute.", Component: TeamStep },
   { key: "risk", title: "Risk", description: "Rate the risks facing this opportunity.", Component: RiskStep },
   { key: "pitch", title: "Pitch narrative", description: "Optional context used to generate the investor pitch deck.", Component: PitchStep },
 ];
@@ -193,7 +200,7 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
           )}
         </div>
         {formState.errors && Object.keys(formState.errors).length > 0 && isLast && (
-          <p className="mt-3 text-xs text-destructive">{t("Some fields need attention before you can finish. Please review earlier steps.")}</p>
+          <p className="mt-3 text-xs text-destructive">{t("Some fields need attention before we can finish. Please review earlier steps.")}</p>
         )}
       </form>
     </div>

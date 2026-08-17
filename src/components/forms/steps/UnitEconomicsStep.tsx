@@ -33,20 +33,33 @@ export function UnitEconomicsStep({ control }: { control: Control<ProjectFormVal
       ? (currentCustomers * transactionsPerCustomer * aov * (takeRatePct / 100)) / currentCustomers
       : null;
 
+  // With a revenue mix in play, revenue and delivery cost come from the streams
+  // themselves — these lines stay live as the customer-level costs charged on
+  // top, so the founder needs to know not to enter delivery cost twice.
+  const streams = useWatch({ control, name: "revenueStreams" });
+  const hasRevenueStreams = (streams ?? []).some((s) => s?.price?.quality !== "unknown" && (s?.price?.value ?? 0) > 0);
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {hasRevenueStreams && (
+        <p className="text-xs text-muted-foreground sm:col-span-2">
+          {t(
+            "Our revenue streams already carry their own price and delivery cost. The lines below are the customer-level costs charged on top of every stream — don't re-enter delivery cost here."
+          )}
+        </p>
+      )}
       <AssumptionField
         control={control}
         name="unitEconomics.revenuePerCustomer"
         label={t("Revenue per customer")}
         prefix="$"
-        description={t("Typically the same as your monthly ARPU.")}
+        description={t("Typically the same as our monthly ARPU.")}
         hint={
           marketplaceEffectiveArpu !== null
             ? t("Marketplace take-rate ARPU: {value} — consider using this instead of a flat subscription-style price.", {
                 value: marketplaceEffectiveArpu.toFixed(2),
               })
-            : t("Pre-filled from your product price — edit to override.")
+            : t("Pre-filled from our product price — edit to override.")
         }
       />
       <AssumptionField control={control} name="unitEconomics.directCostPerCustomer" label={t("Direct cost per customer")} prefix="$" />

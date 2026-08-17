@@ -45,7 +45,7 @@ export function MarketplaceStep({ control }: { control: Control<ProjectFormValue
         label={t("Take rate")}
         suffix="%"
         step={0.5}
-        description={t("The % of each transaction's value that you keep as revenue.")}
+        description={t("The % of each transaction's value that we keep as revenue.")}
       />
       <ComputedField
         label={t("Gross Merchandise Value (GMV)")}
@@ -55,7 +55,7 @@ export function MarketplaceStep({ control }: { control: Control<ProjectFormValue
       />
       <ComputedField
         label={t("Take-rate revenue")}
-        description={t("Your actual monthly revenue — GMV multiplied by your take rate.")}
+        description={t("Our actual monthly revenue — GMV multiplied by our take rate.")}
         formula={t("GMV x Take Rate")}
         value={takeRateRevenue === null ? t("Enter marketplace assumptions above") : formatCurrency(takeRateRevenue, currency)}
       />
