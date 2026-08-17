@@ -1,0 +1,75 @@
+"use client";
+
+import { useLocale } from "next-intl";
+import { useAppTranslations } from "@/components/i18n/use-app-translations";
+import { Card, CardContent } from "@/components/ui/card";
+
+export interface McpConnectionRow {
+  clientId: string;
+  clientName: string;
+  accessMode: string;
+  status: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  grantedProjectIds: string[];
+}
+export interface McpProjectRow { id: string; name: string }
+
+interface Props {
+  mcpUrl: string;
+  connections: McpConnectionRow[];
+  projects: McpProjectRow[];
+  audits: unknown[];
+}
+
+const ACCESS_MODE_LABELS: Record<string, string> = { read: "Read only", write: "Read/write" };
+const STATUS_LABELS: Record<string, string> = { active: "Active", pending: "Pending", revoked: "Revoked" };
+
+function CodeBlock({ children }: { children: string }) {
+  return <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs leading-relaxed"><code>{children}</code></pre>;
+}
+
+export function McpConnectionsView({ mcpUrl, connections, projects, audits }: Props) {
+  const t = useAppTranslations();
+  const locale = useLocale();
+  const formatDateTime = (value: string) => new Date(value).toLocaleString(locale);
+  return <main className="mx-auto max-w-4xl space-y-6 px-4 py-8">
+    <div><h1 className="text-2xl font-semibold">MCP</h1>
+      <p className="text-sm text-muted-foreground">{t("Manage client access and review recent safe mutations.")}</p></div>
+<Card><CardContent className="space-y-5 pt-6">
+  <div><h2 className="text-lg font-semibold">{t("Connect our AI tool")}</h2><p className="mt-1 text-sm text-muted-foreground">{t("IdeaUp uses MCP (Model Context Protocol) to let supported AI tools securely read our projects. Add the server once, then sign in with IdeaUp when the tool opens the OAuth page.")}</p></div>
+  <div className="rounded-lg border bg-background p-3"><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("MCP server URL")}</p><code className="mt-1 block break-all text-sm">{mcpUrl}</code><p className="mt-2 text-xs text-muted-foreground">{t("Never share an access token here. Authentication is handled by OAuth.")}</p></div>
+  <div className="space-y-4">
+    <div><h3 className="font-medium">Codex CLI</h3><p className="mt-1 text-sm text-muted-foreground">{t("Run these commands in a terminal:")}</p><CodeBlock>{"codex mcp add ideaup --url " + mcpUrl + " --oauth-resource " + mcpUrl + "\n\ncodex mcp login ideaup"}</CodeBlock><p className="mt-2 text-xs text-muted-foreground">{t("A browser opens for OAuth. Verify later with {command}.", { command: "codex mcp get ideaup" })}</p></div>
+    <div><h3 className="font-medium">Claude Code</h3><p className="mt-1 text-sm text-muted-foreground">{t("Add the remote HTTP server, then authenticate from inside Claude Code:")}</p><CodeBlock>{"claude mcp add --transport http --scope user ideaup " + mcpUrl + "\n\nclaude"}</CodeBlock><p className="mt-2 text-xs text-muted-foreground">{t("In Claude Code, run /mcp, choose ideaup, and complete OAuth.")} {t("Verify with {command}.", { command: "claude mcp list" })}</p></div>
+    <div><h3 className="font-medium">{t("Claude Desktop or another MCP client")}</h3><p className="mt-1 text-sm text-muted-foreground">{t("Choose “Add remote MCP server” (or Streamable HTTP), enter the URL above, and select OAuth when prompted.")}</p></div>
+  </div>
+  <details className="rounded-lg border p-3 text-sm"><summary className="cursor-pointer font-medium">{t("Troubleshooting")}</summary><ul className="mt-3 list-disc space-y-1 pl-5 text-muted-foreground"><li>{t("Make sure the URL ends in /mcp and uses https:// in production.")}</li><li>{t("If the client reports a 404 or “no authorization support,” the server deployment is unavailable or outdated.")}</li><li>{t("Reconnect with the client’s OAuth flow instead of pasting a Supabase or access token.")}</li></ul></details>
+</CardContent></Card>
+    {connections.map((connection) => <Card key={connection.clientId}><CardContent className="space-y-2">
+      <div className="flex justify-between"><strong>{connection.clientName}</strong><span>{t(STATUS_LABELS[connection.status] ?? connection.status)}</span></div>
+      <p className="text-sm">{t("Mode: {mode} · Connected: {date}", {
+        mode: t(ACCESS_MODE_LABELS[connection.accessMode] ?? connection.accessMode),
+        date: formatDateTime(connection.createdAt),
+      })}</p>
+      <p className="text-xs text-muted-foreground">{t("Last used: {date}", {
+        date: connection.lastUsedAt ? formatDateTime(connection.lastUsedAt) : t("Never"),
+      })}</p>
+      <form action="/api/settings/connections" method="post" className="space-y-2 rounded border p-3">
+        <input type="hidden" name="operation" value="update" />
+        <input type="hidden" name="clientId" value={connection.clientId} />
+        <label className="block text-sm">{t("Mode")} <select name="mode" defaultValue={connection.accessMode} className="ml-2 rounded border bg-background p-1"><option value="read">{t("Read only")}</option><option value="write">{t("Read/write")}</option></select></label>
+        <label className="flex gap-2 text-sm"><input type="checkbox" name="allowCreate" value="true" />{t("Allow project creation")}</label>
+        <div className="text-sm">{projects.map((project) => <label key={project.id} className="mr-3 inline-flex gap-1"><input type="checkbox" name="projectIds" value={project.id} defaultChecked={connection.grantedProjectIds.includes(project.id)} />{project.name}</label>)}</div>
+        <button className="text-sm underline" type="submit">{t("Save permissions")}</button>
+      </form>
+      <form action="/api/settings/connections" method="post">
+        <input type="hidden" name="clientId" value={connection.clientId} />
+        <input type="hidden" name="_method" value="DELETE" />
+        <button className="text-sm text-destructive underline" type="submit">{t("Revoke connection")}</button>
+      </form>
+    </CardContent></Card>)}
+    <section><h2 className="mb-2 font-semibold">{t("Recent audit events")}</h2>
+      <pre className="max-h-96 overflow-auto rounded-lg border p-3 text-xs">{JSON.stringify(audits, null, 2)}</pre></section>
+  </main>;
+}
