@@ -62,10 +62,10 @@ async function connection(db: ReturnType<typeof createBearerSupabaseClient>, aut
   return data as { access_mode: "read" | "write"; status: string; allow_create: boolean };
 }
 
-export function createIdeaKillMcpServer(auth: AuthInfo) {
+export function createIdeaUpMcpServer(auth: AuthInfo) {
   const db = createBearerSupabaseClient(auth.token);
   const repository = new SupabaseProjectRepository(db);
-  const server = new McpServer({ name: "idea-kill", version: "1.0.0" });
+  const server = new McpServer({ name: "ideaup", version: "1.0.0" });
 
   async function readProject(id: string) {
     enforceRateLimit(`${auth.extra?.userId}:${auth.clientId}:${auth.extra?.ipHash}:read`);
@@ -197,7 +197,7 @@ export function createIdeaKillMcpServer(auth: AuthInfo) {
   });
 
   server.registerTool("update_project", {
-    description: "Atomically apply allowlisted field changes with revision and idempotency checks. Change paths use public MCP section names, such as one_pager.problem or pricing.productPrice.value.",
+    description: "Atomically apply allowlisted field changes with revision and idempotency checks. Change paths use public MCP section names, such as one_pager.problem or pricing.productPrice.value. An assumption can also carry a range: write pricing.productPrice.range.low and .range.high (with .value as the most likely point inside them) to replace a falsely precise single number with a low/high estimate that the Monte Carlo simulation samples.",
     inputSchema: projectId.extend({
       expected_revision: z.number().int().positive(), idempotency_key: z.string().min(8).max(200),
       reason: z.string().min(1).max(500), changes: z.array(z.object({
@@ -229,7 +229,7 @@ export function createIdeaKillMcpServer(auth: AuthInfo) {
       analysis: { score: after.score, decision: after.decision } });
   });
 
-  server.registerResource("projects", "idea-kill://projects", {
+  server.registerResource("projects", "ideaup://projects", {
     description: "Granted project index.", mimeType: "application/json",
     annotations: { audience: ["user", "assistant"] }, cacheHint: { cacheScope: "private", ttlMs: 30_000 },
   }, async (uri) => {
@@ -245,7 +245,7 @@ export function createIdeaKillMcpServer(auth: AuthInfo) {
   const documentKinds = ["pitch", "one_pager", "icp", "value_prop", "validation_plan", "mvp_scope", "gtm_plan", "sales_docs", "contract_terms", "pilot_report"];
   const resourceKinds = ["summary", "assumptions", "analysis", ...documentKinds];
   for (const kind of resourceKinds) {
-    server.registerResource(`project-${kind}`, new ResourceTemplate(`idea-kill://projects/{id}/${kind}`, { list: undefined }), {
+    server.registerResource(`project-${kind}`, new ResourceTemplate(`ideaup://projects/{id}/${kind}`, { list: undefined }), {
       description: `Granted project ${kind}.`, mimeType: "application/json",
       annotations: { audience: ["user", "assistant"] }, cacheHint: { cacheScope: "private", ttlMs: 30_000 },
     }, async (uri, variables) => {

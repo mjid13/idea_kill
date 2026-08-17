@@ -1,7 +1,12 @@
 import { projectDocumentSchema, projectFormSchema } from "@/lib/validation/projectSchema";
 import type { Project } from "@/types";
+import { resolveSizingMethod } from "@/lib/calculations/market";
 import {
+  fundingRequirementDefaults,
+  defaultMarketFunnel,
+  emptyDebt,
   emptyMarketplace,
+  emptyRevenueStreams,
   emptyOnePager,
   emptyIcp,
   emptyValueProp,
@@ -30,6 +35,17 @@ export function projectFromRow(row: ProjectRow): Project {
   // so their leaf fields are addressable via MCP's update_project.
   const backfilled = {
     ...parsed,
+    funding: { ...fundingRequirementDefaults(), ...parsed.funding },
+    // Projects saved before the bottom-up funnel existed keep their previous
+    // sizing behaviour (direct entry if they carried TAM/SAM/SOM overrides,
+    // otherwise the simple model) and get an empty funnel to fill in.
+    market: {
+      ...parsed.market,
+      sizingMethod: parsed.market.sizingMethod ?? resolveSizingMethod(parsed.market),
+      funnel: parsed.market.funnel ?? defaultMarketFunnel(),
+    },
+    debt: { ...emptyDebt(), ...parsed.debt },
+    revenueStreams: parsed.revenueStreams ?? emptyRevenueStreams(),
     marketplace: parsed.marketplace ?? emptyMarketplace(),
     onePager: parsed.onePager ?? emptyOnePager(),
     icp: parsed.icp ?? emptyIcp(),

@@ -1,4 +1,4 @@
-import { known, unknownValue, type Project } from "@/types";
+import { estimated, known, ranged, unknownValue, type Project } from "@/types";
 
 /**
  * Pre-populated example project (spec section 28) so a new user can load a
@@ -37,12 +37,14 @@ export const exampleProject: Project = {
   acquisition: {
     monthlyMarketingSpend: known(4000),
     monthlySalesSpend: known(2000),
-    newCustomersAcquiredMonthly: known(30),
+    // Two forward-looking assumptions are entered as ranges rather than single
+    // numbers, so the example also demonstrates the Monte Carlo panel.
+    newCustomersAcquiredMonthly: ranged(20, 30, 45),
     monthlyLeads: known(400),
     leadToCustomerConversionPct: unknownValue(0),
   },
   retention: {
-    monthlyChurnPct: known(3),
+    monthlyChurnPct: ranged(2, 3, 5),
     annualChurnPct: unknownValue(0),
     averageCustomerLifetimeMonths: unknownValue(0),
   },
@@ -70,6 +72,11 @@ export const exampleProject: Project = {
     availableCash: known(100000),
     initialInvestment: known(0),
     otherMonthlyIncome: known(0),
+    monthsToMilestone: estimated(12),
+    safetyBufferMonths: estimated(3),
+    receivableDays: estimated(30),
+    capex: known(15000),
+    contingencyPct: estimated(18),
   },
   validation: {
     problemPain: 4,

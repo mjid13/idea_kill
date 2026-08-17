@@ -1,4 +1,4 @@
-import type { BillingPeriod, BusinessModel, Currency, FundingRoundType } from "@/types";
+import type { BillingPeriod, BusinessModel, Currency, FundingRoundType, RevenueStreamKind } from "@/types";
 
 export const BUSINESS_MODEL_OPTIONS: Array<{ value: BusinessModel; label: string }> = [
   { value: "saas", label: "SaaS" },
@@ -25,6 +25,31 @@ export const BILLING_PERIOD_OPTIONS: Array<{ value: BillingPeriod; label: string
   { value: "annual", label: "Annual" },
   { value: "one_time", label: "One-time" },
   { value: "usage_based", label: "Usage-based" },
+];
+
+export const REVENUE_STREAM_KIND_OPTIONS: Array<{ value: RevenueStreamKind; label: string; description: string }> = [
+  { value: "one_time", label: "One-time", description: "Charged once per customer — an audit, a setup fee, an implementation project." },
+  { value: "recurring", label: "Recurring", description: "Charged every period for as long as the customer stays — platform, retainer, support." },
+  { value: "usage", label: "Usage-based", description: "Metered consumption billed monthly — AI tokens, API calls, processed volume." },
+  { value: "transactional", label: "Transactional", description: "A cut of the transaction volume flowing through the product." },
+];
+
+export const REVENUE_STREAM_KIND_LABELS: Record<RevenueStreamKind, string> = Object.fromEntries(
+  REVENUE_STREAM_KIND_OPTIONS.map((o) => [o.value, o.label])
+) as Record<RevenueStreamKind, string>;
+
+/**
+ * Starting points for a hybrid mix, so a founder can build "audit +
+ * implementation + platform + AI usage + enterprise support" by clicking
+ * instead of by knowing which stream kind each piece maps to.
+ */
+export const REVENUE_STREAM_PRESETS: Array<{ name: string; kind: RevenueStreamKind }> = [
+  { name: "Audit", kind: "one_time" },
+  { name: "Implementation", kind: "one_time" },
+  { name: "Platform subscription", kind: "recurring" },
+  { name: "AI usage", kind: "usage" },
+  { name: "Enterprise support", kind: "recurring" },
+  { name: "Transaction fee", kind: "transactional" },
 ];
 
 export const BUSINESS_MODEL_LABELS: Record<BusinessModel, string> = Object.fromEntries(

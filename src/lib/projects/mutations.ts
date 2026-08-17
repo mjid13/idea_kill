@@ -23,6 +23,21 @@ function clone<T>(value: T): T {
   return structuredClone(value);
 }
 
+const RANGE_LEAF = /\.range\.(low|high)$/;
+
+/**
+ * Assumption ranges are optional, so an assumption that is still a single
+ * number has no `range` leaf to discover. Writing `…​.range.low` / `…​.range.high`
+ * is allowed whenever the assumption itself exists, which is what lets a client
+ * turn a point estimate into a low/high range in one call.
+ */
+function isWritablePath(path: string, allowed: Set<string>): boolean {
+  if (allowed.has(path)) return true;
+  const match = path.match(RANGE_LEAF);
+  if (!match) return false;
+  return allowed.has(`${path.slice(0, -match[0].length)}.value`);
+}
+
 export function applyProjectChanges(project: Project, changes: FieldChange[]): { project: Project; diff: FieldChange[] } {
   if (!changes.length) throw new DomainError("VALIDATION_FAILED", "At least one change is required.");
   const raw = projectFormSchema.parse(project);
@@ -31,11 +46,16 @@ export function applyProjectChanges(project: Project, changes: FieldChange[]): {
   const diff: FieldChange[] = [];
   for (const change of changes) {
     const segments = change.path.split(".");
-    if (!segments.length || FORBIDDEN.has(segments[0]) || !allowed.has(change.path)) {
+    if (!segments.length || FORBIDDEN.has(segments[0]) || !isWritablePath(change.path, allowed)) {
       throw new DomainError("VALIDATION_FAILED", `Field is not writable: ${change.path}`);
     }
     let parent = next;
     for (const segment of segments.slice(0, -1)) {
+      // Materialize the `range` container the first time a bound is written.
+      if (segment === "range" && parent.range === undefined && RANGE_LEAF.test(change.path)) {
+        const likely = typeof parent.value === "number" ? parent.value : 0;
+        parent.range = { low: likely, high: likely };
+      }
       const child = parent[segment];
       if (!child || typeof child !== "object" || Array.isArray(child)) {
         throw new DomainError("VALIDATION_FAILED", `Field is not writable: ${change.path}`);

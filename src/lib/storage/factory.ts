@@ -1,4 +1,12 @@
-import { unknownValue, type BusinessModel, type Currency, type Project } from "@/types";
+import {
+  estimated,
+  unknownValue,
+  type BusinessModel,
+  type Currency,
+  type Project,
+  type RevenueStream,
+  type RevenueStreamKind,
+} from "@/types";
 
 export function createProjectId(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
@@ -24,6 +32,8 @@ export function createEmptyProject(businessModel: BusinessModel = "saas", curren
       averageAnnualCustomerSpend: u0(),
       addressableMarketPct: u0(),
       obtainableMarketPct: u0(),
+      sizingMethod: "simple",
+      funnel: defaultMarketFunnel(),
       targetCustomers: u0(),
     },
     pricing: {
@@ -35,6 +45,7 @@ export function createEmptyProject(businessModel: BusinessModel = "saas", curren
       freeToPaidConversionPct: u0(),
       topCustomersRevenueSharePct: u0(),
     },
+    revenueStreams: emptyRevenueStreams(),
     marketplace: emptyMarketplace(),
     acquisition: {
       monthlyMarketingSpend: u0(),
@@ -75,7 +86,9 @@ export function createEmptyProject(businessModel: BusinessModel = "saas", curren
       initialInvestment: u0(),
       otherMonthlyIncome: u0(),
       preMoneyValuation: u0(),
+      ...fundingRequirementDefaults(),
     },
+    debt: emptyDebt(),
     validation: {
       problemPain: 3,
       problemFrequency: 3,
@@ -124,6 +137,106 @@ export function createEmptyProject(businessModel: BusinessModel = "saas", curren
     contractTerms: emptyContractTerms(),
     pilotReport: emptyPilotReport(),
   };
+}
+
+/**
+ * Defaults for the funding-requirement inputs, also used to backfill projects
+ * saved before the requirement calculator existed. Seeded with the same
+ * planning defaults the calculator falls back to (12-month milestone window,
+ * 3-month buffer, 18% contingency) rather than pristine zeros, so a new
+ * project produces a usable requirement before the founder touches the step.
+ * Marked "estimated": these are planning conventions, not known facts.
+ */
+export function fundingRequirementDefaults() {
+  return {
+    monthsToMilestone: estimated(12),
+    safetyBufferMonths: estimated(3),
+    receivableDays: u0(),
+    capex: u0(),
+    contingencyPct: estimated(18),
+  };
+}
+
+/**
+ * Defaults for the debt-financing inputs behind Lender Mode, also used to
+ * backfill projects saved before it existed. Seeded with the conventions a
+ * commercial lender underwrites to — a 5-year term, 1.25x minimum coverage, and
+ * a 30% revenue haircut for the downside case — rather than pristine zeros, so
+ * a schedule and a DSCR exist before the founder touches the form. Marked
+ * "estimated": these are lending conventions, not this bank's actual terms.
+ */
+export function emptyDebt() {
+  return {
+    loanAmount: u0(),
+    annualInterestRatePct: u0(),
+    termMonths: estimated(60),
+    gracePeriodMonths: u0(),
+    existingMonthlyDebtService: u0(),
+    founderContribution: u0(),
+    collateralValue: u0(),
+    collateralDescription: "",
+    personalGuarantee: false,
+    contractedMonthlyRevenue: u0(),
+    targetDscr: estimated(1.25),
+    downsideRevenueHaircutPct: estimated(30),
+  };
+}
+
+/**
+ * Starting scaffold for the bottom-up market funnel, also used to backfill
+ * projects saved before it existed. The stages mirror how a B2B founder
+ * actually narrows a market — geography, company size, sector, digital
+ * maturity, workflow fit, budget, reachability — so the founder edits real
+ * filters instead of inventing an "addressable %".
+ *
+ * Stage ids are fixed slugs, not generated: they are referenced by
+ * samStageId/somStageId and addressed by MCP field paths, so they must survive
+ * a reload and be identical across every project created from this scaffold.
+ */
+export function defaultMarketFunnel() {
+  return {
+    baseLabel: "Businesses in the target country",
+    baseCount: u0(),
+    stages: [
+      { id: "company-size", label: "In the target company-size band", mode: "count" as const, value: u0() },
+      { id: "sector", label: "In a relevant sector", mode: "count" as const, value: u0() },
+      { id: "digital-maturity", label: "Digitally ready", mode: "count" as const, value: u0() },
+      { id: "workflow-fit", label: "Workflow fits our product", mode: "count" as const, value: u0() },
+      { id: "budget", label: "Has sufficient budget", mode: "count" as const, value: u0() },
+      { id: "reachable", label: "Reachable, highly qualified accounts", mode: "count" as const, value: u0() },
+    ],
+    samStageId: "budget",
+    somStageId: "reachable",
+    winRatePct: u0(),
+  };
+}
+
+/**
+ * A blank revenue stream. Defaults describe the most common case — every
+ * customer buys it (100% attach), one unit a month, sold monthly — so a founder
+ * only has to type a name, a price and a delivery cost to get real numbers.
+ */
+export function emptyRevenueStream(kind: RevenueStreamKind = "recurring", name = ""): RevenueStream {
+  return {
+    id: id(),
+    name,
+    kind,
+    price: u0(),
+    billingPeriod: kind === "one_time" ? "one_time" : kind === "usage" ? "usage_based" : "monthly",
+    attachRatePct: estimated(100),
+    unitsPerCustomerPerMonth: estimated(1),
+    takeRatePct: kind === "transactional" ? u0() : undefined,
+    deliveryCostPct: u0(),
+  };
+}
+
+/**
+ * New projects start with no streams, which keeps the simple single-price model
+ * in charge until the founder opts into a mix. Backfilled as `[]` (not
+ * undefined) for older projects so the array is addressable via MCP.
+ */
+export function emptyRevenueStreams(): RevenueStream[] {
+  return [];
 }
 
 /** Default empty marketplace GMV/take-rate content, also used to backfill projects saved before this slice existed. */

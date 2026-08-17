@@ -1,7 +1,7 @@
 import type { Project } from "@/types";
 
 export const SECTION_KEY_MAP = {
-  basic: "basicInfo", market: "market", pricing: "pricing", acquisition: "acquisition",
+  basic: "basicInfo", market: "market", pricing: "pricing", revenue_streams: "revenueStreams", acquisition: "acquisition",
   retention: "retention", unit_economics: "unitEconomics", costs: "costs", funding: "funding",
   validation: "validation", team: "team", risk: "risk", pitch: "pitch",
   one_pager: "onePager", icp: "icp", value_prop: "valueProp", validation_plan: "validationPlan",

@@ -37,4 +37,28 @@ describe("MCP project mutations", () => {
   it("rejects a non-existent business-document field", () => {
     expect(() => applyProjectChanges(validProject(), [{ path: "onePager.notAField", value: 1 }])).toThrow(/not writable/);
   });
+
+  it("turns a point estimate into a range, creating the missing range container", () => {
+    const project = validProject();
+    const result = applyProjectChanges(project, [
+      { path: "pricing.productPrice.value", value: 4000 },
+      { path: "pricing.productPrice.range.low", value: 2500 },
+      { path: "pricing.productPrice.range.high", value: 5000 },
+    ]);
+    expect(result.project.pricing.productPrice.range).toEqual({ low: 2500, high: 5000 });
+    expect(project.pricing.productPrice.range).toBeUndefined();
+  });
+
+  it("rejects a range whose most likely value falls outside it", () => {
+    expect(() =>
+      applyProjectChanges(validProject(), [
+        { path: "pricing.productPrice.value", value: 4000 },
+        { path: "pricing.productPrice.range.high", value: 3000 },
+      ])
+    ).toThrow(/invalid/i);
+  });
+
+  it("rejects a range bound on a field that is not an assumption", () => {
+    expect(() => applyProjectChanges(validProject(), [{ path: "onePager.problem.range.low", value: 1 }])).toThrow(/not writable/);
+  });
 });
