@@ -61,7 +61,7 @@ export function ForecastCharts({ project, metrics }: { project: Project; metrics
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
         <div>
           <CardTitle>{t("Forecast")}</CardTitle>
-          <CardDescription>{t("Month-by-month projection built from your current assumptions.")}</CardDescription>
+          <CardDescription>{t("Month-by-month projection built from our current assumptions.")}</CardDescription>
         </div>
         <div className="inline-flex rounded-md border border-border p-0.5 text-xs">
           {HORIZONS.map((h) => (

@@ -54,7 +54,7 @@ export function ScoreBreakdown({ scores }: { scores: ScoreBreakdownType }) {
         <div className="space-y-4 border-t border-border px-4 py-4">
           <p className="text-xs text-muted-foreground">
             {t(
-              "Overall Score = Market × 20% + Unit Economics × 20% + Financial Viability × 20% + Validation × 15% + Execution × 15% + Risk × 10%. Every category score is 0-100, derived transparently from your inputs and business-model-specific benchmarks — nothing here is a guess."
+              "Overall Score = Market × 20% + Unit Economics × 20% + Financial Viability × 20% + Validation × 15% + Execution × 15% + Risk × 10%. Every category score is 0-100, derived transparently from our inputs and business-model-specific benchmarks — nothing here is a guess."
             )}
           </p>
           {CATEGORY_ORDER.map((key) => {

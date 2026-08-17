@@ -19,13 +19,18 @@ export function EfficiencyPanel({ project, metrics }: { project: Project; metric
   const forecast = useMemo(() => forecastProject(project, metrics, 12), [project, metrics]);
   const efficiency = useMemo(() => calculateEfficiencyMetrics(project, metrics, forecast), [project, metrics, forecast]);
 
-  if (!isRecurring(project.pricing.billingPeriod)) return null;
+  // Hidden for businesses with no recurring revenue at all — a hybrid mix
+  // counts as recurring on the strength of its subscription/usage streams.
+  const hasRecurringRevenue = metrics.revenueMix
+    ? metrics.revenueMix.recurringArpu > 0
+    : isRecurring(project.pricing.billingPeriod);
+  if (!hasRecurringRevenue) return null;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>{t("Efficiency ratios")}</CardTitle>
-        <CardDescription>{t("Projected 12 months out from your current assumptions — not trailing actuals.")}</CardDescription>
+        <CardDescription>{t("Projected 12 months out from our current assumptions — not trailing actuals.")}</CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <MetricCard

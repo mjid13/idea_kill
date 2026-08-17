@@ -30,7 +30,7 @@ export function LegacyMigrationNotice() {
   }
   return <aside className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
     <strong>{projects.length} legacy browser project{projects.length === 1 ? "" : "s"} detected.</strong>
-    <p>Your old data remains untouched. Download it, then use Import project to copy it into your authenticated account.</p>
+    <p>Our old data remains untouched. Download it, then use Import project to copy it into our authenticated account.</p>
     <button className="mt-2 underline" onClick={download}>Download legacy project files</button>
   </aside>;
 }

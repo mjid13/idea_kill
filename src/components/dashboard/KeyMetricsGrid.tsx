@@ -39,7 +39,7 @@ export function KeyMetricsGrid({ metrics, scores, currency }: { metrics: Calcula
       <MetricCard
         label={t("SOM")}
         value={money(metrics.market.som)}
-        description={t("Serviceable Obtainable Market — the portion of SAM you could realistically capture.")}
+        description={t("Serviceable Obtainable Market — the portion of SAM we could realistically capture.")}
         formula={t("SAM × Obtainable Market %")}
         health={somScore !== null ? scoreToHealth(somScore) : undefined}
       />
@@ -102,7 +102,7 @@ export function KeyMetricsGrid({ metrics, scores, currency }: { metrics: Calcula
       <MetricCard
         label={t("Customer Concentration")}
         value={formatPercentage(metrics.concentration.topCustomersRevenueSharePct, 0)}
-        description={t("Estimated share of revenue from your largest few customers.")}
+        description={t("Estimated share of revenue from our largest few customers.")}
         formula={t("Top Customers' Revenue / Total Revenue")}
         health={CONCENTRATION_HEALTH[metrics.concentration.riskLevel]}
         healthLabel={metrics.concentration.riskLevel}
@@ -118,7 +118,7 @@ export function KeyMetricsGrid({ metrics, scores, currency }: { metrics: Calcula
           <MetricCard
             label={t("Take-rate Revenue")}
             value={money(metrics.marketplace.takeRateRevenue)}
-            description={t("Your actual monthly revenue — GMV multiplied by your take rate.")}
+            description={t("Our actual monthly revenue — GMV multiplied by our take rate.")}
             formula={t("GMV x Take Rate")}
           />
         </>

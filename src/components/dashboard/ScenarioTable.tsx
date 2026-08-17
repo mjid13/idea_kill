@@ -20,7 +20,7 @@ export function ScenarioTable({ result, currency }: { result: ScenarioResult; cu
     <Card>
       <CardHeader>
         <CardTitle>{t("Scenario analysis")}</CardTitle>
-        <CardDescription>{t("Conservative applies weaker growth/CAC/churn; optimistic applies stronger. Base uses your entered assumptions.")}</CardDescription>
+        <CardDescription>{t("Conservative applies weaker growth/CAC/churn; optimistic applies stronger. Base uses our entered assumptions.")}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">

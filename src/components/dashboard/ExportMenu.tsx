@@ -31,7 +31,7 @@ export function ExportMenu({ project }: { project: Project }) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t("Export this project")}</DialogTitle>
-          <DialogDescription>{t("Everything is generated locally in your browser — nothing is uploaded anywhere.")}</DialogDescription>
+          <DialogDescription>{t("Everything is generated locally in this browser — nothing is uploaded anywhere.")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
           <ExportRow

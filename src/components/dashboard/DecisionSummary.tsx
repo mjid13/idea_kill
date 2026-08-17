@@ -17,7 +17,7 @@ export function DecisionSummary({ summary }: { summary: DecisionSummaryType }) {
     <Card>
       <CardContent className="space-y-4">
         <div>
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("Should you pursue this idea?")}</p>
+          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("Should we pursue this idea?")}</p>
           <div className={`mt-2 inline-flex rounded-lg border px-3 py-1.5 text-base font-semibold ${VERDICT_COLOR[summary.verdict]}`}>
             {t(summary.title)}
           </div>

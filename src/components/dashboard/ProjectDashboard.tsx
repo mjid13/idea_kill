@@ -14,12 +14,15 @@ import { BUSINESS_MODEL_LABELS } from "@/lib/constants";
 import { ScoreHero } from "./ScoreHero";
 import { ScoreBreakdown } from "./ScoreBreakdown";
 import { KeyMetricsGrid } from "./KeyMetricsGrid";
+import { RevenueMixPanel } from "./RevenueMixPanel";
 import { InsightsPanel, RecommendedActions } from "./InsightsPanel";
 import { DecisionSummary } from "./DecisionSummary";
 import { SensitivityPanel } from "./SensitivityPanel";
 import { ScenarioTable } from "./ScenarioTable";
+import { MonteCarloPanel } from "./MonteCarloPanel";
 import { ForecastCharts } from "./ForecastCharts";
 import { EfficiencyPanel } from "./EfficiencyPanel";
+import { FundingRequirementPanel } from "./FundingRequirementPanel";
 import { ExportMenu } from "./ExportMenu";
 import type { Project } from "@/types";
 
@@ -49,6 +52,22 @@ export function ProjectDashboard({ project }: { project: Project }) {
         </div>
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("Turn this idea into a business")}</CardTitle>
+          <CardDescription>
+            {t(
+              "Build a Business One-Pager, ICP, Value Proposition, Validation Plan, and more — structured documents filled in automatically from what we've already entered here."
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardFooter className="justify-end border-t-0 bg-transparent p-(--card-spacing)">
+          <Button size="sm" render={<Link href={`/project/${project.id}/documents`} />}>
+            {t("Build business documents")} <ArrowRight />
+          </Button>
+        </CardFooter>
+      </Card>
+
       <ScoreHero scores={scores} />
       <ScoreBreakdown scores={scores} />
       <KeyMetricsGrid metrics={metrics} scores={scores} currency={project.basicInfo.currency} />
@@ -61,26 +80,13 @@ export function ProjectDashboard({ project }: { project: Project }) {
         </div>
       </div>
 
+      <RevenueMixPanel metrics={metrics} currency={project.basicInfo.currency} />
+      <FundingRequirementPanel project={project} metrics={metrics} />
       <SensitivityPanel project={project} />
       <EfficiencyPanel project={project} metrics={metrics} />
       <ScenarioTable result={scenarios} currency={project.basicInfo.currency} />
+      <MonteCarloPanel project={project} />
       <ForecastCharts project={project} metrics={metrics} />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("Turn this idea into a business")}</CardTitle>
-          <CardDescription>
-            {t(
-              "Build a Business One-Pager, ICP, Value Proposition, Validation Plan, and more — structured documents filled in automatically from what you've already entered here."
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardFooter className="justify-end border-t-0 bg-transparent p-(--card-spacing)">
-          <Button size="sm" render={<Link href={`/project/${project.id}/documents`} />}>
-            {t("Build business documents")} <ArrowRight />
-          </Button>
-        </CardFooter>
-      </Card>
     </div>
   );
 }
