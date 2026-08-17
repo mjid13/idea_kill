@@ -1,4 +1,4 @@
-# Product Viability Calculator
+# IdeaUp
 
 Evaluate the *economics* of a startup idea — market size, unit economics,
 profitability, runway, validation, and risk — from a small set of assumptions.
@@ -97,6 +97,28 @@ projection (customers, MRR, revenue, costs, cash balance) for any horizon;
 function with different inputs. The sensitivity engine (`sensitivity.ts`) flexes
 price/CAC/churn/growth ±50% and re-runs the full scoring pipeline to rank which
 assumptions move the score the most.
+
+### Assumption ranges and Monte Carlo
+
+Any numeric input can be entered either as a single number or as a range — low,
+most likely, high — via the Range toggle on the input itself. A single number
+("CAC = OMR 4,000") claims a precision nobody has; a range ("OMR 2,500–5,000,
+most likely 4,000") states what is actually known.
+
+`monteCarlo.ts` finds every ranged assumption in a project, draws each one from
+a triangular distribution over its own low/most likely/high span, and re-runs
+the full metrics + forecast + scoring pipeline once per draw (1,000 runs by
+default, seeded from the project id so results are reproducible). It reports
+the outcome as a distribution rather than a point forecast:
+
+- probability of reaching break-even before cash runs out — the headline number
+- probability of breaking even at all, and of running out of cash, in 24 months
+- bear / base / bull columns read off the P10 / P50 / P90 of the simulated
+  outcomes (each metric's own percentile, not one single run)
+- the full distribution of break-even months, including runs that never get there
+
+With no ranged assumptions there is nothing to sample, so the panel explains how
+to add one instead of showing a fake distribution.
 
 ## Scoring methodology
 
