@@ -1,5 +1,5 @@
 import { useAppTranslations } from "@/components/i18n/use-app-translations";
-import { AlertTriangle, CheckCircle2, Lightbulb, ShieldAlert, ListChecks } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Lightbulb, Scale, ShieldAlert, ListChecks } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { translateInsightMessage, translateInsightDetail } from "@/components/i18n/translate-insight";
 import type { Insight, InsightReport } from "@/types";
@@ -45,7 +45,12 @@ function InsightGroup({
 export function InsightsPanel({ report }: { report: InsightReport }) {
   const t = useAppTranslations();
   const hasAny =
-    report.strengths.length + report.warnings.length + report.criticalRisks.length + report.opportunities.length > 0;
+    report.contradictions.length +
+      report.strengths.length +
+      report.warnings.length +
+      report.criticalRisks.length +
+      report.opportunities.length >
+    0;
 
   if (!hasAny) return null;
 
@@ -55,6 +60,7 @@ export function InsightsPanel({ report }: { report: InsightReport }) {
         <CardTitle>{t("Insights")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
+        <InsightGroup title="Contradictions" icon={Scale} items={report.contradictions} tone="red" />
         <InsightGroup title="Critical risks" icon={ShieldAlert} items={report.criticalRisks} tone="red" />
         <InsightGroup title="Warnings" icon={AlertTriangle} items={report.warnings} tone="amber" />
         <InsightGroup title="Strengths" icon={CheckCircle2} items={report.strengths} tone="emerald" />

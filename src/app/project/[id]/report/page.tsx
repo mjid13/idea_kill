@@ -192,7 +192,7 @@ function Report({ project }: { project: Project }) {
       </Section>
 
       <Section title="Risks">
-        <BulletList items={[...insights.criticalRisks, ...insights.warnings].map((i) => translateInsightMessage(t, i))} empty={t("None identified.")} />
+        <BulletList items={[...insights.contradictions, ...insights.criticalRisks, ...insights.warnings].map((i) => translateInsightMessage(t, i))} empty={t("None identified.")} />
       </Section>
 
       <Section title="Opportunities">

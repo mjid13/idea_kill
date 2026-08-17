@@ -1084,5 +1084,14 @@
   "Runs": "عمليات تشغيل",
   "Never breaks even": "لا يبلغ نقطة التعادل",
   "Sampled {count} ranged assumptions:": "تمت محاكاة {count} افتراضًا ذا نطاق:",
-  "Each draw uses a triangular distribution across low/most likely/high. Bear/base/bull columns are each metric's own percentile across runs, not one single simulated future.": "تستخدم كل عملية سحب توزيعًا مثلثيًا بين الحد الأدنى/الأرجح/الأعلى. أعمدة المتشائم/الأساس/المتفائل تمثل المئين الخاص بكل مقياس عبر عمليات التشغيل، لا مستقبلًا واحدًا محاكى."
+  "Each draw uses a triangular distribution across low/most likely/high. Bear/base/bull columns are each metric's own percentile across runs, not one single simulated future.": "تستخدم كل عملية سحب توزيعًا مثلثيًا بين الحد الأدنى/الأرجح/الأعلى. أعمدة المتشائم/الأساس/المتفائل تمثل المئين الخاص بكل مقياس عبر عمليات التشغيل، لا مستقبلًا واحدًا محاكى.",
+  "Contradictions": "تناقضات",
+  "Expected customer count contradicts the acquisition model.": "عدد العملاء المتوقع يتعارض مع نموذج الاكتساب.",
+  "{expected} customers are expected in 12 months, but the acquisition model projects {implied}.": "من المتوقع {expected} عميلًا خلال 12 شهرًا، لكن نموذج الاكتساب يُسقط {implied} عميلًا.",
+  "Customer lifetime contradicts the churn assumption.": "عمر العميل يتعارض مع افتراض معدل التسرب.",
+  "Lifetime is entered as {entered} months, but {churn}% monthly churn implies {implied} months.": "عمر العميل مُدخل كـ {entered} شهرًا، لكن معدل تسرب شهري {churn}% يقتضي {implied} شهرًا.",
+  "TAM revenue per customer contradicts the pricing model.": "الإيراد السنوي لكل عميل في حجم السوق يتعارض مع نموذج التسعير.",
+  "Market sizing assumes {currency} {tam, number} per customer per year, but the pricing model implies {currency} {model, number}.": "يفترض حجم السوق {currency} {tam, number} لكل عميل سنويًا، لكن نموذج التسعير يقتضي {currency} {model, number}.",
+  "Customers churn before paying back acquisition cost.": "يترك العملاء قبل استرداد تكلفة اكتسابهم.",
+  "Payback takes {payback} months, but customers stay only {lifetime} months.": "الاسترداد يستغرق {payback} شهرًا، لكن العملاء يبقون {lifetime} شهرًا فقط."
 }

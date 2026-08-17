@@ -1018,6 +1018,13 @@ export interface Insight {
 }
 
 export interface InsightReport {
+  /**
+   * Assumptions that disagree with each other (e.g. expected customers vs the
+   * acquisition model, entered lifetime vs the churn rate). Surfaced
+   * separately from warnings because these are internal inconsistencies that
+   * would embarrass the document in front of an investor, not judgments.
+   */
+  contradictions: Insight[];
   strengths: Insight[];
   warnings: Insight[];
   criticalRisks: Insight[];

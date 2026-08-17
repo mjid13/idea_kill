@@ -1084,5 +1084,14 @@
   "Runs": "Runs",
   "Never breaks even": "Never breaks even",
   "Sampled {count} ranged assumptions:": "Sampled {count} ranged assumptions:",
-  "Each draw uses a triangular distribution across low/most likely/high. Bear/base/bull columns are each metric's own percentile across runs, not one single simulated future.": "Each draw uses a triangular distribution across low/most likely/high. Bear/base/bull columns are each metric's own percentile across runs, not one single simulated future."
+  "Each draw uses a triangular distribution across low/most likely/high. Bear/base/bull columns are each metric's own percentile across runs, not one single simulated future.": "Each draw uses a triangular distribution across low/most likely/high. Bear/base/bull columns are each metric's own percentile across runs, not one single simulated future.",
+  "Contradictions": "Contradictions",
+  "Expected customer count contradicts the acquisition model.": "Expected customer count contradicts the acquisition model.",
+  "{expected} customers are expected in 12 months, but the acquisition model projects {implied}.": "{expected} customers are expected in 12 months, but the acquisition model projects {implied}.",
+  "Customer lifetime contradicts the churn assumption.": "Customer lifetime contradicts the churn assumption.",
+  "Lifetime is entered as {entered} months, but {churn}% monthly churn implies {implied} months.": "Lifetime is entered as {entered} months, but {churn}% monthly churn implies {implied} months.",
+  "TAM revenue per customer contradicts the pricing model.": "TAM revenue per customer contradicts the pricing model.",
+  "Market sizing assumes {currency} {tam, number} per customer per year, but the pricing model implies {currency} {model, number}.": "Market sizing assumes {currency} {tam, number} per customer per year, but the pricing model implies {currency} {model, number}.",
+  "Customers churn before paying back acquisition cost.": "Customers churn before paying back acquisition cost.",
+  "Payback takes {payback} months, but customers stay only {lifetime} months.": "Payback takes {payback} months, but customers stay only {lifetime} months."
 }

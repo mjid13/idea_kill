@@ -217,7 +217,7 @@ function PitchDeck({ project }: { project: Project }) {
 
       <Slide title="Risks">
         <BulletList
-          items={[...insights.criticalRisks, ...insights.warnings].map((i) => translateInsightMessage(t, i))}
+          items={[...insights.contradictions, ...insights.criticalRisks, ...insights.warnings].map((i) => translateInsightMessage(t, i))}
           empty={t("No significant risks flagged.")}
         />
       </Slide>

@@ -3,8 +3,15 @@ import { calculateMetrics, calculateSensitivityRanking, forecastProject, generat
 import { calculateScoreBreakdown } from "@/lib/scoring";
 import { generateDecisionSummary, generateInsights } from "@/lib/insights";
 
+/**
+ * Fills `{key}` placeholders for the MCP tool's plain-English output. Also
+ * strips ICU format suffixes (`{amount, number}`), which the UI layer renders
+ * through use-intl but a plain string replace would leave behind verbatim.
+ */
 function interpolate(template: string, params?: Record<string, string | number>) {
-  return Object.entries(params ?? {}).reduce((text, [key, value]) => text.replaceAll(`{${key}}`, String(value)), template);
+  return template.replace(/\{(\w+)(?:,\s*\w+)?\}/g, (match, key: string) =>
+    params && key in params ? String(params[key]) : match
+  );
 }
 
 function englishInsight(item: Insight) {

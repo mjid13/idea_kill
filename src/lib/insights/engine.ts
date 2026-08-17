@@ -1,6 +1,7 @@
 import type { CalculatedMetrics, Insight, InsightReport, Project, ScoreBreakdown } from "@/types";
 import { getBenchmarks } from "@/lib/scoring/benchmarks";
 import { interpolateScore } from "@/lib/scoring/interpolate";
+import { detectContradictions } from "./contradictions";
 
 let idCounter = 0;
 function insight(
@@ -445,6 +446,7 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
   recommendedActions.push(insight("Test a landing page before building the full product, if we haven't already."));
 
   return {
+    contradictions: detectContradictions(project, metrics),
     strengths,
     warnings,
     criticalRisks,
