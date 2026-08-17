@@ -24,18 +24,30 @@ export function buildForecastInputs(
   const expansionMultiplier = overrides.expansionMultiplier ?? 1;
   const contractionMultiplier = overrides.contractionMultiplier ?? 1;
 
+  const mix = metrics.revenueMix;
+
   return {
     startingCustomers: val(project.pricing.currentCustomers),
     newCustomersPerMonth: val(project.acquisition.newCustomersAcquiredMonthly),
     monthlyCustomerGrowthPct: val(project.pricing.expectedMonthlyCustomerGrowthPct) * growthMultiplier,
     monthlyChurnPct: Math.max(0, metrics.retention.monthlyChurnPct * churnMultiplier),
-    monthlyArpu: metrics.revenue.monthlyArpu * priceMultiplier,
-    grossMarginPct: metrics.unitEconomics.grossMarginPct,
+    // With a mix, ARPU is strictly the recurring half — the one-time half is
+    // passed separately below, and feeding it in twice would double-count a
+    // project whose streams are all one-time.
+    monthlyArpu: (mix ? mix.recurringArpu : metrics.revenue.monthlyArpu) * priceMultiplier,
+    // A hybrid mix carries a different margin on each half of the business, so
+    // the forecast gets the recurring margin here and the one-time margin below
+    // instead of one blended rate applied to both.
+    grossMarginPct: mix ? mix.recurringGrossMarginPct : metrics.unitEconomics.grossMarginPct,
     monthlyOperatingExpenses: metrics.operating.monthlyOperatingCost,
     otherMonthlyIncome: val(project.funding.otherMonthlyIncome),
     startingCashBalance: val(project.funding.availableCash) + val(project.funding.initialInvestment),
-    isRecurringRevenue: isRecurring(project.pricing.billingPeriod),
+    // With a mix, whether revenue recurs is a property of the streams, not of
+    // the single `pricing.billingPeriod` dropdown.
+    isRecurringRevenue: mix ? mix.recurringArpu > 0 : isRecurring(project.pricing.billingPeriod),
     months,
+    oneTimeRevenuePerNewCustomer: mix ? mix.oneTimeRevenuePerNewCustomer * priceMultiplier : 0,
+    oneTimeGrossMarginPct: mix ? mix.oneTimeGrossMarginPct : undefined,
     monthlyExpansionRevenuePct: val(project.retention.monthlyExpansionRevenuePct) * expansionMultiplier,
     monthlyContractionRevenuePct: val(project.retention.monthlyContractionRevenuePct) * contractionMultiplier,
   };

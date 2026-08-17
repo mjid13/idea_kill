@@ -19,6 +19,14 @@ export interface ForecastInputs {
   monthlyExpansionRevenuePct?: number;
   /** % of MRR lost each month from downgrades among existing customers. Defaults to 0 (no effect). */
   monthlyContractionRevenuePct?: number;
+  /**
+   * Hybrid mix: revenue collected once per newly acquired customer (audit,
+   * setup, implementation). Layered on top of the recurring stream rather than
+   * replacing it, so a business can run both at once. Defaults to 0.
+   */
+  oneTimeRevenuePerNewCustomer?: number;
+  /** Gross margin on that one-time revenue (0-100). Defaults to `grossMarginPct`. */
+  oneTimeGrossMarginPct?: number;
 }
 
 /**
@@ -41,11 +49,14 @@ export function generateForecast(inputs: ForecastInputs): ForecastMonth[] {
     months,
     monthlyExpansionRevenuePct = 0,
     monthlyContractionRevenuePct = 0,
+    oneTimeRevenuePerNewCustomer = 0,
+    oneTimeGrossMarginPct = inputs.grossMarginPct,
   } = inputs;
 
   const churnRate = pct(monthlyChurnPct);
   const growthRate = pct(monthlyCustomerGrowthPct);
   const marginRate = pct(grossMarginPct);
+  const oneTimeMarginRate = pct(oneTimeGrossMarginPct);
   const expansionRate = pct(monthlyExpansionRevenuePct);
   const contractionRate = pct(monthlyContractionRevenuePct);
 
@@ -70,9 +81,13 @@ export function generateForecast(inputs: ForecastInputs): ForecastMonth[] {
     expansionMultiplier *= 1 + expansionRate - contractionRate;
 
     const mrr = isRecurringRevenue ? baseMrr * expansionMultiplier : 0;
-    const revenue = isRecurringRevenue ? mrr : newCustomers * monthlyArpu;
+    const recurringRevenue = isRecurringRevenue ? mrr : newCustomers * monthlyArpu;
+    // One-time revenue tracks acquisitions, not the installed base, and carries
+    // its own (usually lower, services-shaped) margin.
+    const oneTimeRevenue = newCustomers * oneTimeRevenuePerNewCustomer;
+    const revenue = recurringRevenue + oneTimeRevenue;
 
-    const grossProfit = revenue * marginRate;
+    const grossProfit = recurringRevenue * marginRate + oneTimeRevenue * oneTimeMarginRate;
     const variableCosts = revenue - grossProfit;
     const netCashFlow = grossProfit - monthlyOperatingExpenses + otherMonthlyIncome;
     cashBalance += netCashFlow;
@@ -85,6 +100,8 @@ export function generateForecast(inputs: ForecastInputs): ForecastMonth[] {
       endingCustomers: Math.round(endingCustomers),
       mrr,
       revenue,
+      recurringRevenue,
+      oneTimeRevenue,
       variableCosts,
       grossProfit,
       operatingExpenses: monthlyOperatingExpenses,

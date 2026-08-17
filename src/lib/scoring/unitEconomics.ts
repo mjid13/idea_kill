@@ -60,7 +60,7 @@ export function scoreUnitEconomics(
   const score = weightedAverage(factors);
 
   const scoreFactors = [
-    { label: "Gross margin", score: Math.round(grossMarginScore), detail: "Gross profit as a share of revenue, benchmarked against your business model." },
+    { label: "Gross margin", score: Math.round(grossMarginScore), detail: "Gross profit as a share of revenue, benchmarked against our business model." },
     { label: "LTV:CAC ratio", score: Math.round(ltvToCacScore), detail: "Lifetime value relative to acquisition cost." },
     { label: "CAC payback period", score: Math.round(cacPaybackScore), detail: "Months of gross profit needed to recover acquisition cost." },
   ];

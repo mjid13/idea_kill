@@ -25,7 +25,12 @@ export function calculateEfficiencyMetrics(
   metrics: CalculatedMetrics,
   forecast: ForecastMonth[]
 ): EfficiencyMetrics {
-  if (!isRecurring(project.pricing.billingPeriod) || forecast.length < 12) {
+  // These ratios describe a recurring-revenue business. A hybrid mix qualifies
+  // on its recurring streams, whatever the single `pricing.billingPeriod` says.
+  const hasRecurringRevenue = metrics.revenueMix
+    ? metrics.revenueMix.recurringArpu > 0
+    : isRecurring(project.pricing.billingPeriod);
+  if (!hasRecurringRevenue || forecast.length < 12) {
     return NULL_EFFICIENCY_METRICS;
   }
 

@@ -75,8 +75,8 @@ export function scoreMarketOpportunity(
     weight: 0.2,
     factors: [
       { label: "Serviceable available market (SAM)", score: Math.round(samScore), detail: "Size of the realistically addressable market." },
-      { label: "Serviceable obtainable market (SOM)", score: Math.round(somScore), detail: "Realistic revenue opportunity given your obtainable share." },
-      { label: "Required market penetration", score: Math.round(penetrationScore), detail: "Share of the addressable market your target customers represent — lower is more credible." },
+      { label: "Serviceable obtainable market (SOM)", score: Math.round(somScore), detail: "Realistic revenue opportunity given our obtainable share." },
+      { label: "Required market penetration", score: Math.round(penetrationScore), detail: "Share of the addressable market our target customers represent — lower is more credible." },
       { label: "Competitive landscape", score: Math.round(competitiveLandscapeScore), detail: "Competition intensity, differentiation strength, and switching ease combined." },
     ],
   };

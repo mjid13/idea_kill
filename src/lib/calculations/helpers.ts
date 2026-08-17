@@ -7,6 +7,17 @@ export function val(a: Assumption<number> | number | undefined | null, fallback 
   return Number.isFinite(a.value) ? a.value : fallback;
 }
 
+/**
+ * Reads an optional assumption, falling back to `fallback` when the field is
+ * absent (project saved before it existed) or still pristine — a 0 marked
+ * "unknown" means "not answered", not "zero".
+ */
+export function valOrDefault(assumption: Assumption<number> | undefined, fallback: number): number {
+  if (!assumption) return fallback;
+  if (assumption.quality === "unknown" && assumption.value === 0) return fallback;
+  return val(assumption, fallback);
+}
+
 /** Safe division that never produces NaN/Infinity. Returns `fallback` (default null) on an invalid divide. */
 export function safeDiv(numerator: number, denominator: number): number | null {
   if (!Number.isFinite(numerator) || !Number.isFinite(denominator)) return null;

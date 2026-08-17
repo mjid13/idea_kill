@@ -57,7 +57,7 @@ export function scoreRisk(risk: RiskAssessment, pricing: PricingAssumptions): Ca
     factors.push({
       label: "Customer concentration",
       score: Math.round(concentrationScore),
-      detail: "Exposure to revenue loss if your largest customers churn.",
+      detail: "Exposure to revenue loss if our largest customers churn.",
     });
   }
 
