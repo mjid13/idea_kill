@@ -88,7 +88,7 @@ export default function LandingPage() {
         </section>
       </main>
       <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
-        {t("IdeaUp — evaluate before you build.")}
+        {t("Built for founders by.")}<a href={"https://mjidhub.com"} className="text-primary hover:underline">mjid</a>
       </footer>
     </div>
   );
