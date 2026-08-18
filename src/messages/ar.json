@@ -1309,7 +1309,7 @@
   "Assumptions to test": "افتراضات لاختبارها",
   "Proposal/quotation template": "قالب العرض / عرض السعر",
   "Sign in to IdeaUp": "تسجيل الدخول إلى IdeaUp",
-  "Use a magic link to access our private projects.": "استخدم رابطًا سحريًا للوصول إلى مشاريعنا الخاصة.",
+  "Use a magic link to access your private projects.": "استخدم رابطًا سحريًا للوصول إلى مشاريعك الخاصة.",
   "Connect an MCP client": "الاتصال بعميل MCP",
   "This authorization request is invalid or expired.": "طلب التفويض هذا غير صالح أو منتهي الصلاحية."
 }
