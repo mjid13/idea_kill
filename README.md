@@ -15,8 +15,9 @@ assumptions and tells you what to fix, validate, or test next.
 - [Scoring methodology](#scoring-methodology)
 - [Business-model benchmarks](#business-model-benchmarks)
 - [Confidence vs. viability](#confidence-vs-viability)
-- [Persistence & future database migration](#persistence--future-database-migration)
+- [Persistence](#persistence)
 - [Testing](#testing)
+- [License](#license)
 
 ## Architecture
 
@@ -25,24 +26,39 @@ Business logic is kept entirely out of React components:
 
 ```text
 /src
-  /app                     Routes (landing, wizard, dashboard, projects, compare, report)
+  /app                     Routes: landing, sign-in, wizard, project workspace
+                           (dashboard + business documents), projects, compare,
+                           settings, OAuth consent, /api (projects CRUD),
+                           /mcp (hosted MCP server), /health
   /components
     /ui                    shadcn/ui primitives
     /forms                 Multi-step wizard, field components, form <-> domain mapping
-    /dashboard              Score, metrics, insights, sensitivity, scenarios, charts
+    /dashboard             Score, metrics, insights, sensitivity, scenarios, charts
+    /documents             Generated business-document primitives (one-pager, pitch, …)
+    /auth                  Sign-in and OAuth consent forms
+    /audience              Investor / lender audience views
+    /settings              MCP connection management
+    /i18n                  Translation provider and helpers
     /layout                Header
   /lib
-    /calculations           Pure financial calculation engine (TAM/SAM/SOM, CAC, LTV,
-                             break-even, forecasting, scenarios, sensitivity)
-    /scoring                Scoring engine: benchmarks, category scorers, confidence,
-                             validation maturity
-    /insights               Deterministic insight + decision-summary generation
-    /storage                ProjectRepository interface + LocalStorageProjectRepository
-    /validation              Zod schema for the wizard
-    format.ts               Currency/percentage/multiple/month formatting helpers
-    example.ts               Pre-populated example project
-  /types                    Domain types: Project, *Assumptions, CalculatedMetrics,
-                             ScoreBreakdown, ForecastMonth, ScenarioResult, …
+    /calculations          Pure financial calculation engine (TAM/SAM/SOM, CAC, LTV,
+                           break-even, forecasting, scenarios, Monte Carlo, sensitivity)
+    /scoring               Scoring engine: benchmarks, category scorers, confidence,
+                           validation maturity
+    /insights              Deterministic insight + decision-summary generation
+    /projects              Supabase-backed repository, codec, safe mutations
+    /storage               ProjectRepository interface + localStorage implementation
+    /supabase              Browser/server clients and env detection
+    /mcp                   MCP server, OAuth auth, rate limiting, serialization
+    /documents             Document registry, derivation, status
+    /export                Project export/import
+    /investor, /lender     Investor summary and lender assessment logic
+    /validation            Zod schemas for the wizard and stored documents
+    format.ts              Currency/percentage/multiple/month formatting helpers
+    example.ts             Pre-populated example project
+  /messages                English + Arabic message catalogs
+  /types                   Domain types: Project, *Assumptions, CalculatedMetrics,
+                           ScoreBreakdown, ForecastMonth, ScenarioResult, …
 ```
 
 Every calculation is a pure function of typed inputs — no React, no I/O — and is
@@ -58,8 +74,21 @@ npm run lint     # eslint
 npm run build    # production build (also runs the TypeScript compiler)
 ```
 
-No environment variables or backend are required. All data is stored in the
-browser's `localStorage`.
+Out of the box — with no environment variables — the app runs fully
+client-side and stores projects in the browser's `localStorage`.
+
+To enable accounts and cross-device storage, point the app at a
+[Supabase](https://supabase.com) project:
+
+1. Create a Supabase project.
+2. Apply the SQL files in `/supabase/migrations/` in timestamp order
+   (SQL editor or `supabase db push`).
+3. Copy `.env.example` to `.env.local` and fill in your project URL and
+   publishable key.
+
+Once those variables are set, projects are stored in Postgres per
+authenticated user. See [docs/hosted-mcp-setup.md](docs/hosted-mcp-setup.md)
+for deploying the optional hosted MCP server.
 
 ## Calculation formulas
 
@@ -187,7 +216,7 @@ Problem Validated → Solution Validated → Revenue Validated → Growth Valida
 Scale Ready) is a third, independent signal — it does not feed the viability
 score.
 
-## Persistence & future database migration
+## Persistence
 
 All persistence goes through the `ProjectRepository` interface
 (`/src/lib/storage/types.ts`):
@@ -201,11 +230,20 @@ interface ProjectRepository {
 }
 ```
 
-The MVP ships `LocalStorageProjectRepository`. To move to Postgres/Supabase
-later, write a new class implementing the same interface (e.g.
-`SupabaseProjectRepository`) and swap the single exported instance in
-`/src/lib/storage/localStorageRepository.ts` — no calling code changes, because
-every page/component depends on the interface, not the implementation.
+The implementation is chosen at runtime (`/src/lib/storage/browserRepository.ts`):
+
+- **No Supabase env vars** → `LocalStorageProjectRepository` — everything stays
+  in the browser.
+- **Supabase configured** → a thin client that calls the app's own
+  `/api/projects` routes. Those routes use `SupabaseProjectRepository`
+  (`/src/lib/projects/repository.ts`) with the signed-in user's token: projects
+  are stored as JSONB rows protected by row-level security, writes go through
+  an allowlisted mutation set (`/src/lib/projects/mutations.ts`), and saves use
+  optimistic concurrency (`revision` checks) so concurrent edits conflict
+  loudly instead of silently overwriting.
+
+Because every page/component depends on the interface, not the
+implementation, swapping the backend again requires no calling-code changes.
 
 ## Testing
 
@@ -213,10 +251,14 @@ every page/component depends on the interface, not the implementation.
 npm run test
 ```
 
-58 vitest unit tests cover the calculation engine (TAM/SAM/SOM, CAC, LTV,
+228 vitest test cases cover the calculation engine (TAM/SAM/SOM, CAC, LTV,
 LTV:CAC, gross margin, break-even, runway, forecasts, scenarios — including
 zero-churn, zero-CAC, zero-revenue, and negative-margin edge cases), the
 scoring engine (category boundaries, weight sums, worst-case/best-case
 scores), the insights engine, and the formatting helpers. Financial
 correctness is treated as more important than visual polish, per the project's
 own principle.
+
+## License
+
+[MIT](LICENSE)
