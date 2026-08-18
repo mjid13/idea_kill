@@ -1,7 +1,7 @@
 "use client";
 
 import { RotateCcw, Sigma } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { useController, type Control, type FieldPath } from "react-hook-form";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,31 @@ export function AssumptionField({
   const qualityField = useController({ control, name: `${name}.quality` as FieldPath<ProjectFormValues> });
   const rangeField = useController({ control, name: `${name}.range` as FieldPath<ProjectFormValues> });
   const recalculate = useFieldLink(name);
+
+  // Per-step validation silently refuses to advance the wizard when any field
+  // in the step is invalid, so every assumption must surface its own error.
+  // Messages can land on `${name}.value` (including the object-level refines,
+  // which are re-pathed there) or under `${name}.range`.
+  const rangeError = rangeField.fieldState.error as
+    | { message?: string; low?: { message?: string }; high?: { message?: string } }
+    | undefined;
+  const errorMessage =
+    valueField.fieldState.error?.message ??
+    rangeError?.low?.message ??
+    rangeError?.high?.message ??
+    rangeError?.message;
+
+  // An optional assumption that the saved project never carried arrives here as
+  // `undefined`. Merely mounting these controllers materializes the parent
+  // object with undefined members, which the schema then rejects on `value` and
+  // `quality` — an invalid field the user never touched. Seed the same pristine
+  // default the factory uses so the field is valid from the first render.
+  useEffect(() => {
+    if (typeof valueField.field.value !== "number") valueField.field.onChange(0);
+    if (qualityField.field.value === undefined) qualityField.field.onChange("unknown");
+    // Mount-only: later edits are the user's own.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const rawValue = valueField.field.value;
   const displayValue = typeof rawValue === "number" && Number.isFinite(rawValue) ? rawValue : 0;
@@ -101,7 +126,7 @@ export function AssumptionField({
     fieldValue: number,
     onChange: (next: number) => void,
     onBlur: () => void,
-    extra?: { placeholder?: string; ariaLabel?: string }
+    extra?: { placeholder?: string; ariaLabel?: string; invalid?: boolean }
   ) => (
     <div className="relative flex items-center">
       {prefix && <span className="pointer-events-none absolute left-2.5 text-xs text-muted-foreground">{prefix}</span>}
@@ -111,6 +136,7 @@ export function AssumptionField({
         min={min}
         inputMode="decimal"
         aria-label={extra?.ariaLabel}
+        aria-invalid={extra?.invalid ?? !!errorMessage}
         placeholder={extra?.placeholder ?? placeholder}
         className={cn(prefix && "pl-7", suffix && "pr-8")}
         value={Number.isFinite(fieldValue) ? fieldValue : 0}
@@ -193,6 +219,7 @@ export function AssumptionField({
           valueField.field.onBlur
         )
       )}
+      {errorMessage && <p className="text-xs text-destructive">{t(errorMessage)}</p>}
       {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
     </div>
   );
