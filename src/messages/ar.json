@@ -1312,5 +1312,6 @@
   "Use a magic link to access your private projects.": "استخدم رابطًا سحريًا للوصول إلى مشاريعك الخاصة.",
   "Connect an MCP client": "الاتصال بعميل MCP",
   "This authorization request is invalid or expired.": "طلب التفويض هذا غير صالح أو منتهي الصلاحية.",
-  "No activity yet.": "لا يوجد نشاط بعد."
+  "No activity yet.": "لا يوجد نشاط بعد.",
+  "This step has a value we can't use yet. The inputs outlined in red above explain what to change.": "تحتوي هذه الخطوة على قيمة غير صالحة. الحقول المحددة باللون الأحمر أعلاه توضّح ما يجب تغييره."
 }

@@ -85,6 +85,7 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
   const t = useAppTranslations();
   const [stepIndex, setStepIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [blocked, setBlocked] = useState(false);
 
   const defaultValues = useMemo(
     () => projectToFormValues(initialProject ?? createEmptyProject()),
@@ -123,20 +124,28 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
   const progressPct = Math.round(((safeIndex + 1) / visibleSteps.length) * 100);
 
   async function goNext() {
-    const valid = await trigger(step.key);
-    if (!valid) return;
+    const valid = await trigger(step.key, { shouldFocus: true });
+    if (!valid) {
+      // Without this the button just looks inert — the invalid inputs are
+      // marked in place, but nothing explains why the step refused to advance.
+      setBlocked(true);
+      return;
+    }
+    setBlocked(false);
     if (isLast) return;
     setStepIndex((i) => Math.min(visibleSteps.length - 1, i + 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function goBack() {
+    setBlocked(false);
     setStepIndex((i) => Math.max(0, i - 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function loadExample() {
     reset(projectToFormValues(exampleProject));
+    setBlocked(false);
     setStepIndex(0);
   }
 
@@ -217,6 +226,9 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
             </Button>
           )}
         </div>
+        {blocked && !isLast && (
+          <p className="mt-3 text-xs text-destructive">{t("This step has a value we can't use yet. The inputs outlined in red above explain what to change.")}</p>
+        )}
         {formState.errors && Object.keys(formState.errors).length > 0 && isLast && (
           <p className="mt-3 text-xs text-destructive">{t("Some fields need attention before we can finish. Please review earlier steps.")}</p>
         )}

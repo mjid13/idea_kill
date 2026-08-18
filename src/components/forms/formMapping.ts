@@ -30,7 +30,11 @@ export function projectToFormValues(project: Project): ProjectFormValues {
       sizingMethod: rest.market.sizingMethod ?? resolveSizingMethod(rest.market),
       funnel: rest.market.funnel ?? defaultMarketFunnel(),
     },
-    pricing: { ...rest.pricing, topCustomersRevenueSharePct: rest.pricing.topCustomersRevenueSharePct ?? unknownValue(0) },
+    pricing: {
+      ...rest.pricing,
+      freeToPaidConversionPct: rest.pricing.freeToPaidConversionPct ?? unknownValue(0),
+      topCustomersRevenueSharePct: rest.pricing.topCustomersRevenueSharePct ?? unknownValue(0),
+    },
     retention: {
       ...rest.retention,
       monthlyExpansionRevenuePct: rest.retention.monthlyExpansionRevenuePct ?? unknownValue(0),
