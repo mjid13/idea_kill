@@ -16,6 +16,7 @@ assumptions and tells you what to fix, validate, or test next.
 - [Business-model benchmarks](#business-model-benchmarks)
 - [Confidence vs. viability](#confidence-vs-viability)
 - [Persistence](#persistence)
+- [Hosted MCP capabilities](#hosted-mcp-capabilities)
 - [Testing](#testing)
 - [License](#license)
 
@@ -49,7 +50,8 @@ Business logic is kept entirely out of React components:
     /projects              Supabase-backed repository, codec, safe mutations
     /storage               ProjectRepository interface + localStorage implementation
     /supabase              Browser/server clients and env detection
-    /mcp                   MCP server, OAuth auth, rate limiting, serialization
+    /mcp                   MCP server: composition root, tool modules, pure
+                           payload views, typed errors, OAuth auth, rate limiting
     /documents             Document registry, derivation, status
     /export                Project export/import
     /investor, /lender     Investor summary and lender assessment logic
@@ -244,6 +246,53 @@ The implementation is chosen at runtime (`/src/lib/storage/browserRepository.ts`
 
 Because every page/component depends on the interface, not the
 implementation, swapping the backend again requires no calling-code changes.
+
+## Hosted MCP capabilities
+
+The hosted MCP server (`/src/lib/mcp`, served at `/mcp`) exposes the same
+engine the UI uses. `server.ts` only registers; every payload is built by a
+pure function in `/src/lib/mcp/views` that takes a `Project` and returns data —
+which is why they are unit tested without a server or a database.
+
+Two capabilities are reachable **only** through MCP: Lender Mode
+(`get_lender_assessment`) and Investor Mode (`get_investor_assessment`) have no
+route in the app, and `debt.*` — the loan terms Lender Mode reads — has no
+wizard step, so MCP is the only way to populate it.
+
+| Tool | Reads / writes | Underlying function |
+| --- | --- | --- |
+| `list_projects` | granted project index | `analyzeProject` |
+| `get_project` | raw assumptions per section | `rawSections` |
+| `get_project_analysis` | metrics, score, insights, forecast, scenarios, sensitivity, efficiency, funding requirement, benchmarks | `analyzeProject`, `financialModelView` |
+| `get_missing_assumptions` | unknown/estimated assumptions, optionally inside lists | `findMissingAssumptions` |
+| `get_writable_paths` | every path `update_project` accepts | `leafPaths` |
+| `run_scenario` | temporary overrides and/or price/CAC/churn/growth multipliers | `applyMultipliers`, `applyProjectChanges` |
+| `run_monte_carlo` | distribution across ranged assumptions | `runMonteCarlo` |
+| `get_lender_assessment` | DSCR, liquidity, downside, capacity, collateral | `calculateLenderMetrics`, `assessLenderReadiness` |
+| `get_investor_assessment` | growth, retention, efficiency, moat, round | `buildInvestorSummary`, `assessInvestorReadiness` |
+| `get_benchmarks` | scoring anchors, optionally with this project's figures | `getBenchmarks` |
+| `list_documents` | per-document status and filled/total | `computeDocumentCompleteness` |
+| `suggest_document_content` | deterministic drafts, each with the path that persists it | `/src/lib/documents/derive.ts` |
+| `compare_projects` | two to five projects side by side | `analyzeProject` |
+| `export_project` | full JSON bundle or flattened CSV | `buildExportBundle`, `buildExportCsv` |
+| `get_example_project` | the reference fixture, schema included | `exampleProject` |
+| `create_project` / `import_project` | **write** — new project, granted to the calling client | `create_project_with_mcp_grant` |
+| `update_project` | **write** — allowlisted field changes, including one list item | `applyProjectChanges` |
+| `add_revenue_stream` / `remove_revenue_stream` / `reorder_revenue_streams` | **write** — the hybrid revenue mix, item by item | `/src/lib/projects/listMutations.ts` |
+| `edit_list` | **write** — append/replace/remove/move one item in a document list | `applyListOperation` |
+
+Resources are `ideaup://projects`, `ideaup://example`,
+`ideaup://benchmarks/{business_model}`, and
+`ideaup://projects/{id}/{kind}` where `kind` is any stored section plus
+`summary`, `assumptions`, `analysis`, `financial_model`, `lender`, `investor`,
+and `documents`. Ten prompts cover challenging assumptions, prioritising
+validation, unit economics, founder review, comparison, investor readiness,
+lender underwriting, downside risk, document drafting, and filling unknowns.
+
+Writes stay off unless `MCP_WRITES_ENABLED=true`, the connection is in
+read/write mode, and — for creation — the owner allowed it. See
+[docs/hosted-mcp-setup.md](docs/hosted-mcp-setup.md) for deployment and
+[docs/mcp-tools.md](docs/mcp-tools.md) for the client-facing contract.
 
 ## Testing
 
