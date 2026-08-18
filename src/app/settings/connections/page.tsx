@@ -14,7 +14,7 @@ export default async function ConnectionsPage() {
   const { data: claims } = await supabase.auth.getClaims();
   if (!claims?.claims?.sub) redirect("/sign-in?next=/settings/connections");
   const { data: connections } = await supabase.from("mcp_connections")
-    .select("client_id,client_name,client_uri,access_mode,status,created_at,last_used_at,mcp_project_grants(project_id,projects(name))")
+    .select("client_id,client_name,client_uri,access_mode,allow_create,status,created_at,last_used_at,mcp_project_grants(project_id,projects(name))")
     .order("created_at", { ascending: false });
   const { data: projects } = await supabase.from("projects").select("id,name").order("name");
   const { data: audits } = await supabase.from("project_audit_events")
@@ -27,6 +27,7 @@ export default async function ConnectionsPage() {
         clientId: connection.client_id,
         clientName: connection.client_name,
         accessMode: connection.access_mode,
+        allowCreate: connection.allow_create,
         status: connection.status,
         createdAt: connection.created_at,
         lastUsedAt: connection.last_used_at,

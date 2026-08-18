@@ -8,6 +8,7 @@ export interface McpConnectionRow {
   clientId: string;
   clientName: string;
   accessMode: string;
+  allowCreate: boolean;
   status: string;
   createdAt: string;
   lastUsedAt: string | null;
@@ -20,6 +21,53 @@ interface Props {
   connections: McpConnectionRow[];
   projects: McpProjectRow[];
   audits: unknown[];
+}
+
+interface AuditEvent {
+  action: string;
+  client_id: string | null;
+  revision_before: number | null;
+  revision_after: number;
+  created_at: string;
+  changes: unknown;
+}
+
+/**
+ * Audit `changes` has three shapes in the wild: the create RPC's
+ * `[{path, operation}]`, an MCP write's `{reason, source, changes[]}`, and a
+ * grant change's `{source, operation}`. All three are summarised here so the
+ * owner reads field names, not JSON.
+ */
+function describeChanges(changes: unknown): string[] {
+  if (Array.isArray(changes)) {
+    return changes.map((entry) => {
+      const row = entry as { path?: string; operation?: string };
+      return `${row.operation ?? "set"} ${row.path ?? ""}`.trim();
+    });
+  }
+  if (changes && typeof changes === "object") {
+    const record = changes as { reason?: string; operation?: string; changes?: Array<{ path?: string; op?: string }> };
+    const lines = record.changes?.map((entry) => `${entry.op ?? "set"} ${entry.path ?? ""}`.trim()) ?? [];
+    if (record.operation) lines.push(record.operation);
+    if (record.reason) lines.push(`"${record.reason}"`);
+    return lines;
+  }
+  return [];
+}
+
+function AuditRow({ audit, formatDateTime }: { audit: AuditEvent; formatDateTime: (value: string) => string }) {
+  const lines = describeChanges(audit.changes);
+  return <div className="rounded border p-2">
+    <div className="flex flex-wrap justify-between gap-2">
+      <span className="font-medium">{audit.action}</span>
+      <span className="text-muted-foreground">
+        {audit.client_id ?? "app"} · r{audit.revision_before ?? "—"}→r{audit.revision_after} · {formatDateTime(audit.created_at)}
+      </span>
+    </div>
+    {lines.length > 0 && <ul className="mt-1 list-disc pl-4 text-muted-foreground">
+      {lines.map((line, index) => <li key={index}>{line}</li>)}
+    </ul>}
+  </div>;
 }
 
 const ACCESS_MODE_LABELS: Record<string, string> = { read: "Read only", write: "Read/write" };
@@ -59,7 +107,7 @@ export function McpConnectionsView({ mcpUrl, connections, projects, audits }: Pr
         <input type="hidden" name="operation" value="update" />
         <input type="hidden" name="clientId" value={connection.clientId} />
         <label className="block text-sm">{t("Mode")} <select name="mode" defaultValue={connection.accessMode} className="ml-2 rounded border bg-background p-1"><option value="read">{t("Read only")}</option><option value="write">{t("Read/write")}</option></select></label>
-        <label className="flex gap-2 text-sm"><input type="checkbox" name="allowCreate" value="true" />{t("Allow project creation")}</label>
+        <label className="flex gap-2 text-sm"><input type="checkbox" name="allowCreate" value="true" defaultChecked={connection.allowCreate} />{t("Allow project creation")}</label>
         <div className="text-sm">{projects.map((project) => <label key={project.id} className="mr-3 inline-flex gap-1"><input type="checkbox" name="projectIds" value={project.id} defaultChecked={connection.grantedProjectIds.includes(project.id)} />{project.name}</label>)}</div>
         <button className="text-sm underline" type="submit">{t("Save permissions")}</button>
       </form>
@@ -70,6 +118,9 @@ export function McpConnectionsView({ mcpUrl, connections, projects, audits }: Pr
       </form>
     </CardContent></Card>)}
     <section><h2 className="mb-2 font-semibold">{t("Recent audit events")}</h2>
-      <pre className="max-h-96 overflow-auto rounded-lg border p-3 text-xs">{JSON.stringify(audits, null, 2)}</pre></section>
+      <div className="max-h-96 space-y-2 overflow-auto rounded-lg border p-3 text-xs">
+        {audits.length === 0 ? <p className="text-muted-foreground">{t("No activity yet.")}</p>
+          : audits.map((audit, index) => <AuditRow key={index} audit={audit as AuditEvent} formatDateTime={formatDateTime} />)}
+      </div></section>
   </main>;
 }

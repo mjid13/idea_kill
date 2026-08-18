@@ -1311,5 +1311,6 @@
   "Sign in to IdeaUp": "Sign in to IdeaUp",
   "Use a magic link to access your private projects.": "Use a magic link to access your private projects.",
   "Connect an MCP client": "Connect an MCP client",
-  "This authorization request is invalid or expired.": "This authorization request is invalid or expired."
+  "This authorization request is invalid or expired.": "This authorization request is invalid or expired.",
+  "No activity yet.": "No activity yet."
 }
