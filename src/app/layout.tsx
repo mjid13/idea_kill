@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { LanguageProvider } from "@/components/i18n/language-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -30,6 +31,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <LanguageProvider>
           <TooltipProvider>{children}</TooltipProvider>
         </LanguageProvider>
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ? (
+          <GoogleAnalytics
+            measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}
+          />
+        ) : null}
       </body>
     </html>
   );
