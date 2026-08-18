@@ -1,6 +1,6 @@
 # Hosted MCP deployment
 
-Production runs at <https://your-app.example.com> (Your host behind Cloudflare).
+Production runs at your deployment target, optionally behind a reverse proxy / CDN.
 
 The application now uses Supabase for authenticated project storage and exposes the MCP server at the exact URL configured by `MCP_RESOURCE_URL` (normally `https://your-app.example.com/mcp`).
 
@@ -18,14 +18,14 @@ The application now uses Supabase for authenticated project storage and exposes 
 
 Never add a service-role key to the application environment. All application and MCP access uses the end-user token plus RLS/security-definer mutation functions.
 
-## Application environment (Your host)
+## Application environment
 
 ```
 NEXT_PUBLIC_APP_URL=https://your-app.example.com
 MCP_RESOURCE_URL=https://your-app.example.com/mcp
 ```
 
-`NEXT_PUBLIC_*` values are inlined at build time — redeploy after changing them. Cloudflare must use **Full (strict)** SSL for `mjidhub.com`; "Flexible" causes an infinite 301 loop at Your host's edge before requests ever reach the app. Keep `MCP_CONNECTIONS_ENABLED=false` until OAuth discovery/consent has been tested in staging. Keep `MCP_WRITES_ENABLED=false` for the read-only rollout.
+`NEXT_PUBLIC_*` values are inlined at build time — redeploy after changing them. If fronting the app with Cloudflare, use **Full (strict)** SSL; "Flexible" causes an infinite 301 loop at the host's edge before requests ever reach the app. Keep `MCP_CONNECTIONS_ENABLED=false` until OAuth discovery/consent has been tested in staging. Keep `MCP_WRITES_ENABLED=false` for the read-only rollout.
 
 ## Verification
 
