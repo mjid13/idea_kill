@@ -1313,5 +1313,11 @@
   "Connect an MCP client": "الاتصال بعميل MCP",
   "This authorization request is invalid or expired.": "طلب التفويض هذا غير صالح أو منتهي الصلاحية.",
   "No activity yet.": "لا يوجد نشاط بعد.",
-  "This step has a value we can't use yet. The inputs outlined in red above explain what to change.": "تحتوي هذه الخطوة على قيمة غير صالحة. الحقول المحددة باللون الأحمر أعلاه توضّح ما يجب تغييره."
+  "This step has a value we can't use yet. The inputs outlined in red above explain what to change.": "تحتوي هذه الخطوة على قيمة غير صالحة. الحقول المحددة باللون الأحمر أعلاه توضّح ما يجب تغييره.",
+  "Potential cost double-counting between revenue streams and unit economics.": "احتمال ازدواج في احتساب التكاليف بين مصادر الإيراد ووحدة الاقتصاد.",
+  "Revenue streams already carry their own delivery cost, and a further {currency} {stacked, number} per customer per month of direct, infrastructure and support cost is charged on top. Remove whichever side already accounts for it.": "مصادر الإيراد تتضمن أصلًا تكلفة التنفيذ الخاصة بها، ويُحتسب فوقها {currency} {stacked, number} إضافية لكل عميل شهريًا من التكاليف المباشرة والبنية التحتية والدعم. احذف التكلفة من الجهة التي تحتسبها بالفعل.",
+  "Break-even cannot be reached by growing the subscriber base.": "لا يمكن بلوغ نقطة التعادل عبر زيادة عدد المشتركين.",
+  "Recurring contribution per customer is zero or negative, so only one-time work (setup, implementation, pilots) covers fixed costs. The forecast can still show positive cash flow — it is being carried by new sales each month, not by the installed base.": "هامش المساهمة المتكرر لكل عميل صفر أو سالب، لذا لا تغطي التكاليف الثابتة سوى الأعمال غير المتكررة (التهيئة والتنفيذ والمشاريع التجريبية). قد يظل التوقع يُظهر تدفقًا نقديًا موجبًا، لكنه محمول على المبيعات الجديدة كل شهر لا على قاعدة العملاء الحالية.",
+  "Subscribers needed to cover the fixed costs left after this month's one-time work.": "عدد المشتركين اللازم لتغطية التكاليف الثابتة المتبقية بعد الأعمال غير المتكررة لهذا الشهر.",
+  "(Fixed Monthly Costs − Monthly One-time Contribution) / Recurring Contribution Margin Per Customer": "(التكاليف الشهرية الثابتة − المساهمة الشهرية غير المتكررة) ÷ هامش المساهمة المتكرر لكل عميل"
 }

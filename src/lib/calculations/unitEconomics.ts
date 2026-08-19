@@ -59,6 +59,22 @@ export function calculateUnitEconomicsMetrics(
 }
 
 /**
+ * Customer-level variable costs: the per-customer, per-month lines that apply
+ * on top of whatever each revenue stream's own `deliveryCostPct` already
+ * covers. Exported so the forecast charges exactly the same set — if the two
+ * drift apart, the projection and the break-even section start telling
+ * different stories about the same project.
+ */
+export function customerLevelMonthlyCost(unitEconomics: UnitEconomicsAssumptions): number {
+  return (
+    val(unitEconomics.directCostPerCustomer) +
+    val(unitEconomics.infrastructureCostPerCustomer) +
+    val(unitEconomics.supportCostPerCustomer) +
+    val(unitEconomics.otherVariableCostPerCustomer)
+  );
+}
+
+/**
  * Hybrid unit economics: an upfront audit, a paid implementation, a platform
  * subscription and metered usage do not average into one number without
  * distorting the business.
@@ -84,11 +100,7 @@ function calculateHybridUnitEconomics(
   monthlyChurnPct: number
 ): UnitEconomicsMetrics {
   const processingRate = pct(val(unitEconomics.paymentProcessingPct));
-  const customerLevelMonthlyCost =
-    val(unitEconomics.directCostPerCustomer) +
-    val(unitEconomics.infrastructureCostPerCustomer) +
-    val(unitEconomics.supportCostPerCustomer) +
-    val(unitEconomics.otherVariableCostPerCustomer);
+  const customerLevelCost = customerLevelMonthlyCost(unitEconomics);
 
   const recurringRevenue = mix.recurringArpu;
   const oneTimeRevenue = mix.oneTimeRevenuePerNewCustomer;
@@ -96,7 +108,7 @@ function calculateHybridUnitEconomics(
   const recurringDeliveryCost = recurringRevenue * (1 - pct(mix.recurringGrossMarginPct));
   const oneTimeDeliveryCost = oneTimeRevenue * (1 - pct(mix.oneTimeGrossMarginPct));
 
-  const recurringCost = recurringDeliveryCost + recurringRevenue * processingRate + customerLevelMonthlyCost;
+  const recurringCost = recurringDeliveryCost + recurringRevenue * processingRate + customerLevelCost;
   const oneTimeCost = oneTimeDeliveryCost + oneTimeRevenue * processingRate;
 
   const recurringGrossProfitPerCustomer = recurringRevenue - recurringCost;

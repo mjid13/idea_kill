@@ -264,3 +264,82 @@ describe("forecastProject — hybrid revenue mix", () => {
     expect(first.revenue).toBe(10000);
   });
 });
+
+/**
+ * The double-counting report: `deliveryCostPct` and the Unit Economics cost
+ * lines are additive by design, so both have to reach the forecast *and* the
+ * break-even figure. When only one of them did, a project could show positive
+ * monthly cash flow while the break-even section called break-even impossible.
+ */
+describe("cost model — forecast and unit economics agree", () => {
+  function costedProject(): Project {
+    return {
+      ...hybridProject(),
+      unitEconomics: {
+        revenuePerCustomer: known(1750),
+        directCostPerCustomer: known(50),
+        paymentProcessingPct: known(3),
+        infrastructureCostPerCustomer: known(100),
+        supportCostPerCustomer: known(80),
+        otherVariableCostPerCustomer: known(20),
+      },
+    };
+  }
+
+  it("subtracts customer-level costs and payment processing from forecast gross profit", () => {
+    const project = costedProject();
+    const metrics = calculateMetrics(project);
+    const mix = metrics.revenueMix!;
+    const [first] = forecastProject(project, metrics, 1);
+
+    expect(first.grossProfit).toBeCloseTo(
+      first.recurringRevenue * (mix.recurringGrossMarginPct / 100) +
+        first.oneTimeRevenue * (mix.oneTimeGrossMarginPct / 100) -
+        first.endingCustomers * 250 -
+        first.revenue * 0.03,
+      6
+    );
+  });
+
+  it("reconstructs forecast gross profit from the same contributions break-even divides by", () => {
+    const project = costedProject();
+    const metrics = calculateMetrics(project);
+    const [first] = forecastProject(project, metrics, 1);
+
+    expect(first.grossProfit).toBeCloseTo(
+      first.endingCustomers * metrics.unitEconomics.recurringGrossProfitPerCustomer +
+        first.newCustomers * metrics.unitEconomics.oneTimeGrossProfitPerCustomer,
+      6
+    );
+  });
+
+  it("never reports positive cash flow off a customer base whose contribution is negative", () => {
+    // Customer-level costs alone exceed the $1,375 recurring contribution, and
+    // the one-time streams are removed so nothing else can carry the month.
+    const project: Project = {
+      ...costedProject(),
+      revenueStreams: hybridStreams().filter((s) => s.kind !== "one_time"),
+      unitEconomics: { ...costedProject().unitEconomics, supportCostPerCustomer: known(2000) },
+    };
+    const metrics = calculateMetrics(project);
+    const [first] = forecastProject(project, metrics, 1);
+
+    expect(metrics.unitEconomics.recurringGrossProfitPerCustomer).toBeLessThan(0);
+    expect(metrics.breakEven.breakEvenCustomers).toBeNull();
+    expect(first.grossProfit).toBeLessThan(0);
+    expect(first.netCashFlow).toBeLessThan(0);
+  });
+
+  it("leaves projects with no customer-level costs entered exactly where they were", () => {
+    const project = hybridProject();
+    const metrics = calculateMetrics(project);
+    const mix = metrics.revenueMix!;
+    const [first] = forecastProject(project, metrics, 1);
+
+    expect(first.grossProfit).toBeCloseTo(
+      first.recurringRevenue * (mix.recurringGrossMarginPct / 100) +
+        first.oneTimeRevenue * (mix.oneTimeGrossMarginPct / 100),
+      6
+    );
+  });
+});

@@ -185,3 +185,79 @@ describe("detectContradictions", () => {
     expect(report.some((i) => i.detailParams?.model === 600)).toBe(true);
   });
 });
+
+describe("cost double-counting", () => {
+  function platformStream(deliveryCostPct: number): RevenueStream {
+    return {
+      id: "s1",
+      name: "Platform",
+      kind: "recurring",
+      price: known(1000),
+      billingPeriod: "monthly",
+      attachRatePct: known(100),
+      unitsPerCustomerPerMonth: known(1),
+      deliveryCostPct: known(deliveryCostPct),
+    };
+  }
+
+  function projectWith(deliveryCostPct: number, customerCosts: Partial<Project["unitEconomics"]>): Project {
+    return {
+      ...exampleProject,
+      revenueStreams: [platformStream(deliveryCostPct)],
+      unitEconomics: {
+        ...exampleProject.unitEconomics,
+        directCostPerCustomer: known(0),
+        infrastructureCostPerCustomer: known(0),
+        supportCostPerCustomer: known(0),
+        otherVariableCostPerCustomer: known(0),
+        paymentProcessingPct: known(0),
+        ...customerCosts,
+      },
+    };
+  }
+
+  const message = "Potential cost double-counting between revenue streams and unit economics.";
+
+  it("flags customer-level costs stacked on top of a costed stream", () => {
+    // A 45% delivery cost that plausibly already covers infrastructure and
+    // support, with $400 of the same costs charged again per customer.
+    const report = contradictionsFor(
+      projectWith(45, { infrastructureCostPerCustomer: known(250), supportCostPerCustomer: known(150) })
+    );
+    const finding = report.find((i) => i.message === message);
+    expect(finding).toBeDefined();
+    expect(finding?.detailParams?.stacked).toBe(400);
+  });
+
+  it("stays silent when the stream carries no delivery cost of its own", () => {
+    const report = contradictionsFor(
+      projectWith(0, { infrastructureCostPerCustomer: known(250), supportCostPerCustomer: known(150) })
+    );
+    expect(report.some((i) => i.message === message)).toBe(false);
+  });
+
+  it("stays silent when no customer-level cost was entered", () => {
+    expect(contradictionsFor(projectWith(45, {})).some((i) => i.message === message)).toBe(false);
+  });
+
+  it("ignores an immaterial customer-level cost", () => {
+    // $20 against a $1,000 ARPU is 2% — a real cost, not a duplicated one.
+    const report = contradictionsFor(projectWith(45, { supportCostPerCustomer: known(20) }));
+    expect(report.some((i) => i.message === message)).toBe(false);
+  });
+
+  it("flags a small cost once it drives recurring contribution negative", () => {
+    // A 99% delivery cost leaves $10 of margin; $20 of support wipes it out.
+    const report = contradictionsFor(projectWith(99, { supportCostPerCustomer: known(20) }));
+    expect(report.some((i) => i.message === message)).toBe(true);
+  });
+
+  it("never fires on the single-price model, which has no stream costs to overlap", () => {
+    const project: Project = {
+      ...exampleProject,
+      revenueStreams: [],
+      unitEconomics: { ...exampleProject.unitEconomics, supportCostPerCustomer: known(500) },
+    };
+    expect(contradictionsFor(project).some((i) => i.message === message)).toBe(false);
+  });
+});

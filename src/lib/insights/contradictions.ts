@@ -1,5 +1,6 @@
 import type { CalculatedMetrics, Insight, Project } from "@/types";
-import { isRecurring, val } from "@/lib/calculations/helpers";
+import { isRecurring, pct, val } from "@/lib/calculations/helpers";
+import { customerLevelMonthlyCost } from "@/lib/calculations/unitEconomics";
 import { forecastProject } from "@/lib/calculations/projectForecast";
 
 /**
@@ -14,6 +15,9 @@ import { forecastProject } from "@/lib/calculations/projectForecast";
  *   financial model (a TAM built on one ARPU and a forecast on another).
  * - CAC payback vs customer lifetime (customers who leave before they pay for
  *   their own acquisition — the economics contradict the retention story).
+ * - Revenue-stream delivery costs vs the Unit Economics cost lines (the same
+ *   infrastructure or support cost counted once inside `deliveryCostPct` and
+ *   again per customer).
  *
  * Every rule reads the same derived metrics the rest of the report uses, so
  * the findings are reproducible and auditable — no AI. Messages/details are
@@ -26,6 +30,7 @@ export function detectContradictions(project: Project, metrics: CalculatedMetric
   checkLifetimeVsChurn(project, metrics, findings);
   checkTamArpuVsPricing(project, metrics, findings);
   checkPaybackVsLifetime(metrics, findings);
+  checkCostDoubleCounting(project, metrics, findings);
 
   return findings;
 }
@@ -166,6 +171,60 @@ function checkPaybackVsLifetime(metrics: CalculatedMetrics, findings: Insight[])
       "Payback takes {payback} months, but customers stay only {lifetime} months.",
       undefined,
       { payback: payback.toFixed(1), lifetime: lifetime.toFixed(1) }
+    )
+  );
+}
+
+/**
+ * Cost double-counting. A stream's `deliveryCostPct` is meant to cover only
+ * what it costs to deliver *that* stream; the Unit Economics lines are
+ * customer-level costs charged on top. Nothing stops a founder from putting
+ * infrastructure and support inside a 45% pilot delivery cost and then
+ * entering them again per customer — which silently halves the contribution
+ * margin and can drive LTV and break-even negative.
+ *
+ * Only material overlaps are reported. Every additive project has *some*
+ * customer-level cost, so a 2%-of-ARPU support line is not a finding; a stack
+ * heavy enough to move the answer is. The two triggers are a non-positive
+ * recurring contribution (the failure the user actually sees) and
+ * customer-level costs worth 15%+ of recurring ARPU (the same threshold the
+ * other rules use for "these two numbers disagree").
+ */
+function checkCostDoubleCounting(project: Project, metrics: CalculatedMetrics, findings: Insight[]): void {
+  const mix = metrics.revenueMix;
+  if (!mix) return;
+
+  // Only streams the founder actually costed can be double-counting anything.
+  const costedStreams = (project.revenueStreams ?? []).filter(
+    (stream) => stream.deliveryCostPct.quality !== "unknown" && val(stream.deliveryCostPct) > 0
+  );
+  if (costedStreams.length === 0) return;
+
+  const answered = [
+    project.unitEconomics.directCostPerCustomer,
+    project.unitEconomics.infrastructureCostPerCustomer,
+    project.unitEconomics.supportCostPerCustomer,
+    project.unitEconomics.otherVariableCostPerCustomer,
+  ].filter((cost) => cost.quality !== "unknown" && val(cost) > 0);
+  if (answered.length === 0) return;
+
+  const customerLevelCost = customerLevelMonthlyCost(project.unitEconomics);
+  const recurringContribution = metrics.unitEconomics.recurringGrossProfitPerCustomer;
+  const costShareOfArpu = mix.recurringArpu > 0 ? customerLevelCost / mix.recurringArpu : 1;
+  if (recurringContribution > 0 && costShareOfArpu <= 0.15) return;
+
+  const processingPct = val(project.unitEconomics.paymentProcessingPct);
+  const stackedCost = customerLevelCost + mix.recurringArpu * pct(processingPct);
+
+  findings.push(
+    contradiction(
+      "Potential cost double-counting between revenue streams and unit economics.",
+      "Revenue streams already carry their own delivery cost, and a further {currency} {stacked, number} per customer per month of direct, infrastructure and support cost is charged on top. Remove whichever side already accounts for it.",
+      undefined,
+      {
+        currency: project.basicInfo.currency,
+        stacked: Math.round(stackedCost * 100) / 100,
+      }
     )
   );
 }

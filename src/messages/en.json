@@ -1313,5 +1313,11 @@
   "Connect an MCP client": "Connect an MCP client",
   "This authorization request is invalid or expired.": "This authorization request is invalid or expired.",
   "No activity yet.": "No activity yet.",
-  "This step has a value we can't use yet. The inputs outlined in red above explain what to change.": "This step has a value we can't use yet. The inputs outlined in red above explain what to change."
+  "This step has a value we can't use yet. The inputs outlined in red above explain what to change.": "This step has a value we can't use yet. The inputs outlined in red above explain what to change.",
+  "Potential cost double-counting between revenue streams and unit economics.": "Potential cost double-counting between revenue streams and unit economics.",
+  "Revenue streams already carry their own delivery cost, and a further {currency} {stacked, number} per customer per month of direct, infrastructure and support cost is charged on top. Remove whichever side already accounts for it.": "Revenue streams already carry their own delivery cost, and a further {currency} {stacked, number} per customer per month of direct, infrastructure and support cost is charged on top. Remove whichever side already accounts for it.",
+  "Break-even cannot be reached by growing the subscriber base.": "Break-even cannot be reached by growing the subscriber base.",
+  "Recurring contribution per customer is zero or negative, so only one-time work (setup, implementation, pilots) covers fixed costs. The forecast can still show positive cash flow — it is being carried by new sales each month, not by the installed base.": "Recurring contribution per customer is zero or negative, so only one-time work (setup, implementation, pilots) covers fixed costs. The forecast can still show positive cash flow — it is being carried by new sales each month, not by the installed base.",
+  "Subscribers needed to cover the fixed costs left after this month's one-time work.": "Subscribers needed to cover the fixed costs left after this month's one-time work.",
+  "(Fixed Monthly Costs − Monthly One-time Contribution) / Recurring Contribution Margin Per Customer": "(Fixed Monthly Costs − Monthly One-time Contribution) / Recurring Contribution Margin Per Customer"
 }

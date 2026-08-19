@@ -105,3 +105,37 @@ describe("generateForecast", () => {
     }
   });
 });
+
+/**
+ * The mix path passes the customer-level cost lines in separately, because
+ * `grossMarginPct` there is the streams' delivery margin alone. The
+ * single-price path leaves them at 0 — its margin already contains them.
+ */
+describe("generateForecast — customer-level costs", () => {
+  it("leaves the single-price path untouched when the new inputs are omitted", () => {
+    const withDefaults = generateForecast(baseInputs());
+    const withExplicitZeros = generateForecast(
+      baseInputs({ customerLevelCostPerCustomerPerMonth: 0, paymentProcessingPct: 0 })
+    );
+    expect(withExplicitZeros).toEqual(withDefaults);
+  });
+
+  it("charges customer-level costs against every active customer", () => {
+    const base = generateForecast(baseInputs())[0];
+    const [withCosts] = generateForecast(baseInputs({ customerLevelCostPerCustomerPerMonth: 4 }));
+
+    expect(withCosts.revenue).toBe(base.revenue);
+    expect(withCosts.grossProfit).toBeCloseTo(base.grossProfit - withCosts.endingCustomers * 4, 6);
+    // Whatever leaves gross profit has to show up as a variable cost.
+    expect(withCosts.variableCosts).toBeCloseTo(base.variableCosts + withCosts.endingCustomers * 4, 6);
+    expect(withCosts.netCashFlow).toBeCloseTo(base.netCashFlow - withCosts.endingCustomers * 4, 6);
+  });
+
+  it("charges payment processing against all revenue, one-time included", () => {
+    const inputs = baseInputs({ oneTimeRevenuePerNewCustomer: 1000, oneTimeGrossMarginPct: 50 });
+    const base = generateForecast(inputs)[0];
+    const [withProcessing] = generateForecast({ ...inputs, paymentProcessingPct: 3 });
+
+    expect(withProcessing.grossProfit).toBeCloseTo(base.grossProfit - base.revenue * 0.03, 6);
+  });
+});

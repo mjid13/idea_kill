@@ -75,8 +75,19 @@ export function KeyMetricsGrid({ metrics, scores, currency }: { metrics: Calcula
       <MetricCard
         label={t("Break-even Customers")}
         value={metrics.breakEven.breakEvenCustomers === null ? t("Unreachable") : metrics.breakEven.breakEvenCustomers.toLocaleString(locale)}
-        description={t("Customers needed to cover fixed monthly costs.")}
-        formula={t("Fixed Monthly Costs / Contribution Margin Per Customer")}
+        description={
+          // With a mix these are subscribers, and one-time work has already
+          // paid down part of the fixed base — spelling that out keeps this
+          // card readable next to a forecast that includes both halves.
+          metrics.revenueMix
+            ? t("Subscribers needed to cover the fixed costs left after this month's one-time work.")
+            : t("Customers needed to cover fixed monthly costs.")
+        }
+        formula={
+          metrics.revenueMix
+            ? t("(Fixed Monthly Costs − Monthly One-time Contribution) / Recurring Contribution Margin Per Customer")
+            : t("Fixed Monthly Costs / Contribution Margin Per Customer")
+        }
         health={breakEvenScore !== null ? scoreToHealth(breakEvenScore) : undefined}
       />
       <MetricCard

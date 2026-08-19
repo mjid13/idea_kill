@@ -132,3 +132,63 @@ describe("generateDecisionSummary", () => {
     ]).toContain(summary.verdict);
   });
 });
+
+/**
+ * With a revenue mix, an unreachable break-even is a statement about the
+ * recurring half alone — one-time work can still carry the forecast into
+ * positive cash flow. The wording has to say so, or the projection chart and
+ * the break-even section read as a contradiction.
+ */
+describe("break-even reachability wording", () => {
+  function mixProject(supportCost: number): Project {
+    return {
+      ...exampleProject,
+      revenueStreams: [
+        {
+          id: "impl",
+          name: "Implementation",
+          kind: "one_time",
+          price: known(20000),
+          billingPeriod: "one_time",
+          attachRatePct: known(100),
+          unitsPerCustomerPerMonth: known(1),
+          deliveryCostPct: known(50),
+        },
+        {
+          id: "platform",
+          name: "Platform",
+          kind: "recurring",
+          price: known(1000),
+          billingPeriod: "monthly",
+          attachRatePct: known(100),
+          unitsPerCustomerPerMonth: known(1),
+          deliveryCostPct: known(10),
+        },
+      ],
+      unitEconomics: { ...exampleProject.unitEconomics, supportCostPerCustomer: known(supportCost) },
+    };
+  }
+
+  function reportFor(project: Project) {
+    const metrics = calculateMetrics(project);
+    return { metrics, report: generateInsights(metrics, calculateScoreBreakdown(project, metrics), project) };
+  }
+
+  it("attributes an unreachable break-even to the subscriber base when one-time work carries it", () => {
+    const { metrics, report } = reportFor(mixProject(2000));
+    expect(metrics.breakEven.breakEvenCustomers).toBeNull();
+    expect(metrics.unitEconomics.oneTimeGrossProfitPerCustomer).toBeGreaterThan(0);
+    expect(
+      report.criticalRisks.some((i) => i.message === "Break-even cannot be reached by growing the subscriber base.")
+    ).toBe(true);
+  });
+
+  it("keeps the plain wording when there is no one-time contribution to explain", () => {
+    const project: Project = {
+      ...mixProject(2000),
+      revenueStreams: mixProject(2000).revenueStreams!.filter((s) => s.kind !== "one_time"),
+    };
+    const { report } = reportFor(project);
+    expect(report.criticalRisks.some((i) => i.message === "Break-even is currently mathematically unreachable.")).toBe(true);
+  });
+});

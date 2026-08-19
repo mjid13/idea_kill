@@ -1,6 +1,7 @@
 import type { CalculatedMetrics, Project } from "@/types";
 import { isRecurring, val } from "./helpers";
 import { generateForecast, type ForecastInputs, type ForecastMonth } from "./forecast";
+import { customerLevelMonthlyCost } from "./unitEconomics";
 
 export interface ForecastOverrides {
   monthlyCustomerGrowthPctDelta?: number; // percentage-point delta applied to base growth
@@ -50,6 +51,13 @@ export function buildForecastInputs(
     oneTimeGrossMarginPct: mix ? mix.oneTimeGrossMarginPct : undefined,
     monthlyExpansionRevenuePct: val(project.retention.monthlyExpansionRevenuePct) * expansionMultiplier,
     monthlyContractionRevenuePct: val(project.retention.monthlyContractionRevenuePct) * contractionMultiplier,
+    // Only the mix path needs these: with a mix, `grossMarginPct` above is the
+    // streams' delivery margin alone, so the customer-level cost lines have to
+    // be charged separately or the forecast would disagree with the break-even
+    // and LTV figures, which do subtract them. In the single-price path
+    // `unitEconomics.grossMarginPct` already includes both, so they stay 0.
+    customerLevelCostPerCustomerPerMonth: mix ? customerLevelMonthlyCost(project.unitEconomics) : 0,
+    paymentProcessingPct: mix ? val(project.unitEconomics.paymentProcessingPct) : 0,
   };
 }
 

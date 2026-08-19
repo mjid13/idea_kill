@@ -27,6 +27,18 @@ export interface ForecastInputs {
   oneTimeRevenuePerNewCustomer?: number;
   /** Gross margin on that one-time revenue (0-100). Defaults to `grossMarginPct`. */
   oneTimeGrossMarginPct?: number;
+  /**
+   * Hybrid mix only: customer-level variable costs (direct, infrastructure,
+   * support, other) charged per active customer per month *on top* of each
+   * stream's delivery cost. In the single-price model these are already baked
+   * into `grossMarginPct`, so it defaults to 0 and that path is unchanged.
+   */
+  customerLevelCostPerCustomerPerMonth?: number;
+  /**
+   * Hybrid mix only: payment processing as a % of all revenue, for the same
+   * reason — the single-price `grossMarginPct` already contains it. Defaults to 0.
+   */
+  paymentProcessingPct?: number;
 }
 
 /**
@@ -51,6 +63,8 @@ export function generateForecast(inputs: ForecastInputs): ForecastMonth[] {
     monthlyContractionRevenuePct = 0,
     oneTimeRevenuePerNewCustomer = 0,
     oneTimeGrossMarginPct = inputs.grossMarginPct,
+    customerLevelCostPerCustomerPerMonth = 0,
+    paymentProcessingPct = 0,
   } = inputs;
 
   const churnRate = pct(monthlyChurnPct);
@@ -58,6 +72,7 @@ export function generateForecast(inputs: ForecastInputs): ForecastMonth[] {
   const marginRate = pct(grossMarginPct);
   const oneTimeMarginRate = pct(oneTimeGrossMarginPct);
   const expansionRate = pct(monthlyExpansionRevenuePct);
+  const processingRate = pct(paymentProcessingPct);
   const contractionRate = pct(monthlyContractionRevenuePct);
 
   const result: ForecastMonth[] = [];
@@ -87,7 +102,16 @@ export function generateForecast(inputs: ForecastInputs): ForecastMonth[] {
     const oneTimeRevenue = newCustomers * oneTimeRevenuePerNewCustomer;
     const revenue = recurringRevenue + oneTimeRevenue;
 
-    const grossProfit = recurringRevenue * marginRate + oneTimeRevenue * oneTimeMarginRate;
+    // Customer-level costs and payment processing sit outside the stream
+    // delivery margins, exactly as `calculateHybridUnitEconomics` charges them.
+    // Subtracting them here is what keeps the forecast's contribution per
+    // customer identical to the one break-even divides by — without it a
+    // project could show positive monthly cash flow while the break-even
+    // section reported a negative contribution margin.
+    const customerLevelCosts = endingCustomers * customerLevelCostPerCustomerPerMonth;
+    const processingCosts = revenue * processingRate;
+    const grossProfit =
+      recurringRevenue * marginRate + oneTimeRevenue * oneTimeMarginRate - customerLevelCosts - processingCosts;
     const variableCosts = revenue - grossProfit;
     const netCashFlow = grossProfit - monthlyOperatingExpenses + otherMonthlyIncome;
     cashBalance += netCashFlow;

@@ -160,11 +160,22 @@ export function generateInsights(metrics: CalculatedMetrics, scores: ScoreBreakd
 
   // --- Break-even reachability -------------------------------------------
   if (breakEven.breakEvenCustomers === null && breakEven.contributionMarginPerCustomer <= 0) {
+    // With a revenue mix, "unreachable" is a statement about the *recurring*
+    // half only: one-time work is earned per acquisition, not per subscriber,
+    // so it can carry the forecast to positive cash flow while no number of
+    // subscribers ever covers fixed costs. Saying that outright stops the
+    // projection chart and this section from looking like they disagree.
+    const oneTimeCarries = metrics.revenueMix !== null && unitEconomics.oneTimeGrossProfitPerCustomer > 0;
     criticalRisks.push(
-      insight(
-        "Break-even is currently mathematically unreachable.",
-        "Contribution margin per customer is zero or negative — each additional customer loses money before fixed costs are even considered."
-      )
+      oneTimeCarries
+        ? insight(
+            "Break-even cannot be reached by growing the subscriber base.",
+            "Recurring contribution per customer is zero or negative, so only one-time work (setup, implementation, pilots) covers fixed costs. The forecast can still show positive cash flow — it is being carried by new sales each month, not by the installed base."
+          )
+        : insight(
+            "Break-even is currently mathematically unreachable.",
+            "Contribution margin per customer is zero or negative — each additional customer loses money before fixed costs are even considered."
+          )
     );
   } else if (breakEven.remainingCustomersToBreakEven === 0) {
     strengths.push(insight("The business has already reached break-even at the current customer count."));
