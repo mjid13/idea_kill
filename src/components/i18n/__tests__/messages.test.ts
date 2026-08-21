@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { createTranslator } from "use-intl/core";
 import en from "@/messages/en.json";
 import ar from "@/messages/ar.json";
+import docsEn from "@/messages/how-to-use.en.json";
+import docsAr from "@/messages/how-to-use.ar.json";
 
 /**
  * use-app-translations maps every English key to its numeric index and hands
@@ -18,6 +20,13 @@ describe("message catalogs", () => {
 
   it("leaves no English value empty", () => {
     for (const [key, value] of Object.entries(en)) {
+      expect(value, key).not.toBe("");
+    }
+  });
+
+  it("keeps the guide catalogs complete and key-aligned", () => {
+    expect(Object.keys(docsAr)).toEqual(Object.keys(docsEn));
+    for (const [key, value] of Object.entries(docsAr)) {
       expect(value, key).not.toBe("");
     }
   });

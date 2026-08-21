@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseEnv } from "./env";
 
-const PUBLIC_PREFIXES = ["/", "/sign-in", "/auth/callback", "/oauth/consent", "/mcp", "/.well-known/", "/health"];
+const PUBLIC_PREFIXES = ["/", "/how-to-use", "/sign-in", "/auth/callback", "/oauth/consent", "/mcp", "/.well-known/", "/health"];
 
 export async function refreshSupabaseSession(request: NextRequest) {
   let response = NextResponse.next({ request });

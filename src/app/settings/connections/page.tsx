@@ -2,11 +2,9 @@ import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { Header } from "@/components/layout/header";
 import { McpConnectionsView } from "@/components/settings/McpConnectionsView";
+import { canonicalMcpUrl } from "@/lib/supabase/env";
 
 export const dynamic = "force-dynamic";
-
-const mcpUrl = process.env.MCP_RESOURCE_URL
-  ?? `${(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "")}/mcp`;
 
 export default async function ConnectionsPage() {
   if (process.env.MCP_CONNECTIONS_ENABLED !== "true") redirect("/projects");
@@ -22,7 +20,7 @@ export default async function ConnectionsPage() {
     .order("created_at", { ascending: false }).limit(50);
   return <div className="min-h-screen"><Header />
     <McpConnectionsView
-      mcpUrl={mcpUrl}
+      mcpUrl={canonicalMcpUrl()}
       connections={(connections ?? []).map((connection) => ({
         clientId: connection.client_id,
         clientName: connection.client_name,

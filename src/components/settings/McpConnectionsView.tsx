@@ -3,6 +3,7 @@
 import { useLocale } from "next-intl";
 import { useAppTranslations } from "@/components/i18n/use-app-translations";
 import { Card, CardContent } from "@/components/ui/card";
+import { getMcpClientSetups } from "@/lib/mcp/clientSetup";
 
 export interface McpConnectionRow {
   clientId: string;
@@ -81,6 +82,7 @@ export function McpConnectionsView({ mcpUrl, connections, projects, audits }: Pr
   const t = useAppTranslations();
   const locale = useLocale();
   const formatDateTime = (value: string) => new Date(value).toLocaleString(locale);
+  const clientSetups = getMcpClientSetups(mcpUrl);
   return <main className="mx-auto max-w-4xl space-y-6 px-4 py-8">
     <div><h1 className="text-2xl font-semibold">MCP</h1>
       <p className="text-sm text-muted-foreground">{t("Manage client access and review recent safe mutations.")}</p></div>
@@ -88,9 +90,12 @@ export function McpConnectionsView({ mcpUrl, connections, projects, audits }: Pr
   <div><h2 className="text-lg font-semibold">{t("Connect our AI tool")}</h2><p className="mt-1 text-sm text-muted-foreground">{t("IdeaUp uses MCP (Model Context Protocol) to let supported AI tools securely read our projects. Add the server once, then sign in with IdeaUp when the tool opens the OAuth page.")}</p></div>
   <div className="rounded-lg border bg-background p-3"><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("MCP server URL")}</p><code className="mt-1 block break-all text-sm">{mcpUrl}</code><p className="mt-2 text-xs text-muted-foreground">{t("Never share an access token here. Authentication is handled by OAuth.")}</p></div>
   <div className="space-y-4">
-    <div><h3 className="font-medium">Codex CLI</h3><p className="mt-1 text-sm text-muted-foreground">{t("Run these commands in a terminal:")}</p><CodeBlock>{"codex mcp add ideaup --url " + mcpUrl + " --oauth-resource " + mcpUrl + "\n\ncodex mcp login ideaup"}</CodeBlock><p className="mt-2 text-xs text-muted-foreground">{t("A browser opens for OAuth. Verify later with {command}.", { command: "codex mcp get ideaup" })}</p></div>
-    <div><h3 className="font-medium">Claude Code</h3><p className="mt-1 text-sm text-muted-foreground">{t("Add the remote HTTP server, then authenticate from inside Claude Code:")}</p><CodeBlock>{"claude mcp add --transport http --scope user ideaup " + mcpUrl + "\n\nclaude"}</CodeBlock><p className="mt-2 text-xs text-muted-foreground">{t("In Claude Code, run /mcp, choose ideaup, and complete OAuth.")} {t("Verify with {command}.", { command: "claude mcp list" })}</p></div>
-    <div><h3 className="font-medium">{t("Claude Desktop or another MCP client")}</h3><p className="mt-1 text-sm text-muted-foreground">{t("Choose “Add remote MCP server” (or Streamable HTTP), enter the URL above, and select OAuth when prompted.")}</p></div>
+    {clientSetups.map((setup) => <div key={setup.id}>
+      <h3 className="font-medium">{t(setup.title)}</h3>
+      <p className="mt-1 text-sm text-muted-foreground">{t(setup.description)}</p>
+      {setup.command && <CodeBlock>{setup.command}</CodeBlock>}
+      <p className="mt-2 text-xs text-muted-foreground">{t(setup.verification)}</p>
+    </div>)}
   </div>
   <details className="rounded-lg border p-3 text-sm"><summary className="cursor-pointer font-medium">{t("Troubleshooting")}</summary><ul className="mt-3 list-disc space-y-1 pl-5 text-muted-foreground"><li>{t("Make sure the URL ends in /mcp and uses https:// in production.")}</li><li>{t("If the client reports a 404 or “no authorization support,” the server deployment is unavailable or outdated.")}</li><li>{t("Reconnect with the client’s OAuth flow instead of pasting a Supabase or access token.")}</li></ul></details>
 </CardContent></Card>

@@ -5,15 +5,18 @@ import { useLocale } from "next-intl";
 import { createTranslator } from "use-intl/core";
 import en from "@/messages/en.json";
 import ar from "@/messages/ar.json";
+import docsEn from "@/messages/how-to-use.en.json";
+import docsAr from "@/messages/how-to-use.ar.json";
 
 type TranslationValue = string | number | Date;
 export type AppTranslator = (key: string, values?: Record<string, TranslationValue>) => string;
 
-const keys = Object.keys(en);
+const catalogs = { en: { ...en, ...docsEn }, ar: { ...ar, ...docsAr } };
+const keys = Object.keys(catalogs.en);
 const keyIds = new Map(keys.map((key, index) => [key, String(index)]));
 const indexedMessages = {
-  en: Object.fromEntries(keys.map((key, index) => [String(index), en[key as keyof typeof en]])),
-  ar: Object.fromEntries(keys.map((key, index) => [String(index), ar[key as keyof typeof ar]])),
+  en: Object.fromEntries(keys.map((key, index) => [String(index), catalogs.en[key as keyof typeof catalogs.en]])),
+  ar: Object.fromEntries(keys.map((key, index) => [String(index), catalogs.ar[key as keyof typeof catalogs.ar]])),
 };
 
 export function useAppTranslations(): AppTranslator {
