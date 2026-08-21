@@ -13,8 +13,9 @@ import { projectRepository } from "@/lib/storage/browserRepository";
 import { calculateMetrics, generateScenarios, val } from "@/lib/calculations";
 import { calculateScoreBreakdown, classifyScore } from "@/lib/scoring";
 import { generateInsights } from "@/lib/insights";
-import { BUSINESS_MODEL_LABELS, BILLING_PERIOD_LABELS, FUNDING_ROUND_LABELS } from "@/lib/constants";
+import { BUSINESS_MODEL_LABELS, FUNDING_ROUND_LABELS } from "@/lib/constants";
 import { formatCurrency, formatCompactNumber, formatMonths, formatPercentage } from "@/lib/format";
+import { derivePricingRows } from "@/lib/documents/derive";
 import { ExportMenu } from "@/components/dashboard/ExportMenu";
 import { Slide, Prose, KeyValueGrid, BulletList } from "@/components/documents/DocumentPrimitives";
 import { translateInsightMessage } from "@/components/i18n/translate-insight";
@@ -111,8 +112,7 @@ function PitchDeck({ project }: { project: Project }) {
       <Slide title="Business model">
         <KeyValueGrid
           items={[
-            ["Pricing", formatCurrency(val(project.pricing.productPrice), currency)],
-            ["Billing", t(BILLING_PERIOD_LABELS[project.pricing.billingPeriod])],
+            ...derivePricingRows(project).map((row): [string, string] => [row.label, row.value]),
             ["Current customers", val(project.pricing.currentCustomers).toLocaleString(locale)],
             ["Gross margin", formatPercentage(metrics.unitEconomics.grossMarginPct)],
           ]}

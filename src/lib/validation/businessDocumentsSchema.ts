@@ -9,6 +9,7 @@ export const onePagerSchema = z.object({
   customer: z.string().optional(),
   solution: z.string().optional(),
   differentiation: z.string().optional(),
+  useOfFunds: z.string().optional(),
 });
 
 export type OnePagerFormValues = z.infer<typeof onePagerSchema>;

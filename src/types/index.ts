@@ -485,6 +485,8 @@ export interface OnePagerAssumptions {
   /** Defaults to basicInfo.description via useLinkedField. */
   solution?: string;
   differentiation?: string;
+  /** Shared default with PitchAssumptions.useOfFunds via useLinkedField. Paired with a computed funding snapshot. */
+  useOfFunds?: string;
 }
 
 /** ICP Document (/project/[id]/icp). */

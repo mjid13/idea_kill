@@ -44,6 +44,6 @@ describe("document completeness", () => {
   it("ignores whitespace-only text", () => {
     const value = project();
     value.onePager = { problem: "   ", customer: "SMBs" };
-    expect(computeDocumentCompleteness("one-pager", value)).toEqual({ filled: 1, total: 3 });
+    expect(computeDocumentCompleteness("one-pager", value)).toEqual({ filled: 1, total: 4 });
   });
 });

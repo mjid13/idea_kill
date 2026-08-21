@@ -24,7 +24,7 @@ export function Prose({ text, placeholder, className }: { text: string | undefin
 export function KeyValueGrid({ items }: { items: Array<[string, string]> }) {
   const t = useAppTranslations();
   return (
-    <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
+    <dl className="grid grid-cols-1 gap-x-6 gap-y-3 min-[380px]:grid-cols-2 sm:grid-cols-4">
       {items.map(([label, value]) => (
         <div key={label}>
           <dt className="text-xs text-muted-foreground">{t(label)}</dt>

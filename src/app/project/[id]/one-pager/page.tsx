@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useLocale } from "next-intl";
@@ -9,12 +9,10 @@ import { Printer, ArrowLeft, Pencil } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { projectRepository } from "@/lib/storage/browserRepository";
-import { val } from "@/lib/calculations/helpers";
-import { BUSINESS_MODEL_LABELS, BILLING_PERIOD_LABELS } from "@/lib/constants";
-import { formatCurrency } from "@/lib/format";
-import { getUnverifiedAssumptions } from "@/lib/documents/derive";
+import { BUSINESS_MODEL_LABELS } from "@/lib/constants";
+import { ONE_PAGER_SECTIONS } from "@/lib/documents/onePagerSections";
 import { ExportMenu } from "@/components/dashboard/ExportMenu";
-import { Slide, Prose, KeyValueGrid } from "@/components/documents/DocumentPrimitives";
+import { DocumentSectionsView } from "@/components/documents/DocumentSectionsView";
 import type { Project } from "@/types";
 
 export default function OnePagerPage() {
@@ -44,8 +42,6 @@ function OnePager({ project }: { project: Project }) {
   const t = useAppTranslations();
   const locale = useLocale();
   const currency = project.basicInfo.currency;
-  const onePager = project.onePager;
-  const unverified = useMemo(() => getUnverifiedAssumptions(project), [project]);
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10 print:max-w-none print:px-0">
@@ -72,47 +68,7 @@ function OnePager({ project }: { project: Project }) {
         </p>
       </header>
 
-      <Slide title="Problem">
-        <Prose text={onePager?.problem} placeholder={t("No problem statement entered yet.")} />
-      </Slide>
-
-      <Slide title="Customer">
-        <Prose text={onePager?.customer} placeholder={t("No customer description entered yet.")} />
-      </Slide>
-
-      <Slide title="Solution">
-        <Prose text={onePager?.solution || project.basicInfo.description} placeholder={t("No solution summary entered yet.")} />
-      </Slide>
-
-      <Slide title="Business model">
-        <KeyValueGrid
-          items={[
-            ["Model", t(BUSINESS_MODEL_LABELS[project.basicInfo.businessModel])],
-            ["Pricing", formatCurrency(val(project.pricing.productPrice), currency)],
-            ["Billing", t(BILLING_PERIOD_LABELS[project.pricing.billingPeriod])],
-            ["Current customers", val(project.pricing.currentCustomers).toLocaleString(locale)],
-          ]}
-        />
-      </Slide>
-
-      <Slide title="Differentiation">
-        <Prose text={onePager?.differentiation} placeholder={t("No differentiation entered yet.")} />
-      </Slide>
-
-      <Slide title="Key assumptions" last>
-        {unverified.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("Every assumption in this project is marked known — nothing flagged as a guess.")}</p>
-        ) : (
-          <ul className="list-inside list-disc space-y-1 text-sm text-foreground">
-            {unverified.map((a) => (
-              <li key={a.label}>
-                {t(a.label)}: <span className="tabular-nums">{a.value.toLocaleString(locale)}</span>{" "}
-                <span className="text-xs text-muted-foreground">({t(a.quality === "estimated" ? "Estimated" : "Unknown")})</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Slide>
+      <DocumentSectionsView sections={ONE_PAGER_SECTIONS} project={project} doc={project.onePager} />
     </div>
   );
 }

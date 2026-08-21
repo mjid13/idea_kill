@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAppTranslations } from "@/components/i18n/use-app-translations";
@@ -17,7 +17,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { projectRepository } from "@/lib/storage/browserRepository";
 import { pitchDeckDetailsSchema, type PitchDeckDetailsFormValues } from "@/lib/validation/pitchDeckSchema";
 import { FUNDING_ROUND_LABELS, FUNDING_ROUND_OPTIONS } from "@/lib/constants";
-import { normalizeToMonthlyArpu } from "@/lib/calculations/helpers";
+import { calculateMetrics } from "@/lib/calculations";
 import type { FundingRoundType, Project } from "@/types";
 
 function newId(): string {
@@ -67,7 +67,8 @@ function PitchDeckEditForm({ project }: { project: Project }) {
 
   // Same dollars-per-customer the wizard already collected — traction rows
   // shouldn't force the user to redo that multiplication by hand.
-  const monthlyArpu = normalizeToMonthlyArpu(project.pricing.productPrice.value, project.pricing.billingPeriod);
+  const metrics = useMemo(() => calculateMetrics(project), [project]);
+  const monthlyArpu = metrics.revenue.monthlyArpu;
 
   async function onSubmit(values: PitchDeckDetailsFormValues) {
     setSubmitting(true);

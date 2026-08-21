@@ -31,7 +31,7 @@ export function computeDocumentCompleteness(slug: DocumentSlug, project: Project
   switch (slug) {
     case "one-pager": {
       const d = project.onePager;
-      return { filled: d ? filledText(d.problem, d.customer, d.differentiation) : 0, total: 3 };
+      return { filled: d ? filledText(d.problem, d.customer, d.differentiation, d.useOfFunds) : 0, total: 4 };
     }
     case "icp": {
       const d = project.icp;

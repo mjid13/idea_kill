@@ -9,9 +9,8 @@ import { Printer, ArrowLeft, Pencil } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { projectRepository } from "@/lib/storage/browserRepository";
-import { val } from "@/lib/calculations/helpers";
-import { BUSINESS_MODEL_LABELS, BILLING_PERIOD_LABELS } from "@/lib/constants";
-import { formatCurrency } from "@/lib/format";
+import { BUSINESS_MODEL_LABELS } from "@/lib/constants";
+import { derivePricingRows } from "@/lib/documents/derive";
 import { ExportMenu } from "@/components/dashboard/ExportMenu";
 import { Slide, Prose, KeyValueGrid } from "@/components/documents/DocumentPrimitives";
 import type { Project } from "@/types";
@@ -42,7 +41,6 @@ export default function ValuePropPage() {
 function ValueProp({ project }: { project: Project }) {
   const t = useAppTranslations();
   const locale = useLocale();
-  const currency = project.basicInfo.currency;
   const valueProp = project.valueProp;
 
   return (
@@ -83,12 +81,7 @@ function ValueProp({ project }: { project: Project }) {
       </Slide>
 
       <Slide title="Pricing">
-        <KeyValueGrid
-          items={[
-            ["Price", formatCurrency(val(project.pricing.productPrice), currency)],
-            ["Billing", t(BILLING_PERIOD_LABELS[project.pricing.billingPeriod])],
-          ]}
-        />
+        <KeyValueGrid items={derivePricingRows(project).map((row): [string, string] => [row.label, row.value])} />
       </Slide>
 
       <Slide title="Why buy now" last>

@@ -12,6 +12,7 @@ import { projectRepository } from "@/lib/storage/browserRepository";
 import { calculateMetrics, calculateFundingRequirement } from "@/lib/calculations";
 import { val } from "@/lib/calculations/helpers";
 import { BUSINESS_MODEL_LABELS } from "@/lib/constants";
+import { derivePricingRows } from "@/lib/documents/derive";
 import { formatCurrency, formatMonths, formatMultiple, formatPercentage } from "@/lib/format";
 import { ExportMenu } from "@/components/dashboard/ExportMenu";
 import { Slide, KeyValueGrid } from "@/components/documents/DocumentPrimitives";
@@ -72,7 +73,7 @@ function FinancialModel({ project }: { project: Project }) {
       <Slide title="Pricing">
         <KeyValueGrid
           items={[
-            ["Price", formatCurrency(val(project.pricing.productPrice), currency)],
+            ...derivePricingRows(project).map((row): [string, string] => [row.label, row.value]),
             ["Current customers", val(project.pricing.currentCustomers).toLocaleString(locale)],
             ["Expected customers (12mo)", val(project.pricing.expectedCustomers12mo).toLocaleString(locale)],
           ]}
