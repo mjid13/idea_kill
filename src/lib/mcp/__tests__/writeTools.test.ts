@@ -43,28 +43,31 @@ function harness(project = baseProject()) {
 const guards = { expected_revision: 3, idempotency_key: "idem-key-123456", reason: "Founder confirmed pricing." };
 
 describe("write tools", () => {
-  it("records the public path, the reason, and the previous value in the audit payload", async () => {
+  it("records the public path and reason without copying project values", async () => {
     const { rpc, tools } = harness();
     await tools.update_project.handler({
       project_id: projectId, ...guards,
       changes: [{ path: "one_pager.problem", value: "Manual reconciliation" }],
     } as never, {});
     const audit = rpc.mock.calls[0][1].allowed_changes as {
-      reason: string; source: string; changes: Array<{ path: string; internalPath: string; previous: unknown }>;
+      reason: string; source: string; changes: Array<Record<string, unknown>>;
     };
     expect(audit.reason).toBe(guards.reason);
     expect(audit.source).toBe("mcp");
-    expect(audit.changes[0]).toMatchObject({ path: "one_pager.problem", internalPath: "onePager.problem", previous: "" });
+    expect(audit.changes[0]).toEqual({ path: "one_pager.problem" });
+    expect(audit.changes[0]).not.toHaveProperty("value");
+    expect(audit.changes[0]).not.toHaveProperty("previous");
+    expect(audit.changes[0]).not.toHaveProperty("internalPath");
   });
 
-  it("truncates a very long value in the audit copy but not in the project", async () => {
+  it("keeps long content in the project without copying it into the audit", async () => {
     const { rpc, tools } = harness();
     const essay = "x".repeat(2000);
     await tools.update_project.handler({
       project_id: projectId, ...guards, changes: [{ path: "sales_docs.proposalTemplate", value: essay }],
     } as never, {});
-    const call = rpc.mock.calls[0][1] as { allowed_changes: { changes: Array<{ value: string }> }; project_data: Record<string, { proposalTemplate: string }> };
-    expect(call.allowed_changes.changes[0].value).toMatch(/2000 chars/);
+    const call = rpc.mock.calls[0][1] as { allowed_changes: { changes: Array<Record<string, unknown>> }; project_data: Record<string, { proposalTemplate: string }> };
+    expect(call.allowed_changes.changes[0]).not.toHaveProperty("value");
     expect(call.project_data.salesDocs.proposalTemplate).toHaveLength(2000);
   });
 

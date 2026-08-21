@@ -76,8 +76,10 @@ npm run lint     # eslint
 npm run build    # production build (also runs the TypeScript compiler)
 ```
 
-Out of the box — with no environment variables — the app runs fully
-client-side and stores projects in the browser's `localStorage`.
+Out of the box in development — with no environment variables — the app runs
+fully client-side and stores projects in the browser's `localStorage`.
+Production fails closed when Supabase or project encryption is not configured;
+it never silently falls back to browser storage.
 
 To enable accounts and cross-device storage, point the app at a
 [Supabase](https://supabase.com) project:
@@ -89,7 +91,10 @@ To enable accounts and cross-device storage, point the app at a
    publishable key.
 
 Once those variables are set, projects are stored in Postgres per
-authenticated user. See [docs/hosted-mcp-setup.md](docs/hosted-mcp-setup.md)
+authenticated user. The substantive `projects.data` payload is encrypted by
+the application before it reaches Postgres when `PROJECT_ENCRYPTION_MODE` is
+`required`; project names and operational metadata remain readable. See
+[docs/hosted-mcp-setup.md](docs/hosted-mcp-setup.md)
 for deploying the optional hosted MCP server.
 
 ## Calculation formulas
@@ -234,12 +239,13 @@ interface ProjectRepository {
 
 The implementation is chosen at runtime (`/src/lib/storage/browserRepository.ts`):
 
-- **No Supabase env vars** → `LocalStorageProjectRepository` — everything stays
-  in the browser.
+- **No Supabase env vars in development** → `LocalStorageProjectRepository` —
+  everything stays in the browser. Production instead fails closed.
 - **Supabase configured** → a thin client that calls the app's own
   `/api/projects` routes. Those routes use `SupabaseProjectRepository`
   (`/src/lib/projects/repository.ts`) with the signed-in user's token: projects
-  are stored as JSONB rows protected by row-level security, writes go through
+  are stored as encrypted JSONB envelopes protected by row-level security,
+  writes go through
   an allowlisted mutation set (`/src/lib/projects/mutations.ts`), and saves use
   optimistic concurrency (`revision` checks) so concurrent edits conflict
   loudly instead of silently overwriting.

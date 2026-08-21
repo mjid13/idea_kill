@@ -3,6 +3,8 @@ import { SupabaseProjectRepository } from "@/lib/projects/repository";
 import { DomainError } from "@/lib/projects/errors";
 import { projectDocumentSchema } from "@/lib/validation/projectSchema";
 
+export const runtime = "nodejs";
+
 async function context() {
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase.auth.getClaims();
@@ -12,8 +14,12 @@ async function context() {
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { supabase, authenticated } = await context();
   if (!authenticated) return Response.json({ error: { code: "FORBIDDEN", message: "Sign in required." } }, { status: 401 });
-  const project = await new SupabaseProjectRepository(supabase).getById((await params).id);
-  return project ? Response.json(project) : Response.json({ error: { code: "NOT_FOUND", message: "Project not found." } }, { status: 404 });
+  try {
+    const project = await new SupabaseProjectRepository(supabase).getById((await params).id);
+    return project ? Response.json(project) : Response.json({ error: { code: "NOT_FOUND", message: "Project not found." } }, { status: 404 });
+  } catch {
+    return Response.json({ error: { code: "INTERNAL_ERROR", message: "Project data is temporarily unavailable." } }, { status: 500 });
+  }
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -36,7 +42,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return Response.json(saved);
   } catch (error) {
     const status = error instanceof DomainError && error.code === "REVISION_CONFLICT" ? 409 : 400;
-    return Response.json({ error: { code: error instanceof DomainError ? error.code : "INTERNAL_ERROR", message: error instanceof Error ? error.message : "Request failed." } }, { status });
+    const code = error instanceof DomainError ? error.code : "INTERNAL_ERROR";
+    const message = code === "INTERNAL_ERROR" ? "Project data is temporarily unavailable." : (error as Error).message;
+    return Response.json({ error: { code, message } }, { status: code === "INTERNAL_ERROR" ? 500 : status });
   }
 }
 

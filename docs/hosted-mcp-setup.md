@@ -22,8 +22,15 @@ Never add a service-role key to the application environment. All application and
 
 ```
 NEXT_PUBLIC_APP_URL=https://your-app.example.com
+PROJECT_ENCRYPTION_MODE=required
+PROJECT_ENCRYPTION_ACTIVE_KEY_ID=2026-01
+PROJECT_ENCRYPTION_KEYS={"2026-01":"<base64-encoded-32-byte-key>"}
 MCP_RESOURCE_URL=https://your-app.example.com/mcp
 ```
+
+Encryption keys are server-only. Follow the staged cutover, online backfill,
+finalization, rotation, and recovery procedure in
+[Project encryption operations](project-encryption.md).
 
 `NEXT_PUBLIC_*` values are inlined at build time — redeploy after changing them. If fronting the app with Cloudflare, use **Full (strict)** SSL; "Flexible" causes an infinite 301 loop at the host's edge before requests ever reach the app. Keep `MCP_CONNECTIONS_ENABLED=false` until OAuth discovery/consent has been tested in staging. Keep `MCP_WRITES_ENABLED=false` for the read-only rollout.
 
@@ -43,7 +50,7 @@ Writes require all three of: `MCP_WRITES_ENABLED=true`, a connection in read/wri
 - **Lists.** One item is addressable as `revenue_streams[<id>].price.value` for edits. Adding, removing, and reordering go through `add_revenue_stream`, `remove_revenue_stream`, `reorder_revenue_streams`, and `edit_list`. Each of those is one call, one revision, one audit row.
 - **Concurrency.** Every write takes `expected_revision` and a fresh `idempotency_key`. A stale revision returns `REVISION_CONFLICT` carrying the current revision; a replayed key is a no-op that returns the existing row.
 - **Errors** arrive as tool errors whose first line is `CODE: message` and whose second line is `{"error":{code,message,details,retryable,hint}}`. Codes: `NOT_FOUND`, `FORBIDDEN`, `VALIDATION_FAILED`, `REVISION_CONFLICT`, `GRANT_REVOKED`, `DUPLICATE_REQUEST`, `RATE_LIMITED`, `INTERNAL_ERROR`. Raw database text is never forwarded.
-- **Audit.** Every write records the public path used, the internal path, the operation, the previous value, and the client's stated `reason`. Grant and revoke changes made in the settings UI are recorded as `grant_change` events. The owner reads all of it at `/settings/connections`.
+- **Audit.** Every write records the public path, operation, quality marker, and the client's stated `reason`, but never duplicates current or previous project values. A database trigger enforces this during application rollbacks. Grant and revoke changes remain `grant_change` events.
 
 ## Verification
 
@@ -58,4 +65,4 @@ npm run build
 
 Then validate the remote endpoint with the official MCP Inspector and two independent Streamable HTTP/OAuth clients. With `MCP_WRITES_ENABLED=false`, confirm: tool titles and `{id}` completion appear; `marketplace` and `debt` sections are readable; `run_monte_carlo` returns a simulation on a project with ranges and actionable guidance on one without; `get_lender_assessment` and `get_investor_assessment` return interpolated checks with no `{placeholder}` text. With writes enabled on staging, add a revenue stream, edit one of its fields, remove it, and confirm each call bumps the revision exactly once, a replayed idempotency key is a no-op, a stale `expected_revision` returns structured conflict details, and `/settings/connections` shows the audit rows with public paths and the stated reason. Also toggle "Allow project creation" off and on there and reload: the checkbox must reflect stored state. Exercise both a 2026-07-28 client and the stateless 2025 fallback. Supabase-backed RLS integration tests require a configured disposable Supabase project and should verify cross-user, cross-client, revocation, concurrency, and idempotency behavior before enabling either feature flag.
 
-The `/health` endpoint reports only process health. MCP failures produce a protected-resource challenge and never disclose project data.
+The `/health` endpoint reports no secret details and returns 503 when production storage or encryption configuration is invalid. MCP failures produce a protected-resource challenge and never disclose project data.

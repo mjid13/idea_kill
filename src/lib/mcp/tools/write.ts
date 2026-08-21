@@ -1,7 +1,8 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/server";
 import { analyzeProject } from "@/lib/projects/analysis";
-import { projectData, projectFromRow, type ProjectRow } from "@/lib/projects/codec";
+import { projectData, type ProjectRow } from "@/lib/projects/codec";
+import { projectFromStoredRow, storedProjectData } from "@/lib/projects/storageCodec";
 import { applyProjectChanges, type FieldChange } from "@/lib/projects/mutations";
 import {
   EDITABLE_LISTS, addRevenueStream, applyListOperation, moveRevenueStream, removeRevenueStream,
@@ -18,18 +19,10 @@ import { normalizeMcpPath, publicMcpPath } from "../paths";
 import { projectLinks, result } from "../result";
 import { businessModel, jsonOutput, projectId, quality, writeHints } from "./shared";
 
-/** Long prose belongs in the project, not repeated in every audit row. */
-const AUDIT_VALUE_LIMIT = 500;
-
-function auditValue(value: unknown): unknown {
-  if (typeof value !== "string" || value.length <= AUDIT_VALUE_LIMIT) return value;
-  return `${value.slice(0, AUDIT_VALUE_LIMIT)}… (${value.length} chars)`;
-}
 
 /**
  * The audit table is read by the project owner at /settings/connections, so it
- * records the public path a client actually used, the internal one for support,
- * and the reason the client gave for the write.
+ * records the public path and reason without copying sensitive project values.
  */
 function auditPayload(reason: string, diff: FieldChange[], operation?: string) {
   return {
@@ -37,10 +30,7 @@ function auditPayload(reason: string, diff: FieldChange[], operation?: string) {
     source: "mcp",
     changes: diff.map((change) => ({
       path: publicMcpPath(change.path),
-      internalPath: change.path,
       ...(operation ? { op: operation } : {}),
-      value: auditValue(change.value),
-      previous: auditValue((change as FieldChange & { previous?: unknown }).previous),
       ...(change.quality ? { quality: change.quality } : {}),
     })),
   };
@@ -73,11 +63,11 @@ export function registerWriteTools(server: McpServer, ctx: McpToolContext) {
     const { data, error } = await ctx.db.rpc("apply_project_mutation", {
       target_project_id: input.projectId, expected_revision: input.expectedRevision,
       request_idempotency_key: input.idempotencyKey,
-      project_name: applied.project.basicInfo.name, project_data: projectData(applied.project),
+      project_name: applied.project.basicInfo.name, project_data: storedProjectData(applied.project),
       allowed_changes: auditPayload(input.reason, applied.diff, input.operation),
     });
     if (error) throw error;
-    const updated = projectFromRow(data as ProjectRow);
+    const updated = projectFromStoredRow(data as ProjectRow);
     const before = analyzeProject(previous, 0);
     const after = analyzeProject(updated, 0);
     return result({
@@ -97,15 +87,16 @@ export function registerWriteTools(server: McpServer, ctx: McpToolContext) {
     });
   }
 
-  async function create(name: string, document: unknown, idempotencyKey: string, summary: string) {
+  async function create(project: Project, idempotencyKey: string, summary: string) {
     await ctx.requireWrite(true);
     await ctx.limit("create", { limit: 20, cost: COST.write });
     const { data, error } = await ctx.db.rpc("create_project_with_mcp_grant", {
-      project_name: name, project_data: document, project_schema_version: 1,
+      target_project_id: project.id, project_name: project.basicInfo.name,
+      project_data: storedProjectData(project), project_schema_version: 1,
       request_idempotency_key: idempotencyKey,
     });
     if (error) throw error;
-    const created = projectFromRow(data as ProjectRow);
+    const created = projectFromStoredRow(data as ProjectRow);
     return result({
       id: created.id, revision: created.revision, assumptions: projectData(created),
       analysis: analyzeProject(created), grantNotice: "Added to this client's project grants.",
@@ -124,7 +115,7 @@ export function registerWriteTools(server: McpServer, ctx: McpToolContext) {
   }, guard(async ({ idempotency_key, basic, assumptions }) => {
     const empty = createEmptyProject(basic.businessModel, basic.currency);
     const candidate = projectFormSchema.parse({ ...empty, ...assumptions, basicInfo: basic });
-    return create(basic.name, candidate, idempotency_key, "Project created.");
+    return create(candidate as Project, idempotency_key, "Project created.");
   }));
 
   server.registerTool("import_project", {
@@ -138,8 +129,8 @@ export function registerWriteTools(server: McpServer, ctx: McpToolContext) {
   }, guard(async ({ idempotency_key, bundle_json, name_override }) => {
     const imported = parseImportBundle(bundle_json);
     const name = name_override ?? imported.basicInfo.name;
-    const document = projectData({ ...imported, basicInfo: { ...imported.basicInfo, name } });
-    return create(name, document, idempotency_key, "Project imported.");
+    const project = { ...imported, basicInfo: { ...imported.basicInfo, name } };
+    return create(project, idempotency_key, "Project imported.");
   }));
 
   server.registerTool("update_project", {

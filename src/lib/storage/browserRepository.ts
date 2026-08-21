@@ -44,6 +44,19 @@ class BrowserProjectRepository implements ProjectRepository {
   }
 }
 
+class UnavailableProjectRepository implements ProjectRepository {
+  private unavailable(): never {
+    throw new Error("Project storage is unavailable because Supabase is not configured.");
+  }
+  async getAll(): Promise<Project[]> { return this.unavailable(); }
+  async getById(): Promise<Project | null> { return this.unavailable(); }
+  async save(): Promise<void> { return this.unavailable(); }
+  async saveImported(): Promise<void> { return this.unavailable(); }
+  async delete(): Promise<void> { return this.unavailable(); }
+}
+
 export const projectRepository: ProjectRepository = isSupabaseConfigured()
   ? new BrowserProjectRepository()
-  : new LocalStorageProjectRepository();
+  : process.env.NODE_ENV === "production"
+    ? new UnavailableProjectRepository()
+    : new LocalStorageProjectRepository();

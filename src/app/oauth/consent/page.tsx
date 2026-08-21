@@ -17,12 +17,12 @@ export default async function ConsentPage({ searchParams }: { searchParams: Prom
   const { data, error } = await supabase.auth.oauth.getAuthorizationDetails(authorizationId);
   if (error || !data) return <main className="p-8"><Trans text="This authorization request is invalid or expired." /></main>;
   if ("redirect_url" in data) redirect(data.redirect_url);
-  const projects = await new SupabaseProjectRepository(supabase).getAll();
+  const projects = await new SupabaseProjectRepository(supabase).getSummaries();
   return <main className="mx-auto max-w-2xl px-4 py-12">
     <Card><CardHeader><CardTitle><Trans text="Connect an MCP client" /></CardTitle></CardHeader><CardContent>
       <ConsentForm authorizationId={authorizationId} clientName={data.client.name}
         clientUri={data.client.uri} redirectUri={data.redirect_uri}
-        projects={projects.map((p) => ({ id: p.id, name: p.basicInfo.name }))} />
+        projects={projects} />
     </CardContent></Card>
   </main>;
 }
