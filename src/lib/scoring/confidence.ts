@@ -1,5 +1,6 @@
-import type { Assumption, Project } from "@/types";
+import type { Assumption, CalculatedMetrics, Project } from "@/types";
 import { val } from "@/lib/calculations/helpers";
+import { getActiveRevenueStreams } from "@/lib/calculations/revenueStreams";
 import { ratingToScore, weightedAverage } from "./interpolate";
 
 const QUALITY_WEIGHT: Record<Assumption<number>["quality"], number> = {
@@ -8,14 +9,23 @@ const QUALITY_WEIGHT: Record<Assumption<number>["quality"], number> = {
   unknown: 10,
 };
 
-/** The core assumptions that materially drive the calculated metrics and score. */
+/**
+ * The core assumptions that materially drive the calculated metrics and
+ * score. Pricing is whichever model is actually operative — each active
+ * revenue stream's price when a hybrid mix is in use, else the flat
+ * `pricing.productPrice` — so a hybrid project isn't penalized for leaving
+ * an unused flat price untouched.
+ */
 function coreAssumptions(project: Project): Array<Assumption<number> | undefined> {
+  const activeStreams = getActiveRevenueStreams(project);
+  const pricingAssumptions = activeStreams.length > 0 ? activeStreams.map((s) => s.price) : [project.pricing.productPrice];
+
   return [
     project.market.totalPotentialCustomers,
     project.market.averageAnnualCustomerSpend,
     project.market.addressableMarketPct,
     project.market.obtainableMarketPct,
-    project.pricing.productPrice,
+    ...pricingAssumptions,
     project.pricing.currentCustomers,
     project.pricing.expectedMonthlyCustomerGrowthPct,
     project.acquisition.monthlyMarketingSpend,
@@ -38,7 +48,7 @@ function coreAssumptions(project: Project): Array<Assumption<number> | undefined
  * A strong-looking score built on unknown/estimated inputs should report low
  * confidence (spec sections 31-33).
  */
-export function calculateConfidence(project: Project): number {
+export function calculateConfidence(project: Project, metrics: CalculatedMetrics): number {
   const assumptions = coreAssumptions(project).filter((a): a is Assumption<number> => a !== undefined);
   const completenessScore = weightedAverage(assumptions.map((a) => [QUALITY_WEIGHT[a.quality], 1]));
 
@@ -50,7 +60,8 @@ export function calculateConfidence(project: Project): number {
   ]);
 
   const hasRealCustomers = val(project.pricing.currentCustomers) > 0 && project.pricing.currentCustomers.quality !== "unknown";
-  const hasRealRevenue = hasRealCustomers && val(project.pricing.productPrice) > 0;
+  const hasRealRevenue =
+    hasRealCustomers && (metrics.revenueMix ? metrics.revenueMix.totalMonthlyRevenue > 0 : val(project.pricing.productPrice) > 0);
   const cacDataReliable = project.acquisition.newCustomersAcquiredMonthly.quality === "known";
   const churnDataReliable = project.retention.monthlyChurnPct.quality === "known";
 

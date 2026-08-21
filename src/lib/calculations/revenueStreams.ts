@@ -1,4 +1,5 @@
 import type {
+  Project,
   RevenueMixMetrics,
   RevenueStream,
   RevenueStreamKind,
@@ -24,6 +25,11 @@ function assumptionOrDefault(assumption: RevenueStream["price"] | undefined, fal
 /** A stream counts once the founder has entered a real price for it. */
 export function hasStreamData(stream: RevenueStream): boolean {
   return stream.price.quality !== "unknown" && val(stream.price) > 0;
+}
+
+/** Streams that carry real data — the ones that override the single-price `pricing` model wherever they're read. */
+export function getActiveRevenueStreams(project: Project): RevenueStream[] {
+  return (project.revenueStreams ?? []).filter(hasStreamData);
 }
 
 export interface RevenueMixContext {

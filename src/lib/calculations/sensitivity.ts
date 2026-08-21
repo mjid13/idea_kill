@@ -17,6 +17,12 @@ export const DEFAULT_MULTIPLIERS: SensitivityMultipliers = { price: 1, cac: 1, c
  * from spend / new customers), so a CAC multiplier scales acquisition spend
  * proportionally, which scales CAC the same way while holding customer
  * count constant.
+ *
+ * The price lever also has to reach whichever pricing model is actually
+ * operative — `calculateMetrics` gives revenue streams and marketplace GMV
+ * priority over the flat `pricing.productPrice` whenever either carries data
+ * (see revenueStreams.ts/marketplace.ts), so leaving those untouched would
+ * make "Pricing" a no-op for any hybrid or marketplace project.
  */
 export function applyMultipliers(project: Project, multipliers: SensitivityMultipliers): Project {
   return {
@@ -41,6 +47,14 @@ export function applyMultipliers(project: Project, multipliers: SensitivityMulti
     unitEconomics: {
       ...project.unitEconomics,
       revenuePerCustomer: { ...project.unitEconomics.revenuePerCustomer, value: project.unitEconomics.revenuePerCustomer.value * multipliers.price },
+    },
+    revenueStreams: project.revenueStreams?.map((stream) => ({
+      ...stream,
+      price: { ...stream.price, value: stream.price.value * multipliers.price },
+    })),
+    marketplace: project.marketplace && {
+      ...project.marketplace,
+      averageOrderValue: { ...project.marketplace.averageOrderValue, value: project.marketplace.averageOrderValue.value * multipliers.price },
     },
   };
 }

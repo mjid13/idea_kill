@@ -79,23 +79,30 @@ export function generateForecast(inputs: ForecastInputs): ForecastMonth[] {
   let beginningCustomers = startingCustomers;
   let cashBalance = startingCashBalance;
   let currentNewCustomers = newCustomersPerMonth;
-  // Compounding overlay applied on top of customer-count-driven MRR to represent
-  // upsell/downgrade revenue from existing customers. Stays at 1 (no effect) when
-  // expansion/contraction are both 0, so the zero-input case is byte-identical to
-  // the pre-expansion behavior.
-  let expansionMultiplier = 1;
+  // Dollar MRR carried forward from the retained customer base only. Expansion/
+  // contraction compounds against this each month; customers acquired *this*
+  // month join at their base ARPU and only start compounding from next month,
+  // so a growing book isn't retroactively inflated by cohorts that haven't
+  // experienced any upsell/downgrade yet.
+  let retainedMrr = isRecurringRevenue ? startingCustomers * monthlyArpu : 0;
 
   for (let month = 1; month <= months; month++) {
     const newCustomers = Math.max(0, currentNewCustomers);
     const churnedCustomers = Math.max(0, Math.round(beginningCustomers * churnRate));
     const endingCustomers = Math.max(0, beginningCustomers + newCustomers - churnedCustomers);
 
-    const baseMrr = isRecurringRevenue ? endingCustomers * monthlyArpu : 0;
-    const expansionRevenue = baseMrr * expansionMultiplier * expansionRate;
-    const contractionRevenue = baseMrr * expansionMultiplier * contractionRate;
-    expansionMultiplier *= 1 + expansionRate - contractionRate;
+    // Same churned share of the customer count is applied to the retained book's
+    // dollars, so the zero-expansion/contraction case stays byte-identical to the
+    // customer-count-driven MRR the pre-expansion behavior produced.
+    const retentionFraction = beginningCustomers > 0 ? (beginningCustomers - churnedCustomers) / beginningCustomers : 1;
+    const survivingRetainedMrr = retainedMrr * retentionFraction;
+    const expansionRevenue = isRecurringRevenue ? survivingRetainedMrr * expansionRate : 0;
+    const contractionRevenue = isRecurringRevenue ? survivingRetainedMrr * contractionRate : 0;
+    const newMrr = newCustomers * monthlyArpu;
 
-    const mrr = isRecurringRevenue ? baseMrr * expansionMultiplier : 0;
+    const mrr = isRecurringRevenue ? survivingRetainedMrr + expansionRevenue - contractionRevenue + newMrr : 0;
+    retainedMrr = mrr;
+
     const recurringRevenue = isRecurringRevenue ? mrr : newCustomers * monthlyArpu;
     // One-time revenue tracks acquisitions, not the installed base, and carries
     // its own (usually lower, services-shaped) margin.
@@ -131,8 +138,8 @@ export function generateForecast(inputs: ForecastInputs): ForecastMonth[] {
       operatingExpenses: monthlyOperatingExpenses,
       netCashFlow,
       cashBalance,
-      expansionRevenue: isRecurringRevenue ? expansionRevenue : 0,
-      contractionRevenue: isRecurringRevenue ? contractionRevenue : 0,
+      expansionRevenue,
+      contractionRevenue,
     });
 
     beginningCustomers = endingCustomers;

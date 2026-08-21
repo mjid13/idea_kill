@@ -94,6 +94,25 @@ describe("generateForecast", () => {
     expect(withContraction[11].contractionRevenue).toBeGreaterThan(0);
   });
 
+  it("does not apply expansion to customers acquired in the same month they join", () => {
+    // Reference values: 10 new customers/mo at $100 ARPU, no churn, 5%/mo expansion.
+    // Each cohort should only start compounding the month *after* it joins — a
+    // customer acquired this month must be booked at the flat $100 base rate, not
+    // inflated by the multiplier the pre-existing book has already accumulated.
+    const forecast = generateForecast(
+      baseInputs({
+        startingCustomers: 0,
+        newCustomersPerMonth: 10,
+        monthlyChurnPct: 0,
+        monthlyArpu: 100,
+        monthlyExpansionRevenuePct: 5,
+        months: 6,
+      })
+    );
+    const expectedMrr = [1000, 2050, 3152.5, 4310.125, 5525.63125, 6801.912812500001];
+    forecast.forEach((m, i) => expect(m.mrr).toBeCloseTo(expectedMrr[i], 6));
+  });
+
   it("never applies expansion/contraction revenue to non-recurring revenue", () => {
     const forecast = generateForecast(
       baseInputs({ isRecurringRevenue: false, monthlyExpansionRevenuePct: 10, monthlyContractionRevenuePct: 10 })

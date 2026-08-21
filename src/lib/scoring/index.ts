@@ -38,7 +38,7 @@ export function calculateScoreBreakdown(project: Project, metrics: CalculatedMet
   return {
     overall: Math.round(Math.min(100, Math.max(0, overall))),
     categories,
-    confidence: calculateConfidence(project),
+    confidence: calculateConfidence(project, metrics),
     maturityStage: determineMaturityStage(project, metrics),
   };
 }
