@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { projectFormSchema, type ProjectFormValues } from "@/lib/validation/projectSchema";
 import { projectRepository } from "@/lib/storage/browserRepository";
 import { createEmptyProject } from "@/lib/storage/factory";
@@ -124,12 +125,14 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
   const progressPct = Math.round(((safeIndex + 1) / visibleSteps.length) * 100);
 
   async function goNext() {
-    const valid = await trigger(step.key, { shouldFocus: true });
-    if (!valid) {
-      // Without this the button just looks inert — the invalid inputs are
-      // marked in place, but nothing explains why the step refused to advance.
-      setBlocked(true);
-      return;
+    if (!initialProject) {
+      const valid = await trigger(step.key, { shouldFocus: true });
+      if (!valid) {
+        // Without this the button just looks inert — the invalid inputs are
+        // marked in place, but nothing explains why the step refused to advance.
+        setBlocked(true);
+        return;
+      }
     }
     setBlocked(false);
     if (isLast) return;
@@ -140,6 +143,15 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
   function goBack() {
     setBlocked(false);
     setStepIndex((i) => Math.max(0, i - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function goToStep(stepKey: keyof ProjectFormValues) {
+    const nextIndex = visibleSteps.findIndex(({ key }) => key === stepKey);
+    if (nextIndex === -1) return;
+
+    setBlocked(false);
+    setStepIndex(nextIndex);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -163,12 +175,35 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
   const StepComponent = step.Component;
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-10">
+    <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:py-10">
       <div className="mb-8 space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium text-muted-foreground">
-            {t("Step {current} of {total}", { current: safeIndex + 1, total: visibleSteps.length })}
-          </p>
+          {initialProject ? (
+            <Select value={step.key} onValueChange={(value) => goToStep(value as keyof ProjectFormValues)}>
+              <SelectTrigger
+                size="sm"
+                aria-label={t("Go to step")}
+                className="max-w-[min(100%,24rem)]"
+              >
+                <SelectValue>
+                  {t("Step {current} of {total}", { current: safeIndex + 1, total: visibleSteps.length })}
+                  {" · "}
+                  {t(step.title)}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent align="start">
+                {visibleSteps.map((visibleStep, index) => (
+                  <SelectItem key={visibleStep.key} value={visibleStep.key}>
+                    {index + 1}. {t(visibleStep.title)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <p className="text-xs font-medium text-muted-foreground">
+              {t("Step {current} of {total}", { current: safeIndex + 1, total: visibleSteps.length })}
+            </p>
+          )}
           {!initialProject && (
             <button
               type="button"
@@ -206,12 +241,12 @@ export function ProjectWizard({ initialProject }: ProjectWizardProps) {
         }}
       >
         <FieldLinker form={form}>
-          <div className="rounded-xl border border-border bg-card p-5 ring-1 ring-foreground/5">
+          <div className="rounded-xl border border-border bg-card p-4 ring-1 ring-foreground/5 sm:p-5">
             <StepComponent control={control} />
           </div>
         </FieldLinker>
 
-        <div className="mt-6 flex items-center justify-between">
+        <div className="mt-6 flex items-center justify-between gap-3">
           <Button type="button" variant="outline" onClick={goBack} disabled={isFirst}>
             <ArrowLeft /> {t("Back")}
           </Button>

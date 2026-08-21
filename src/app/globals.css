@@ -126,6 +126,14 @@
   }
   html {
     @apply font-sans;
+    overflow-x: clip;
+  }
+  body {
+    min-width: 0;
+  }
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 

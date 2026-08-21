@@ -35,16 +35,16 @@ export function ProjectDashboard({ project }: { project: Project }) {
   const scenarios = useMemo(() => generateScenarios(project, metrics), [project, metrics]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
+    <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:space-y-6 sm:py-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">{project.basicInfo.name || t("Untitled project")}</h1>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-foreground">{project.basicInfo.name || t("Untitled project")}</h1>
             <Badge variant="secondary">{t(BUSINESS_MODEL_LABELS[project.basicInfo.businessModel])}</Badge>
           </div>
           {project.basicInfo.description && <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{project.basicInfo.description}</p>}
         </div>
-        <div className="flex gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <Button variant="outline" size="sm" render={<Link href={`/project/${project.id}/edit`} />}>
             <Pencil /> {t("Edit assumptions")}
           </Button>
@@ -62,8 +62,8 @@ export function ProjectDashboard({ project }: { project: Project }) {
           </CardDescription>
         </CardHeader>
         <CardFooter className="justify-end border-t-0 bg-transparent p-(--card-spacing)">
-          <Button size="sm" render={<Link href={`/project/${project.id}/documents`} />}>
-            {t("Build business documents")} <ArrowRight />
+          <Button size="sm" className="w-full sm:w-auto" render={<Link href={`/project/${project.id}/documents`} />}>
+            {t("Discover business documents")} <ArrowRight />
           </Button>
         </CardFooter>
       </Card>

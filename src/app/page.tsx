@@ -44,18 +44,18 @@ export default function LandingPage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="flex-1">
-        <section className="mx-auto max-w-4xl px-4 pt-20 pb-16 text-center">
-          <h1 className="text-4xl font-semibold tracking-tight text-balance text-foreground sm:text-5xl">
+        <section className="mx-auto max-w-4xl px-4 pt-12 pb-12 text-center sm:pt-20 sm:pb-16">
+          <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground sm:text-5xl">
             {t("Know if your product economics make sense before you spend months building it.")}
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
+          <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg">
             {t("Enter your assumptions and instantly evaluate market size, unit economics, profitability, runway, and overall product viability.")}
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Button size="lg" render={<Link href="/new" />}>
+          <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+            <Button size="lg" className="w-full sm:w-auto" render={<Link href="/new" />}>
               {t("Evaluate an Idea")} <ArrowRight />
             </Button>
-            <Button size="lg" variant="outline" onClick={viewExample}>
+            <Button size="lg" className="w-full sm:w-auto" variant="outline" onClick={viewExample}>
               {t("View Example")}
             </Button>
           </div>
@@ -64,7 +64,7 @@ export default function LandingPage() {
           </p>
         </section>
 
-        <section className="border-t border-border bg-muted/30 py-16">
+        <section className="border-t border-border bg-muted/30 py-12 sm:py-16">
           <div className="mx-auto max-w-6xl px-4">
             <h2 className="text-center text-sm font-semibold tracking-wide text-muted-foreground uppercase">{t("What it calculates")}</h2>
             <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -81,15 +81,12 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-4xl px-4 py-16 text-center">
+        <section className="mx-auto max-w-4xl px-4 py-12 text-center sm:py-16">
           <p className="text-sm text-muted-foreground">
             {t("This tool does not predict whether your startup will succeed. It evaluates the quality of your current assumptions and economics — so you know what to fix, validate, or build next.")}
           </p>
         </section>
       </main>
-      <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
-        {t("Built for founders by.")}<a href={"https://mjidhub.com"} className="text-primary hover:underline">mjid</a>
-      </footer>
     </div>
   );
 }

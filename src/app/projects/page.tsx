@@ -95,7 +95,7 @@ export default function ProjectsPage() {
               <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("Projects")}</h1>
               <p className="text-sm text-muted-foreground">{t("Evaluations stored securely in our account.")}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex w-full flex-wrap gap-2 sm:w-auto">
               {selected.size >= 2 && (
                 <Button variant="outline" onClick={goCompare}>
                   <GitCompare /> {t("Compare ({count})", { count: selected.size })}
@@ -155,7 +155,13 @@ export default function ProjectsPage() {
                     </div>
 
                     <div className="flex gap-1.5 border-t border-border pt-3">
-                      <Button variant="outline" size="sm" render={<Link href={`/project/${project.id}`}>{t("Open")}</Link>} className="flex-1" />
+                      <Button variant="outline" size="sm" render={<Link href={`/project/${project.id}`}>{t("Dashboard")}</Link>} className="flex-1" />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        render={<Link href={`/project/${project.id}/documents`}>{t("Documents")}</Link>}
+                        className="flex-1"
+                      />
                       <Button variant="ghost" size="icon-sm" onClick={() => handleDuplicate(project)} aria-label={t("Duplicate")}>
                         <Copy />
                       </Button>
