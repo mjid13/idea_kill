@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { requestOrigin } from "@/lib/http/requestOrigin";
 import { supabaseEnv } from "./env";
 
 const PUBLIC_PREFIXES = ["/", "/how-to-use", "/sign-in", "/auth/callback", "/oauth/consent", "/mcp", "/.well-known/", "/health"];
@@ -26,7 +27,7 @@ export async function refreshSupabaseSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isPublic = PUBLIC_PREFIXES.some((prefix) => prefix === "/" ? path === "/" : path.startsWith(prefix));
   if (!data?.claims && !isPublic) {
-    const url = new URL("/sign-in", request.url);
+    const url = new URL("/sign-in", requestOrigin(request));
     url.searchParams.set("next", path + request.nextUrl.search);
     return NextResponse.redirect(url);
   }

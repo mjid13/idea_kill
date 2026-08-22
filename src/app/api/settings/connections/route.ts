@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { requestOrigin } from "@/lib/http/requestOrigin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 /**
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
     const revoked = previousIds.filter((id) => !projectIds.includes(id));
     await recordGrantChange(supabase, userId, clientId, granted, { operation: "granted", mode, allowCreate });
     await recordGrantChange(supabase, userId, clientId, revoked, { operation: "grant_removed", mode, allowCreate });
-    return NextResponse.redirect(new URL("/settings/connections", request.url), { status: 303 });
+    return NextResponse.redirect(new URL("/settings/connections", requestOrigin(request)), { status: 303 });
   }
 
   const { error } = await supabase.auth.oauth.revokeGrant({ clientId });
@@ -57,5 +58,5 @@ export async function POST(request: Request) {
     status: "revoked", revoked_at: new Date().toISOString(), updated_at: new Date().toISOString(),
   }).eq("client_id", clientId);
   await recordGrantChange(supabase, userId, clientId, previousIds, { operation: "connection_revoked" });
-  return NextResponse.redirect(new URL("/settings/connections", request.url), { status: 303 });
+  return NextResponse.redirect(new URL("/settings/connections", requestOrigin(request)), { status: 303 });
 }
