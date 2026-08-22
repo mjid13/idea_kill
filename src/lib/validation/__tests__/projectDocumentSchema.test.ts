@@ -1,6 +1,33 @@
 import { describe, expect, it } from "vitest";
+import { exampleProject } from "@/lib/example";
 import { createEmptyProject } from "@/lib/storage/factory";
-import { projectDocumentSchema } from "../projectSchema";
+import { projectDocumentSchema, projectFormSchema } from "../projectSchema";
+
+describe("projectFormSchema", () => {
+  it("normalizes an explicitly cleared preloaded range to a single number", () => {
+    const formValue = {
+      ...exampleProject,
+      acquisition: {
+        ...exampleProject.acquisition,
+        newCustomersAcquiredMonthly: {
+          ...exampleProject.acquisition.newCustomersAcquiredMonthly,
+          range: null,
+        },
+      },
+    };
+
+    const parsed = projectFormSchema.parse(formValue);
+
+    expect(parsed.acquisition.newCustomersAcquiredMonthly.value).toBe(30);
+    expect(parsed.acquisition.newCustomersAcquiredMonthly.range).toBeUndefined();
+  });
+
+  it("preserves a range that was not cleared", () => {
+    const parsed = projectFormSchema.parse(exampleProject);
+
+    expect(parsed.acquisition.newCustomersAcquiredMonthly.range).toEqual({ low: 20, high: 45 });
+  });
+});
 
 describe("projectDocumentSchema", () => {
   it("validates revision metadata and structured pitch extras", () => {

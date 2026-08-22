@@ -112,7 +112,11 @@ export function AssumptionField({
 
   const toggleRange = useCallback(() => {
     if (isRanged) {
-      rangeField.field.onChange(undefined);
+      // React Hook Form treats `undefined` as "fall back to the default value".
+      // That makes a range loaded with an existing project immediately reappear
+      // after it is cleared. `null` is an explicit form-only sentinel; the Zod
+      // schema normalizes it back to an absent range before submission.
+      rangeField.field.onChange(null);
       return;
     }
     // Seed a +/-25% band around the current point estimate as a starting guess.

@@ -19,13 +19,24 @@ const assumptionRangeSchema = z.object({
   high: z.number().finite("Must be a finite number"),
 });
 
+// React Hook Form cannot use `undefined` to explicitly clear a controlled field:
+// it reads that as "use the default value". The range toggle therefore uses
+// `null` as a form-only cleared value, which is normalized here so the domain
+// model and persisted project continue to represent a single number by omitting
+// `range` entirely.
+type OptionalAssumptionRange = z.infer<typeof assumptionRangeSchema> | undefined;
+const optionalAssumptionRangeSchema = z.preprocess(
+  (value) => (value === null ? undefined : value),
+  assumptionRangeSchema.optional()
+) as z.ZodType<OptionalAssumptionRange, OptionalAssumptionRange>;
+
 const assumptionSchema = z
   .object({
     value: z.number().finite("Must be a finite number"),
     quality: dataQualitySchema,
     // Optional — absent means a single point estimate. Present means `value` is
     // the most likely point inside [low, high].
-    range: assumptionRangeSchema.optional(),
+    range: optionalAssumptionRangeSchema.optional(),
   })
   .refine((a) => !a.range || a.range.low <= a.range.high, {
     message: "The low end must not exceed the high end",
